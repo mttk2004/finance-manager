@@ -1,0 +1,6 @@
+{
+  "name": "Personal Finance Manager",
+  "description": "Minimalist personal finance manager with multi-fund support and smart insights.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
