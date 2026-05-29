@@ -1,16 +1,16 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "vietnamese"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
+  subsets: ["latin", "vietnamese"],
 });
 
 export const metadata: Metadata = {
@@ -24,13 +24,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="vi">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0a] text-neutral-200 min-h-screen overflow-x-hidden`}
+        className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased bg-[#0a0a0a] text-neutral-200 min-h-screen overflow-x-hidden`}
       >
-        <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row min-h-screen">
+        <div className="w-full max-w-7xl mx-auto flex flex-col min-h-screen">
           <BottomNav />
-          <div className="flex-1 pb-16 md:pb-0 md:px-8 md:py-6 overflow-y-auto w-full">
+          <div className="flex-1 pb-16 md:pb-0 md:pt-20 md:px-8 overflow-y-auto w-full">
             {children}
           </div>
         </div>

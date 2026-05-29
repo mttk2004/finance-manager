@@ -45,16 +45,16 @@ export default function DashboardPage() {
             <h3 className="text-xs uppercase tracking-widest text-neutral-400 mb-3 px-1">Nhập nhanh (One-Tap)</h3>
             {/* Horizontal Scroll Quick Templates */}
             <div className="flex overflow-x-auto pb-2 gap-2 snap-x scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2 cursor-pointer">
                 ☕ Cà phê 30k
               </button>
-              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2 cursor-pointer">
                 ⛽ Đổ xăng 50k
               </button>
-              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2 cursor-pointer">
                 🍜 Ăn sáng 40k
               </button>
-              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2 cursor-pointer">
                 🚌 Di chuyển 25k
               </button>
             </div>
@@ -87,10 +87,10 @@ export default function DashboardPage() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-3 md:gap-4 pt-2">
-                  <button className="py-3 md:py-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-sm hover:bg-rose-500/20 active:scale-[0.98] border border-rose-500/20 transition-all">
+                  <button className="py-3 md:py-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-sm hover:bg-rose-500/20 active:scale-[0.98] border border-rose-500/20 transition-all cursor-pointer">
                     CHI TIỀN
                   </button>
-                  <button className="py-3 md:py-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-sm hover:bg-emerald-500/20 active:scale-[0.98] border border-emerald-500/20 transition-all">
+                  <button className="py-3 md:py-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-sm hover:bg-emerald-500/20 active:scale-[0.98] border border-emerald-500/20 transition-all cursor-pointer">
                     THU VÀO
                   </button>
                 </div>
@@ -115,7 +115,7 @@ export default function DashboardPage() {
         <section className="pb-4 mt-6 md:mt-0">
           <div className="flex justify-between items-center mb-4 px-1">
             <h3 className="text-xs uppercase tracking-widest text-neutral-400">Giao dịch gần đây</h3>
-            <button className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors">Xem tất cả</button>
+            <button className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">Xem tất cả</button>
           </div>
           
           <Card className="bg-neutral-900/50 border-white/5 divide-y divide-white/5 h-auto overflow-hidden">
