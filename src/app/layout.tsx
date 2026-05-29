@@ -26,13 +26,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0a] text-neutral-200 min-h-screen`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0a] text-neutral-200 min-h-screen overflow-x-hidden`}
       >
-        <div className="mx-auto max-w-md min-h-screen bg-[#0a0a0a] border-x border-white/5 relative flex flex-col shadow-2xl overflow-x-hidden">
-          <div className="flex-1 pb-16">
+        <div className="w-full max-w-7xl mx-auto flex flex-col md:flex-row min-h-screen">
+          <BottomNav />
+          <div className="flex-1 pb-16 md:pb-0 md:px-8 md:py-6 overflow-y-auto w-full">
             {children}
           </div>
-          <BottomNav />
         </div>
       </body>
     </html>
