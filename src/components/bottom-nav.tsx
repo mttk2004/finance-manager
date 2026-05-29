@@ -3,27 +3,51 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Settings, BarChart2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
 export function BottomNav() {
   const pathname = usePathname();
 
   if (pathname === '/login') return null;
 
+  const getLinkClass = (path: string) => {
+    const isActive = pathname === path;
+    return `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors cursor-pointer group ${isActive ? 'text-white' : 'text-neutral-500 hover:text-white'}`;
+  };
+
   return (
-    <nav className="fixed bottom-0 w-full left-0 bg-neutral-900/80 backdrop-blur-md border-t border-white/5 flex justify-around items-center h-16 z-50 md:top-0 md:bottom-auto md:border-t-0 md:border-b md:h-16 md:justify-center md:gap-12 md:bg-neutral-900/60">
-      <Link href="/" className={cn("flex flex-col md:flex-row md:px-4 items-center justify-center h-full space-y-1 md:space-y-0 md:space-x-3 text-neutral-500 hover:text-neutral-200 transition-colors cursor-pointer", pathname === '/' && "text-emerald-500 hover:text-emerald-400 md:text-emerald-400")}>
-        <Home className="w-5 h-5" />
-        <span className="text-[10px] md:text-xs font-medium tracking-wider cursor-pointer">TRANG CHỦ</span>
-      </Link>
-      <Link href="/charts" className={cn("flex flex-col md:flex-row md:px-4 items-center justify-center h-full space-y-1 md:space-y-0 md:space-x-3 text-neutral-500 hover:text-neutral-200 transition-colors cursor-pointer", pathname === '/charts' && "text-emerald-500 hover:text-emerald-400 md:text-emerald-400")}>
-        <BarChart2 className="w-5 h-5" />
-        <span className="text-[10px] md:text-xs font-medium tracking-wider cursor-pointer">BIỂU ĐỒ</span>
-      </Link>
-      <Link href="/settings" className={cn("flex flex-col md:flex-row md:px-4 items-center justify-center h-full space-y-1 md:space-y-0 md:space-x-3 text-neutral-500 hover:text-neutral-200 transition-colors cursor-pointer", pathname === '/settings' && "text-emerald-500 hover:text-emerald-400 md:text-emerald-400")}>
-        <Settings className="w-5 h-5" />
-        <span className="text-[10px] md:text-xs font-medium tracking-wider cursor-pointer">CÀI ĐẶT</span>
-      </Link>
-    </nav>
+    <>
+      <nav className="hidden md:flex fixed top-8 left-1/2 -translate-x-1/2 bg-[#121212]/80 backdrop-blur-xl border border-white/[0.05] rounded-full px-8 py-4 z-50 shadow-2xl items-center gap-12">
+        <Link href="/" className={getLinkClass('/')}>
+          <div className="relative">
+            <Home className="w-5 h-5 transition-transform group-active:scale-95" />
+            {pathname === '/' && <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>}
+          </div>
+        </Link>
+        <Link href="/charts" className={getLinkClass('/charts')}>
+          <div className="relative">
+            <BarChart2 className="w-5 h-5 transition-transform group-active:scale-95" />
+            {pathname === '/charts' && <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>}
+          </div>
+        </Link>
+        <Link href="/settings" className={getLinkClass('/settings')}>
+          <div className="relative">
+            <Settings className="w-5 h-5 transition-transform group-active:scale-95" />
+            {pathname === '/settings' && <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full"></div>}
+          </div>
+        </Link>
+      </nav>
+
+      <nav className="md:hidden fixed bottom-0 w-full left-0 bg-[#050505]/95 backdrop-blur-xl border-t border-white/[0.05] flex justify-around items-center h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] z-50">
+        <Link href="/" className={getLinkClass('/')}>
+          <Home className="w-5 h-5" />
+        </Link>
+        <Link href="/charts" className={getLinkClass('/charts')}>
+          <BarChart2 className="w-5 h-5" />
+        </Link>
+        <Link href="/settings" className={getLinkClass('/settings')}>
+          <Settings className="w-5 h-5" />
+        </Link>
+      </nav>
+    </>
   );
 }
