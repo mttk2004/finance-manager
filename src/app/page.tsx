@@ -1,6 +1,5 @@
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
 
@@ -21,19 +20,19 @@ export default function DashboardPage() {
 
         <div className="md:grid md:grid-cols-2 md:gap-6">
           <div className="flex flex-col items-center md:items-start mb-6 md:mb-0 md:bg-neutral-900/30 md:p-6 md:rounded-2xl md:border md:border-white/5 md:justify-center">
-            <span className="text-[10px] md:text-xs uppercase tracking-widest text-neutral-500 mb-1">Tổng số dư</span>
+            <span className="text-xs uppercase tracking-widest text-neutral-400 mb-1">Tổng số dư</span>
             <span className="text-4xl md:text-5xl font-mono text-emerald-400 font-bold tracking-tighter">45.500.000đ</span>
           </div>
 
-          <div className="bg-neutral-900/50 border border-white/5 rounded-2xl p-4 md:p-6 flex flex-col justify-center">
-            <div className="flex justify-between items-end mb-3 md:mb-5">
-              <h3 className="text-xs md:text-sm font-medium text-neutral-400">Ngân sách tháng 10</h3>
-              <span className="text-[10px] md:text-sm font-mono text-neutral-500">4M / 10M</span>
+          <div className="bg-neutral-900/50 border border-white/5 rounded-2xl p-4 md:p-6 flex flex-col justify-center gap-1">
+            <div className="flex justify-between items-end mb-2 md:mb-4">
+              <h3 className="text-sm font-medium text-neutral-300">Ngân sách tháng 10</h3>
+              <span className="text-xs md:text-sm font-mono text-neutral-400">4M / 10M</span>
             </div>
-            <Progress value={40} className="h-2 md:h-3 bg-neutral-800 [&>div]:bg-blue-500" />
-            <div className="flex justify-between mt-2 md:mt-4 text-[10px] md:text-sm font-mono">
+            <Progress value={40} className="h-2 md:h-3 bg-neutral-800 [&>div]:bg-white" />
+            <div className="flex justify-between mt-2 text-xs font-mono">
               <span className="text-neutral-400">Đã chi: 40%</span>
-              <span className="text-neutral-500">Còn lại: 6.000.000đ</span>
+              <span className="text-neutral-300">Còn lại: 6.000.000đ</span>
             </div>
           </div>
         </div>
@@ -43,45 +42,55 @@ export default function DashboardPage() {
         <div className="space-y-6 md:space-y-8">
           {/* 2. Action Zone */}
           <section>
-            <h3 className="text-[10px] md:text-xs uppercase tracking-widest text-neutral-500 mb-3 px-1">Nhập nhanh (One-Tap)</h3>
+            <h3 className="text-xs uppercase tracking-widest text-neutral-400 mb-3 px-1">Nhập nhanh (One-Tap)</h3>
             {/* Horizontal Scroll Quick Templates */}
             <div className="flex overflow-x-auto pb-2 gap-2 snap-x scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
-              <Badge variant="outline" className="snap-start shrink-0 py-2 px-3 md:px-4 md:py-3 md:text-sm border-white/10 bg-neutral-900/50 hover:bg-neutral-800 cursor-pointer flex gap-2 text-xs">
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
                 ☕ Cà phê 30k
-              </Badge>
-              <Badge variant="outline" className="snap-start shrink-0 py-2 px-3 md:px-4 md:py-3 md:text-sm border-white/10 bg-neutral-900/50 hover:bg-neutral-800 cursor-pointer flex gap-2 text-xs">
+              </button>
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
                 ⛽ Đổ xăng 50k
-              </Badge>
-              <Badge variant="outline" className="snap-start shrink-0 py-2 px-3 md:px-4 md:py-3 md:text-sm border-white/10 bg-neutral-900/50 hover:bg-neutral-800 cursor-pointer flex gap-2 text-xs">
+              </button>
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
                 🍜 Ăn sáng 40k
-              </Badge>
-              <Badge variant="outline" className="snap-start shrink-0 py-2 px-3 md:px-4 md:py-3 md:text-sm border-white/10 bg-neutral-900/50 hover:bg-neutral-800 cursor-pointer flex gap-2 text-xs">
+              </button>
+              <button className="snap-start shrink-0 py-2.5 px-4 md:py-3 border border-white/10 rounded-full bg-neutral-900/50 hover:bg-neutral-800 active:scale-95 transition-all text-xs font-medium text-neutral-300 flex items-center gap-2">
                 🚌 Di chuyển 25k
-              </Badge>
+              </button>
             </div>
 
             <Card className="bg-neutral-900/50 border-white/5 mt-4">
               <CardContent className="p-4 md:p-6 space-y-4 md:space-y-6">
-                <div className="relative border-b-2 border-neutral-800 focus-within:border-blue-500 transition-colors">
-                  <input 
-                    type="text" 
-                    placeholder="0" 
-                    className="w-full bg-transparent text-4xl md:text-6xl font-mono text-white py-3 md:py-6 focus:outline-none placeholder:text-neutral-800 text-center" 
-                  />
-                  <span className="absolute right-2 md:right-4 bottom-3 md:bottom-6 text-neutral-600 text-sm md:text-lg font-mono">VND</span>
+                <div className="space-y-2">
+                  <label htmlFor="amount" className="text-xs font-medium text-neutral-400">Số tiền (VND)</label>
+                  <div className="relative border-b-2 border-neutral-800 focus-within:border-white transition-colors">
+                    <input 
+                      id="amount"
+                      type="text" 
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="0" 
+                      className="w-full bg-transparent text-4xl md:text-6xl font-mono text-white py-2 focus:outline-none placeholder:text-neutral-800 text-center" 
+                    />
+                    <span className="absolute right-2 md:right-4 bottom-3 md:bottom-4 text-neutral-600 text-sm md:text-lg font-mono">đ</span>
+                  </div>
                 </div>
                 
-                <input 
-                  type="text" 
-                  placeholder="Ghi chú + #hashtag (Ví dụ: Ăn trưa #vui_ve)" 
-                  className="w-full bg-neutral-800/30 border border-white/5 rounded-lg px-4 py-3 md:py-4 md:px-6 text-xs md:text-sm text-white focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder:text-neutral-500" 
-                />
+                <div className="space-y-2">
+                  <label htmlFor="note" className="text-xs font-medium text-neutral-400">Ghi chú & Hashtag</label>
+                  <input 
+                    id="note"
+                    type="text" 
+                    placeholder="Ví dụ: Ăn trưa #vui_ve" 
+                    className="w-full bg-neutral-800/50 border border-white/10 rounded-xl px-4 py-3 md:py-4 md:px-6 text-sm text-white focus:outline-none focus:ring-1 focus:ring-neutral-400 placeholder:text-neutral-500 transition-all" 
+                  />
+                </div>
                 
-                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-1 md:pt-2">
-                  <button className="py-3 md:py-4 rounded-xl bg-rose-600/10 text-rose-500 font-bold text-xs md:text-sm hover:bg-rose-600/20 border border-rose-500/20 transition-colors">
+                <div className="grid grid-cols-2 gap-3 md:gap-4 pt-2">
+                  <button className="py-3 md:py-4 rounded-xl bg-rose-500/10 text-rose-500 font-bold text-sm hover:bg-rose-500/20 active:scale-[0.98] border border-rose-500/20 transition-all">
                     CHI TIỀN
                   </button>
-                  <button className="py-3 md:py-4 rounded-xl bg-emerald-600/10 text-emerald-500 font-bold text-xs md:text-sm hover:bg-emerald-600/20 border border-emerald-500/20 transition-colors">
+                  <button className="py-3 md:py-4 rounded-xl bg-emerald-500/10 text-emerald-500 font-bold text-sm hover:bg-emerald-500/20 active:scale-[0.98] border border-emerald-500/20 transition-all">
                     THU VÀO
                   </button>
                 </div>
@@ -92,11 +101,11 @@ export default function DashboardPage() {
           {/* 3. Insights & Charts */}
           <section className="grid grid-cols-2 gap-4 md:gap-6">
             <Card className="bg-neutral-900/50 border-white/5 p-4 md:p-6 flex flex-col justify-between">
-              <h3 className="text-[10px] md:text-xs uppercase tracking-widest text-neutral-500 mb-4">Dòng tiền 7 ngày</h3>
+              <h3 className="text-xs uppercase tracking-widest text-neutral-400 mb-4">Dòng tiền 7 ngày</h3>
               <CashFlowChart />
             </Card>
             <Card className="bg-neutral-900/50 border-white/5 p-4 md:p-6 flex flex-col justify-between">
-              <h3 className="text-[10px] md:text-xs uppercase tracking-widest text-neutral-500 mb-4">Danh mục chi</h3>
+              <h3 className="text-xs uppercase tracking-widest text-neutral-400 mb-4">Danh mục chi</h3>
               <CategoryDonutChart />
             </Card>
           </section>
@@ -105,11 +114,11 @@ export default function DashboardPage() {
         {/* 4. Recent Transactions (Sidebar on Desktop) */}
         <section className="pb-4 mt-6 md:mt-0">
           <div className="flex justify-between items-center mb-4 px-1">
-            <h3 className="text-[10px] md:text-xs uppercase tracking-widest text-neutral-500">Giao dịch gần đây</h3>
-            <button className="text-[10px] md:text-xs text-blue-400 hover:underline">Xem tất cả</button>
+            <h3 className="text-xs uppercase tracking-widest text-neutral-400">Giao dịch gần đây</h3>
+            <button className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors">Xem tất cả</button>
           </div>
           
-          <Card className="bg-neutral-900/50 border-white/5 divide-y divide-white/5 h-auto">
+          <Card className="bg-neutral-900/50 border-white/5 divide-y divide-white/5 h-auto overflow-hidden">
             <div className="p-3 md:p-4 flex items-center justify-between hover:bg-white/[0.02] cursor-pointer transition-colors">
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-neutral-800 flex items-center justify-center text-xs md:text-sm shrink-0">☕</div>
