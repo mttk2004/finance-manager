@@ -22,59 +22,53 @@ export default function DashboardPage() {
       <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
       {/* 1. Header & Summary */}
       <section className="px-4 md:px-0">
-        <div className="flex justify-between items-end mb-8 md:mb-12">
+        <div className="flex justify-between items-center mb-6 md:mb-8">
           <div>
-            <p className="text-xs md:text-sm font-medium text-neutral-500 mb-2 font-mono uppercase tracking-wider">Thứ Ba, 24/10/2023</p>
-            <h1 className="text-3xl md:text-4xl font-semibold tracking-tight text-white mb-1">Chào Sơn 👋</h1>
-            <p className="text-neutral-400">Hôm nay bạn đã chi tiêu thế nào?</p>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">Chào Sơn 👋</h1>
+              <span className="text-[10px] md:text-xs font-medium text-neutral-400 font-mono hidden sm:inline-block border border-white/10 px-2 py-0.5 rounded text-neutral-500">24/10/2023</span>
+            </div>
+            <p className="text-sm text-neutral-400">Hôm nay bạn đã chi tiêu thế nào?</p>
           </div>
-          <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#121212] border border-white/10 flex items-center justify-center cursor-pointer hover:bg-neutral-800 transition-colors">
-            <div className="w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+          <div className="w-10 h-10 rounded-full bg-[#121212] border border-white/10 flex items-center justify-center cursor-pointer hover:bg-neutral-800 transition-colors shrink-0">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-          <div className="md:col-span-2 bg-[#121212] p-6 md:p-8 rounded-3xl border border-white/[0.04] flex flex-col justify-between relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="md:col-span-2 bg-[#121212] p-5 md:p-6 rounded-3xl border border-white/[0.04] flex flex-col justify-center relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-40 transition-opacity">
                 {/* Decorative element */}
-                <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="100" height="100" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <circle cx="60" cy="60" r="59.5" stroke="currentColor" strokeDasharray="4 4" className="text-emerald-500"/>
                   <circle cx="60" cy="60" r="40" stroke="currentColor" strokeOpacity="0.5" className="text-emerald-500"/>
                 </svg>
              </div>
-             <div>
-               <span className="text-xs uppercase tracking-widest text-neutral-500 mb-2 block font-medium">Tổng số dư</span>
-               <div className="text-4xl md:text-5xl lg:text-6xl font-mono text-emerald-400 font-bold tracking-tighter">
-                  45.500<span className="text-emerald-700">.000đ</span>
+             <div className="flex justify-between items-end">
+               <div>
+                 <span className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1 block font-medium">Tổng số dư</span>
+                 <div className="text-3xl md:text-4xl font-mono text-emerald-400 font-bold tracking-tighter">
+                    45.500<span className="text-emerald-700">.000đ</span>
+                 </div>
                </div>
-             </div>
-             <div className="mt-8 flex gap-4 text-sm font-medium">
-               <div className="flex items-center gap-2 text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-full">
+               <div className="flex items-center gap-1.5 text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full text-xs font-medium mb-1 relative z-10">
                  <span>↑</span>
-                 <span>+2.5M tháng này</span>
+                 <span>+2.5M</span>
                </div>
              </div>
           </div>
 
-          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8 flex flex-col justify-between">
-            <div>
-              <div className="flex justify-between items-end mb-4">
-                <h3 className="text-sm font-medium text-neutral-400">Ngân sách tháng 10</h3>
-              </div>
-              <div className="text-2xl font-mono text-white mb-1 flex items-baseline">
-                4.000<span className="text-neutral-500 text-sm ml-1">.000đ</span>
-              </div>
-              <div className="text-xs text-neutral-500 font-mono">/ 10.000.000đ</div>
+          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-5 md:p-6 flex flex-col justify-center">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Ngân sách T10</h3>
+              <span className="text-[10px] text-neutral-500">Còn lại 6M</span>
+            </div>
+            <div className="text-xl font-mono text-white mb-3">
+              4M<span className="text-neutral-500 text-sm"> / 10M</span>
             </div>
             
-            <div className="mt-6 md:mt-8">
-              <div className="h-2 w-full bg-neutral-900 rounded-full overflow-hidden relative">
-                <div className="absolute top-0 left-0 h-full bg-white rounded-full w-[40%]"></div>
-              </div>
-              <div className="flex justify-between mt-3 text-xs font-mono text-neutral-500">
-                <span>Đã chi 40%</span>
-                <span className="text-neutral-300">Còn lại 6M</span>
-              </div>
+            <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden relative">
+              <div className="absolute top-0 left-0 h-full bg-white rounded-full w-[40%]"></div>
             </div>
           </div>
         </div>

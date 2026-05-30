@@ -75,7 +75,7 @@ export default function LoginPage() {
               </p>
             )}
           </div>
-          <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-bold bg-white text-black hover:bg-neutral-200 rounded-xl transition-colors">
+          <Button type="submit" disabled={loading || !password} className="w-full h-11 text-sm font-bold bg-white text-black hover:bg-neutral-200 rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">
             {loading ? 'ĐANG MỞ KHÓA...' : 'MỞ KHÓA'}
           </Button>
         </form>

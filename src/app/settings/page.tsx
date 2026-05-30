@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("funds");
+  const [isAddingFund, setIsAddingFund] = useState(false);
 
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 max-w-3xl mx-auto mt-4 md:mt-8 px-4 md:px-0">
@@ -36,10 +37,18 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-medium text-white">Quản lý Quỹ (Funds)</h3>
-              <button className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer">
-                + Thêm quỹ
+              <button onClick={() => setIsAddingFund(!isAddingFund)} className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer">
+                + Thêm quỹ mới
               </button>
             </div>
+            
+            {isAddingFund && (
+              <div className="flex gap-3 mb-4 items-center bg-[#1A1A1A] p-3 rounded-xl border border-white/[0.05]">
+                <input type="text" placeholder="Tên quỹ (VD: Tiết kiệm)" className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-neutral-600 px-2" />
+                <input type="text" placeholder="Số dư đầu kỳ" className="w-32 bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-1.5 text-sm font-mono text-white focus:outline-none placeholder:text-neutral-600" />
+                <button onClick={() => setIsAddingFund(false)} className="px-4 py-1.5 rounded-lg bg-emerald-500 text-black font-semibold text-sm hover:bg-emerald-400 cursor-pointer">Lưu</button>
+              </div>
+            )}
             
             <div className="space-y-3">
               {[
