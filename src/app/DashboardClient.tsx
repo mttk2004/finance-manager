@@ -53,6 +53,24 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Group transactions by date
+  const groupedTransactions = initialData.recentTransactions.reduce((acc: Record<string, Transaction[]>, tx) => {
+    const date = new Date(tx.date!);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    let dateStr = date.toLocaleDateString('vi-VN', { day: 'numeric', month: 'long' });
+    if (date.toDateString() === today.toDateString()) dateStr = 'Hôm nay';
+    else if (date.toDateString() === yesterday.toDateString()) dateStr = 'Hôm qua';
+
+    if (!acc[dateStr]) acc[dateStr] = [];
+    acc[dateStr].push(tx);
+    return acc;
+  }, {});
+
+  const hashtags = ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec'];
+
   const handleTransaction = async (type: 'INCOME' | 'EXPENSE' | 'LEND' | 'BORROW') => {
     if (!amount || amount === '0' || isSubmitting) return;
     
@@ -214,22 +232,35 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   placeholder="Ví dụ: Ăn trưa #vui_ve" 
                   className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 placeholder:text-neutral-600 transition-colors" 
                 />
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {hashtags.map(tag => (
+                    <button 
+                      key={tag}
+                      onClick={() => setNote(prev => prev.includes(tag) ? prev : (prev ? `${prev} ${tag}` : tag))}
+                      className="text-[10px] px-2 py-1 rounded-full bg-white/[0.03] border border-white/[0.05] text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.08] transition-all cursor-pointer"
+                    >
+                      {tag}
+                    </button>
+                  ))}
+                </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <button 
                   onClick={() => handleTransaction('EXPENSE')}
                   disabled={!amount || amount === '0' || isSubmitting}
-                  className="py-4 md:py-5 rounded-2xl bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 font-medium text-sm md:text-base border border-rose-500/10 hover:border-rose-500/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                  className="group relative py-4 md:py-5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-sm md:text-base border border-rose-500/20 hover:border-rose-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:shadow-[0_0_30px_rgba(244,63,94,0.2)]"
                 >
-                  {isSubmitting ? 'ĐANG XỬ LÝ...' : 'CHI TIỀN'}
+                  <span className="relative z-10">{isSubmitting ? 'ĐANG XỬ LÝ...' : 'CHI TIỀN'}</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                 </button>
                 <button 
                   onClick={() => handleTransaction('INCOME')}
                   disabled={!amount || amount === '0' || isSubmitting}
-                  className="py-4 md:py-5 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 font-medium text-sm md:text-base border border-emerald-500/10 hover:border-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100"
+                  className="group relative py-4 md:py-5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold text-sm md:text-base border border-emerald-500/20 hover:border-emerald-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.1)] hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]"
                 >
-                  {isSubmitting ? 'ĐANG XỬ LÝ...' : 'THU VÀO'}
+                  <span className="relative z-10">{isSubmitting ? 'ĐANG XỬ LÝ...' : 'THU VÀO'}</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-2">
@@ -286,26 +317,40 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               <button className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">Xem tất cả</button>
             </div>
             
-            <div className="space-y-2">
-              {initialData.recentTransactions.length === 0 ? (
+            <div className="space-y-8">
+              {Object.keys(groupedTransactions).length === 0 ? (
                 <p className="text-xs text-neutral-600 text-center py-8">Chưa có giao dịch nào</p>
               ) : (
-                initialData.recentTransactions.map((tx) => (
-                  <div key={tx.id} className="p-4 rounded-3xl bg-[#121212] border border-white/[0.02] flex items-center justify-between hover:bg-[#161616] cursor-pointer transition-colors group">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full bg-[#1A1A1A] group-hover:bg-[#222222] transition-colors flex items-center justify-center text-lg shrink-0 shadow-inner">
-                        {tx.category?.icon || "📝"}
-                      </div>
-                      <div>
-                        <p className="text-sm text-neutral-200 font-medium mb-1">{tx.note || tx.category?.name || "Giao dịch"}</p>
-                        <p className="text-[11px] text-neutral-500 font-mono tracking-tight">
-                          {new Date(tx.date!).toLocaleDateString('vi-VN')}
-                        </p>
-                      </div>
+                Object.entries(groupedTransactions).map(([date, txs]) => (
+                  <div key={date} className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-600 font-bold">{date}</span>
+                      <div className="h-[1px] flex-1 bg-white/[0.03]"></div>
                     </div>
-                    <span className={`text-sm font-mono font-medium ${tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
-                    </span>
+                    <div className="space-y-2">
+                      {txs.map((tx) => (
+                        <div key={tx.id} className="p-4 rounded-3xl bg-[#121212] border border-white/[0.02] flex items-center justify-between hover:bg-[#161616] cursor-pointer transition-all hover:translate-x-1 group">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg shrink-0 shadow-inner transition-colors ${
+                              tx.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-400' : 
+                              tx.type === 'EXPENSE' ? 'bg-rose-500/10 text-rose-400' : 
+                              'bg-blue-500/10 text-blue-400'
+                            }`}>
+                              {tx.category?.icon || (tx.type === 'INCOME' ? "💰" : "💸")}
+                            </div>
+                            <div>
+                              <p className="text-sm text-neutral-200 font-medium mb-0.5">{tx.note || tx.category?.name || "Giao dịch"}</p>
+                              <p className="text-[10px] text-neutral-500 font-mono tracking-tight uppercase">
+                                {tx.category?.name || (tx.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu')}
+                              </p>
+                            </div>
+                          </div>
+                          <span className={`text-sm font-mono font-bold ${tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))
               )}

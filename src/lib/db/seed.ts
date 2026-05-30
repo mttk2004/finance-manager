@@ -38,7 +38,7 @@ async function seed() {
 
   // 4. Seed Transactions (Large amount)
   console.log('Seeding transactions...');
-  const txBatch: any[] = [];
+  const txBatch: (typeof transactions.$inferInsert)[] = [];
   const now = new Date();
   
   // Generate transactions for the last 6 months
