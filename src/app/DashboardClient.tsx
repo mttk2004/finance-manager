@@ -94,7 +94,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <div className="flex justify-between items-center mb-6 md:mb-8">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">Chào Sơn 👋</h1>
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">Chào Kiệt 👋</h1>
               <span className="text-[10px] md:text-xs font-medium text-neutral-400 font-mono hidden sm:inline-block border border-white/10 px-2 py-0.5 rounded text-neutral-500">
                 {new Date().toLocaleDateString('vi-VN')}
               </span>

@@ -65,6 +65,20 @@ export async function createTransaction(data: {
   });
 }
 
+export async function updateFund(id: string, data: {
+  name?: string;
+  balance?: number;
+}) {
+  const [updatedFund] = await db.update(funds)
+    .set({ 
+      ...data,
+      updatedAt: new Date() 
+    })
+    .where(eq(funds.id, id))
+    .returning();
+  return updatedFund;
+}
+
 export async function createFund(data: {
   name: string;
   balance: number;
