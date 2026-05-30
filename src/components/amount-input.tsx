@@ -57,7 +57,7 @@ export function AmountInput({ value, onChange, className, placeholder }: AmountI
       
       {showSuggestions && value && (
         <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border border-white/[0.05] rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 flex flex-col md:w-64 md:left-0">
-          <div className="flex flex-wrap gap-2 p-2">
+          <div className="flex flex-col p-2 gap-1">
             {[
               { mult: 100, label: "x100" },
               { mult: 1000, label: "xk" },
@@ -69,9 +69,10 @@ export function AmountInput({ value, onChange, className, placeholder }: AmountI
                 <button
                   key={sug.mult}
                   onClick={() => handleSuggestionClick(sug.mult)}
-                  className="px-3 py-1.5 rounded-lg bg-[#2A2A2A] hover:bg-white/[0.08] transition-colors cursor-pointer border border-white/[0.05] flex flex-col items-center flex-1"
+                  className="px-4 py-3 rounded-xl bg-[#222222] hover:bg-white/[0.08] transition-all cursor-pointer border border-white/[0.02] hover:border-white/10 flex items-center justify-between group"
                 >
-                  <span className="font-mono text-white text-sm">{suggestedFormatted}</span>
+                  <span className="text-[10px] uppercase tracking-widest text-neutral-500 group-hover:text-neutral-300 font-medium">{sug.label}</span>
+                  <span className="font-mono text-white text-base font-semibold">{suggestedFormatted}<span className="text-neutral-600 ml-1">đ</span></span>
                 </button>
               )
             })}
