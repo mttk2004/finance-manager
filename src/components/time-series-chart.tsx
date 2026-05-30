@@ -29,7 +29,8 @@ export function TimeSeriesChart() {
           />
           <Tooltip 
             contentStyle={{ backgroundColor: '#171717', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '13px', color: '#fff' }}
-            formatter={(value: number | string) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            formatter={(value: any) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
             labelStyle={{ color: '#a3a3a3', marginBottom: '4px' }}
           />
           <Line 

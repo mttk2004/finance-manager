@@ -1,9 +1,9 @@
 "use client";
 
-interface Fund {
+export interface Fund {
   id: string;
   name: string;
-  balance: number;
+  balance: number | null;
 }
 
 interface FundSelectorModalProps {
@@ -48,7 +48,7 @@ export function FundSelectorModal({ isOpen, onClose, currentFund, onSelectFund, 
                   {fund.name}
                 </span>
                 <span className={`font-mono text-sm ${currentFund === fund.name ? 'text-emerald-500/80' : 'text-neutral-500'}`}>
-                  {fund.balance.toLocaleString('vi-VN')}đ
+                  {(fund.balance || 0).toLocaleString('vi-VN')}đ
                 </span>
               </button>
             ))

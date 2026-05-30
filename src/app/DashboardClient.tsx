@@ -6,15 +6,12 @@ import { CategoryDonutChart } from "@/components/category-donut-chart";
 import { DailyReminderModal } from "@/components/daily-reminder-modal";
 import { IncomeDistributionModal } from "@/components/income-distribution-modal";
 import { AmountInput } from "@/components/amount-input";
-import { FundSelectorModal } from "@/components/fund-selector-modal";
+import { FundSelectorModal, type Fund } from "@/components/fund-selector-modal";
 import { createTransaction } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 
-interface Fund {
-  id: string;
-  name: string;
+interface DashboardFund extends Fund {
   isDefault: boolean | null;
-  balance: number | null;
   attributes: unknown;
   createdAt: Date | null;
   updatedAt: Date | null;
@@ -38,7 +35,7 @@ interface Transaction {
 
 interface DashboardClientProps {
   initialData: {
-    allFunds: Fund[];
+    allFunds: DashboardFund[];
     recentTransactions: Transaction[];
     totalBalance: number;
     showReminder: boolean;
@@ -51,7 +48,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [isFundSelectorOpen, setFundSelectorOpen] = useState(false);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
-  const [activeFund, setActiveFund] = useState<Fund>(
+  const [activeFund, setActiveFund] = useState<DashboardFund>(
     initialData.allFunds.find(f => f.isDefault) || initialData.allFunds[0]
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -302,7 +299,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                       <div>
                         <p className="text-sm text-neutral-200 font-medium mb-1">{tx.note || tx.category?.name || "Giao dịch"}</p>
                         <p className="text-[11px] text-neutral-500 font-mono tracking-tight">
-                          {new Date(tx.date).toLocaleDateString('vi-VN')}
+                          {new Date(tx.date!).toLocaleDateString('vi-VN')}
                         </p>
                       </div>
                     </div>

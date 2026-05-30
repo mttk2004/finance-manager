@@ -1,6 +1,7 @@
 'use server'
 
 import { db } from './index';
+import { funds, transactions } from './schema';
 import { desc, eq, sql } from 'drizzle-orm';
 
 export async function getDashboardData() {
