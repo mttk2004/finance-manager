@@ -1,9 +1,19 @@
+"use client";
+
+import { useState } from "react";
 import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
+import { DailyReminderModal } from "@/components/daily-reminder-modal";
+import { IncomeDistributionModal } from "@/components/income-distribution-modal";
 
 export default function DashboardPage() {
+  const [isDistributionModalOpen, setDistributionModalOpen] = useState(false);
+
   return (
-    <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
+    <>
+      <DailyReminderModal />
+      <IncomeDistributionModal isOpen={isDistributionModalOpen} onClose={() => setDistributionModalOpen(false)} />
+      <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
       {/* 1. Header & Summary */}
       <section className="px-4 md:px-0">
         <div className="flex justify-between items-end mb-8 md:mb-12">
@@ -69,7 +79,13 @@ export default function DashboardPage() {
           {/* Action Zone - Minimalist */}
           <section className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Nhập nhanh (One-Tap)</h3>
+              <div className="flex items-center gap-3">
+                <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Nhập nhanh (One-Tap)</h3>
+                <div className="text-[10px] uppercase font-mono font-medium tracking-tight bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-500/20">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                  Quỹ chính
+                </div>
+              </div>
               {/* Quick Templates integrated here */}
               <div className="hidden md:flex gap-2">
                 {["☕ Cà phê 30k", "⛽ Đổ xăng 50k", "🍜 Ăn sáng 40k", "🚌 Di chuyển 25k"].map((t) => (
@@ -114,8 +130,19 @@ export default function DashboardPage() {
                 <button className="py-4 md:py-5 rounded-2xl bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 font-medium text-sm md:text-base border border-rose-500/10 hover:border-rose-500/20 active:scale-[0.98] transition-all cursor-pointer">
                   CHI TIỀN
                 </button>
-                <button className="py-4 md:py-5 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 font-medium text-sm md:text-base border border-emerald-500/10 hover:border-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer">
+                <button 
+                  onClick={() => setDistributionModalOpen(true)}
+                  className="py-4 md:py-5 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 font-medium text-sm md:text-base border border-emerald-500/10 hover:border-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                >
                   THU VÀO
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <button className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer">
+                  Đi vay (Borrow)
+                </button>
+                <button className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer">
+                  Cho vay (Lend)
                 </button>
               </div>
             </div>
@@ -124,16 +151,45 @@ export default function DashboardPage() {
           {/* Charts */}
           <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col justify-between aspect-square md:aspect-auto md:h-80">
-              <h3 className="text-xs uppercase tracking-widest text-neutral-500 mb-4 font-medium">Dòng tiền 7 ngày</h3>
+              <h3 className="text-xs uppercase tracking-widest text-neutral-500 mb-4 font-medium">So sánh Thu/Chi (MoM)</h3>
               <div className="flex-1 w-full relative -ml-2">
                  <CashFlowChart />
               </div>
             </div>
             <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col justify-between aspect-square md:aspect-auto md:h-80">
-              <h3 className="text-xs uppercase tracking-widest text-neutral-500 mb-4 font-medium">Danh mục chi</h3>
+              <h3 className="text-xs uppercase tracking-widest text-neutral-500 mb-4 font-medium">Phân bổ chi tiêu tháng</h3>
               <div className="flex-1 w-full relative">
                  <CategoryDonutChart />
               </div>
+            </div>
+          </section>
+
+          {/* Category Budgets tracking */}
+          <section className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Ngân sách con đang theo dõi</h3>
+            </div>
+            <div className="space-y-6">
+              {[
+                { name: "🍔 Ăn uống", current: 3500000, max: 5000000, color: "bg-blue-500" },
+                { name: "🛍️ Mua sắm", current: 1800000, max: 2000000, color: "bg-orange-500" },
+                { name: "🎮 Giải trí", current: 500000, max: 1000000, color: "bg-purple-500" },
+              ].map((budget, i) => {
+                const percent = Math.min((budget.current / budget.max) * 100, 100);
+                const isNearingLimit = percent > 80;
+                return (
+                 <div key={i}>
+                   <div className="flex justify-between text-sm mb-2">
+                     <span className="font-medium text-neutral-300">{budget.name}</span>
+                     <span className="font-mono text-neutral-500">
+                       <span className={isNearingLimit ? "text-rose-400" : "text-white"}>{(budget.current / 1000000).toFixed(1)}M</span> / {(budget.max / 1000000).toFixed(1)}M
+                     </span>
+                   </div>
+                   <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden relative">
+                     <div className={`absolute top-0 left-0 h-full rounded-full ${isNearingLimit ? 'bg-rose-500' : budget.color}`} style={{ width: `${percent}%` }}></div>
+                   </div>
+                 </div>
+              )})}
             </div>
           </section>
         </div>
@@ -174,5 +230,6 @@ export default function DashboardPage() {
         </section>
       </div>
     </div>
+    </>
   );
 }

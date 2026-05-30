@@ -3,13 +3,12 @@
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 const data = [
-  { name: 'T5', income: 4000000, expense: 2400000 },
-  { name: 'T6', income: 3000000, expense: 1398000 },
-  { name: 'T7', income: 2000000, expense: 9800000 },
-  { name: 'CN', income: 2780000, expense: 3908000 },
-  { name: 'T2', income: 1890000, expense: 4800000 },
-  { name: 'T3', income: 2390000, expense: 3800000 },
-  { name: 'T4', income: 3490000, expense: 4300000 },
+  { name: 'Tháng 5', income: 15000000, expense: 12000000 },
+  { name: 'Tháng 6', income: 15000000, expense: 14000000 },
+  { name: 'Tháng 7', income: 18000000, expense: 13500000 },
+  { name: 'Tháng 8', income: 15000000, expense: 16000000 },
+  { name: 'Tháng 9', income: 16000000, expense: 11000000 },
+  { name: 'Tháng 10', income: 15000000, expense: 4000000 },
 ];
 
 export function CashFlowChart() {
