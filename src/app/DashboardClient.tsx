@@ -33,12 +33,29 @@ interface Transaction {
   } | null;
 }
 
+interface BudgetTracking {
+  id: string;
+  categoryId: string;
+  amountLimit: number;
+  period: string;
+  spent: number;
+  category?: {
+    id: string;
+    name: string;
+    icon: string | null;
+  } | null;
+}
+
 interface DashboardClientProps {
   initialData: {
     allFunds: DashboardFund[];
     recentTransactions: Transaction[];
     totalBalance: number;
     showReminder: boolean;
+    budgetTracking: BudgetTracking[];
+    totalSpentMonth: number;
+    totalBudgetMonth: number;
+    currentMonthPeriod: string;
   };
 }
 
@@ -46,6 +63,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   const router = useRouter();
   const [isDistributionModalOpen, setDistributionModalOpen] = useState(false);
   const [isFundSelectorOpen, setFundSelectorOpen] = useState(false);
+  const [isTransferModalOpen, setTransferModalOpen] = useState(false);
+  const [transferToFund, setTransferToFund] = useState<DashboardFund | null>(null);
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [activeFund, setActiveFund] = useState<DashboardFund>(
@@ -71,19 +90,25 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
   const hashtags = ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec'];
 
-  const handleTransaction = async (type: 'INCOME' | 'EXPENSE' | 'LEND' | 'BORROW') => {
+  const handleTransaction = async (type: 'INCOME' | 'EXPENSE' | 'LEND' | 'BORROW' | 'TRANSFER') => {
     if (!amount || amount === '0' || isSubmitting) return;
+    if (type === 'TRANSFER' && (!transferToFund || transferToFund.id === activeFund.id)) {
+      alert("Vui lòng chọn quỹ đích khác với quỹ nguồn.");
+      return;
+    }
     
     setIsSubmitting(true);
     try {
       await createTransaction({
         fundId: activeFund.id,
+        toFundId: type === 'TRANSFER' ? transferToFund?.id : undefined,
         amount: parseInt(amount),
         type,
         note,
       });
       setAmount("");
       setNote("");
+      if (type === 'TRANSFER') setTransferModalOpen(false);
       router.refresh();
     } catch (error) {
       console.error("Failed to create transaction:", error);
@@ -106,6 +131,66 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           if (fund) setActiveFund(fund);
         }} 
       />
+      {/* Transfer Modal */}
+      {isTransferModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-white tracking-tight">Chuyển tiền</h2>
+              <button onClick={() => setTransferModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-neutral-400">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            
+            <div className="space-y-4 mb-6">
+              <div>
+                <p className="text-xs text-neutral-500 mb-2 font-medium">Từ quỹ</p>
+                <div className="w-full bg-[#1A1A1A] border border-white/[0.05] rounded-xl px-4 py-3 text-neutral-300">
+                  {activeFund.name}
+                </div>
+              </div>
+              
+              <div className="flex justify-center -my-2 relative z-10">
+                <div className="w-8 h-8 rounded-full bg-[#121212] border border-white/[0.05] flex items-center justify-center text-neutral-400">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-xs text-neutral-500 mb-2 font-medium">Đến quỹ</p>
+                <select 
+                  value={transferToFund?.id || ''} 
+                  onChange={(e) => {
+                    const fund = initialData.allFunds.find(f => f.id === e.target.value);
+                    if (fund) setTransferToFund(fund);
+                  }}
+                  className="w-full bg-[#1A1A1A] border border-white/[0.05] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/20 transition-colors"
+                >
+                  <option value="" disabled>-- Chọn quỹ đích --</option>
+                  {initialData.allFunds.filter(f => f.id !== activeFund.id).map(f => (
+                    <option key={f.id} value={f.id}>{f.name}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <p className="text-xs text-neutral-500 mb-2 font-medium">Số tiền chuyển</p>
+                <div className="text-2xl font-mono text-white tracking-tight bg-[#1A1A1A] border border-white/[0.05] rounded-xl px-4 py-3">
+                  {parseInt(amount || '0').toLocaleString('vi-VN')}đ
+                </div>
+              </div>
+            </div>
+
+            <button 
+              onClick={() => handleTransaction('TRANSFER')}
+              disabled={isSubmitting || !transferToFund}
+              className="w-full py-4 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "ĐANG CHUYỂN..." : "XÁC NHẬN CHUYỂN"}
+            </button>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
       {/* 1. Header & Summary */}
       <section className="px-4 md:px-0">
@@ -149,15 +234,22 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
           <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-5 md:p-6 flex flex-col justify-center">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Ngân sách T10</h3>
-              <span className="text-[10px] text-neutral-500">Chưa thiết lập</span>
+              <h3 className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Ngân sách T{new Date().getMonth() + 1}</h3>
+              <span className="text-[10px] text-neutral-500">
+                {initialData.totalBudgetMonth > 0 
+                  ? `Còn lại ${((initialData.totalBudgetMonth - initialData.totalSpentMonth) / 1000000).toFixed(1)}M` 
+                  : 'Chưa thiết lập'}
+              </span>
             </div>
             <div className="text-xl font-mono text-white mb-3">
-              0<span className="text-neutral-500 text-sm"> / 0</span>
+              {(initialData.totalSpentMonth / 1000000).toFixed(1)}M<span className="text-neutral-500 text-sm"> / {(initialData.totalBudgetMonth / 1000000).toFixed(1)}M</span>
             </div>
             
             <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden relative">
-              <div className="absolute top-0 left-0 h-full bg-white rounded-full w-[0%]"></div>
+              <div 
+                className={`absolute top-0 left-0 h-full rounded-full ${initialData.totalSpentMonth > initialData.totalBudgetMonth ? 'bg-rose-500' : 'bg-white'}`} 
+                style={{ width: `${Math.min((initialData.totalSpentMonth / (initialData.totalBudgetMonth || 1)) * 100, 100)}%` }}
+              ></div>
             </div>
           </div>
         </div>
@@ -263,20 +355,27 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="grid grid-cols-3 gap-4 mt-2">
                 <button 
                   onClick={() => handleTransaction('BORROW')}
                   disabled={!amount || amount === '0' || isSubmitting}
                   className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer disabled:opacity-40"
                 >
-                  Đi vay (Borrow)
+                  Đi vay
                 </button>
                 <button 
                   onClick={() => handleTransaction('LEND')}
                   disabled={!amount || amount === '0' || isSubmitting}
                   className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer disabled:opacity-40"
                 >
-                  Cho vay (Lend)
+                  Cho vay
+                </button>
+                <button 
+                  onClick={() => setTransferModalOpen(true)}
+                  disabled={!amount || amount === '0' || isSubmitting}
+                  className="py-2 rounded-xl text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 font-medium text-xs border border-transparent hover:border-blue-500/20 transition-all cursor-pointer disabled:opacity-40"
+                >
+                  Chuyển quỹ
                 </button>
               </div>
             </div>
@@ -304,7 +403,34 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Ngân sách con đang theo dõi</h3>
             </div>
             <div className="space-y-6">
-              <p className="text-xs text-neutral-600 text-center py-4">Chưa có ngân sách nào được thiết lập</p>
+              {initialData.budgetTracking.length === 0 ? (
+                <p className="text-xs text-neutral-600 text-center py-4">Chưa có ngân sách nào được thiết lập</p>
+              ) : (
+                initialData.budgetTracking.map((budget, i) => {
+                  const percent = Math.min((budget.spent / budget.amountLimit) * 100, 100);
+                  const isNearingLimit = percent > 80;
+                  const colorClass = ['bg-blue-500', 'bg-orange-500', 'bg-purple-500', 'bg-emerald-500'][i % 4];
+                  return (
+                   <div key={budget.id}>
+                     <div className="flex justify-between text-sm mb-2">
+                       <span className="font-medium text-neutral-300 flex items-center gap-2">
+                         <span>{budget.category?.icon || "📝"}</span> {budget.category?.name}
+                       </span>
+                       <span className="font-mono text-neutral-500">
+                         <span className={isNearingLimit ? "text-rose-400 font-bold" : "text-white"}>
+                           {(budget.spent / 1000000).toFixed(1)}M
+                         </span> / {(budget.amountLimit / 1000000).toFixed(1)}M
+                       </span>
+                     </div>
+                     <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden relative">
+                       <div 
+                         className={`absolute top-0 left-0 h-full rounded-full ${isNearingLimit ? 'bg-rose-500' : colorClass}`} 
+                         style={{ width: `${percent}%` }}
+                       ></div>
+                     </div>
+                   </div>
+                )})
+              )}
             </div>
           </section>
         </div>

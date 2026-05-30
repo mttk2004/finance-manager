@@ -27,11 +27,18 @@ interface TransactionsClientProps {
 }
 
 export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
-  const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
+  const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
   const filteredTransactions = initialTransactions.filter(tx => {
+    // Note search filter
+    if (searchTerm && !(tx.note || '').toLowerCase().includes(searchTerm.toLowerCase()) && !(tx.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase())) {
+      return false;
+    }
+    
+    // Type filter
     if (filter === 'ALL') return true;
     return tx.type === filter;
   });
@@ -42,7 +49,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
     currentPage * itemsPerPage
   );
 
-  const handleFilterChange = (newFilter: 'ALL' | 'INCOME' | 'EXPENSE') => {
+  const handleFilterChange = (newFilter: 'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER') => {
     setFilter(newFilter);
     setCurrentPage(1);
   };
@@ -67,20 +74,38 @@ export default function TransactionsClient({ initialTransactions }: Transactions
         </button>
       </div>
 
-      <div className="flex gap-2 mb-6 overflow-x-auto scrollbar-hide pb-2">
-        {['ALL', 'EXPENSE', 'INCOME'].map((type) => (
-          <button
-            key={type}
-            onClick={() => handleFilterChange(type as 'ALL' | 'INCOME' | 'EXPENSE')}
-            className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer ${
-              filter === type 
-                ? 'bg-white text-black border-white' 
-                : 'bg-[#121212] text-neutral-400 border-white/[0.05] hover:border-white/20'
-            }`}
-          >
-            {type === 'ALL' ? 'Tất cả' : type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu'}
-          </button>
-        ))}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide w-full md:w-auto">
+          {['ALL', 'EXPENSE', 'INCOME', 'TRANSFER'].map((type) => (
+            <button
+              key={type}
+              onClick={() => handleFilterChange(type as 'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER')}
+              className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer ${
+                filter === type 
+                  ? 'bg-white text-black border-white' 
+                  : 'bg-[#121212] text-neutral-400 border-white/[0.05] hover:border-white/20'
+              }`}
+            >
+              {type === 'ALL' ? 'Tất cả' : type === 'INCOME' ? 'Thu nhập' : type === 'EXPENSE' ? 'Chi tiêu' : 'Chuyển tiền'}
+            </button>
+          ))}
+        </div>
+        
+        <div className="w-full md:w-64">
+          <div className="relative">
+            <input 
+              type="text" 
+              placeholder="Tìm kiếm giao dịch..." 
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              className="w-full bg-[#121212] border border-white/[0.05] rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+            />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </div>
+        </div>
       </div>
 
       <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-4 md:p-6 overflow-hidden">

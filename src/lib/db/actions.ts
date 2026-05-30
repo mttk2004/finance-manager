@@ -1,11 +1,17 @@
 'use server'
 
 import { db } from './index';
-import { funds, transactions, categories } from './schema';
-import { desc, eq, sql } from 'drizzle-orm';
+import { funds, transactions, categories, budgets } from './schema';
+import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
 
 export async function getDashboardData() {
   const allFunds = await db.select().from(funds);
+  
+  const now = new Date();
+  const currentMonthPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
   const recentTransactions = await db.query.transactions.findMany({
     with: {
       category: true,
@@ -14,6 +20,40 @@ export async function getDashboardData() {
     limit: 5,
   });
 
+  const monthTransactions = await db.query.transactions.findMany({
+    where: and(
+      gte(transactions.date, startOfMonth),
+      lt(transactions.date, startOfNextMonth),
+      eq(transactions.type, 'EXPENSE')
+    ),
+    with: {
+      category: true,
+    }
+  });
+
+  const monthBudgets = await db.query.budgets.findMany({
+    where: eq(budgets.period, currentMonthPeriod),
+    with: {
+      category: true,
+    }
+  });
+
+  // Calculate total spent for the month
+  const totalSpentMonth = monthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
+
+  // Calculate budget tracking
+  const budgetTracking = monthBudgets.map(budget => {
+    const spent = monthTransactions
+      .filter(tx => tx.categoryId === budget.categoryId)
+      .reduce((acc, tx) => acc + tx.amount, 0);
+    return {
+      ...budget,
+      spent
+    };
+  });
+
+  const totalBudgetMonth = monthBudgets.reduce((acc, b) => acc + b.amountLimit, 0);
+
   const totalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
   const hasTransactionsYesterday = await checkTransactionsYesterday();
   
@@ -21,12 +61,17 @@ export async function getDashboardData() {
     allFunds,
     recentTransactions,
     totalBalance,
-    showReminder: !hasTransactionsYesterday && recentTransactions.length > 0, // Show reminder if no tx yesterday but has at least some tx history
+    showReminder: !hasTransactionsYesterday && recentTransactions.length > 0,
+    budgetTracking,
+    totalSpentMonth,
+    totalBudgetMonth,
+    currentMonthPeriod,
   };
 }
 
 export async function createTransaction(data: {
   fundId: string;
+  toFundId?: string;
   categoryId?: string;
   amount: number;
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
@@ -36,6 +81,7 @@ export async function createTransaction(data: {
     // Insert transaction
     const [newTx] = await tx.insert(transactions).values({
       fundId: data.fundId,
+      toFundId: data.toFundId,
       categoryId: data.categoryId,
       amount: data.amount,
       type: data.type,
@@ -43,7 +89,7 @@ export async function createTransaction(data: {
       date: new Date(),
     }).returning();
 
-    // Update fund balance
+    // Update main fund balance
     const fund = await tx.query.funds.findFirst({
       where: eq(funds.id, data.fundId),
     });
@@ -52,13 +98,26 @@ export async function createTransaction(data: {
       let newBalance = fund.balance || 0;
       if (data.type === 'INCOME' || data.type === 'BORROW') {
         newBalance += data.amount;
-      } else if (data.type === 'EXPENSE' || data.type === 'LEND') {
+      } else if (data.type === 'EXPENSE' || data.type === 'LEND' || data.type === 'TRANSFER') {
         newBalance -= data.amount;
       }
       
       await tx.update(funds)
         .set({ balance: newBalance, updatedAt: new Date() })
         .where(eq(funds.id, data.fundId));
+    }
+
+    // Update destination fund balance if it's a transfer
+    if (data.type === 'TRANSFER' && data.toFundId) {
+      const toFund = await tx.query.funds.findFirst({
+        where: eq(funds.id, data.toFundId),
+      });
+
+      if (toFund) {
+        await tx.update(funds)
+          .set({ balance: (toFund.balance || 0) + data.amount, updatedAt: new Date() })
+          .where(eq(funds.id, data.toFundId));
+      }
     }
 
     return newTx;
@@ -145,6 +204,42 @@ export async function getAllTransactions() {
     },
     orderBy: [desc(transactions.date)],
   });
+}
+
+export async function getBudgets(period: string) {
+  return await db.query.budgets.findMany({
+    where: eq(budgets.period, period),
+    with: {
+      category: true,
+    }
+  });
+}
+
+export async function upsertBudget(data: {
+  categoryId: string;
+  amountLimit: number;
+  period: string;
+}) {
+  const existing = await db.query.budgets.findFirst({
+    where: and(eq(budgets.categoryId, data.categoryId), eq(budgets.period, data.period)),
+  });
+
+  if (existing) {
+    const [updated] = await db.update(budgets)
+      .set({ amountLimit: data.amountLimit })
+      .where(eq(budgets.id, existing.id))
+      .returning();
+    return updated;
+  } else {
+    const [created] = await db.insert(budgets)
+      .values({
+        categoryId: data.categoryId,
+        amountLimit: data.amountLimit,
+        period: data.period,
+      })
+      .returning();
+    return created;
+  }
 }
 
 export async function checkTransactionsYesterday() {

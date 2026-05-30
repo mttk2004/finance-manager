@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createFund, updateFund, deleteFund, createCategory, updateCategory, deleteCategory } from "@/lib/db/actions";
+import { createFund, updateFund, deleteFund, createCategory, updateCategory, deleteCategory, upsertBudget } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 
 interface Fund {
@@ -21,12 +21,22 @@ interface Category {
   createdAt: Date | null;
 }
 
+interface Budget {
+  id: string;
+  categoryId: string;
+  amountLimit: number;
+  period: string;
+  category?: Category | null;
+}
+
 interface SettingsClientProps {
   initialFunds: Fund[];
   initialCategories: Category[];
+  initialBudgets: Budget[];
+  currentMonthPeriod: string;
 }
 
-export default function SettingsClient({ initialFunds, initialCategories }: SettingsClientProps) {
+export default function SettingsClient({ initialFunds, initialCategories, initialBudgets, currentMonthPeriod }: SettingsClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("funds");
   
@@ -44,6 +54,12 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
   const [catType, setCatType] = useState<'INCOME' | 'EXPENSE'>("EXPENSE");
   const [catIcon, setCatIcon] = useState("");
   
+  // --- Budget States ---
+  const [isAddingBudget, setIsAddingBudget] = useState(false);
+  const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
+  const [budgetCategoryId, setBudgetCategoryId] = useState("");
+  const [budgetAmount, setBudgetAmount] = useState("");
+
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- Fund Handlers ---
@@ -163,6 +179,39 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
     setIsAddingCategory(false);
   };
 
+  // --- Budget Handlers ---
+  const handleUpsertBudget = async () => {
+    if (!budgetCategoryId || !budgetAmount || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await upsertBudget({
+        categoryId: budgetCategoryId,
+        amountLimit: parseInt(budgetAmount) || 0,
+        period: currentMonthPeriod,
+      });
+      resetBudgetForm();
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to save budget:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetBudgetForm = () => {
+    setBudgetCategoryId("");
+    setBudgetAmount("");
+    setIsAddingBudget(false);
+    setEditingBudgetId(null);
+  };
+
+  const startEditBudget = (budget: Budget) => {
+    setEditingBudgetId(budget.id);
+    setBudgetCategoryId(budget.categoryId);
+    setBudgetAmount(budget.amountLimit.toString());
+    setIsAddingBudget(false);
+  };
+
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 max-w-3xl mx-auto mt-4 md:mt-8 px-4 md:px-0">
       <div className="mb-8">
@@ -183,6 +232,7 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
               setActiveTab(tab.id);
               resetFundForm();
               resetCategoryForm();
+              resetBudgetForm();
             }}
             className={`pb-2 px-1 text-sm font-medium whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
               activeTab === tab.id ? "text-white border-white" : "text-neutral-500 border-transparent hover:text-neutral-300"
@@ -401,8 +451,88 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
           </div>
         )}
 
+        {activeTab === "budget" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-medium text-white">Ngân sách Tháng {new Date().getMonth() + 1}</h3>
+              <button 
+                onClick={() => {
+                  if (isAddingBudget || editingBudgetId) {
+                    resetBudgetForm();
+                  } else {
+                    setIsAddingBudget(true);
+                  }
+                }} 
+                className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+              >
+                {isAddingBudget || editingBudgetId ? "Hủy" : "+ Thiết lập ngân sách"}
+              </button>
+            </div>
+            
+            {(isAddingBudget || editingBudgetId) && (
+              <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-[#1A1A1A] p-3 rounded-xl border border-white/[0.05]">
+                <select 
+                  value={budgetCategoryId} 
+                  onChange={(e) => setBudgetCategoryId(e.target.value)}
+                  className="bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-white focus:outline-none w-full sm:flex-1"
+                >
+                  <option value="" disabled>-- Chọn danh mục chi tiêu --</option>
+                  {initialCategories.filter(c => c.type === 'EXPENSE').map(c => (
+                    <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                  ))}
+                </select>
+                <input 
+                  type="number" 
+                  value={budgetAmount}
+                  onChange={(e) => setBudgetAmount(e.target.value)}
+                  placeholder="Hạn mức (VND)" 
+                  className="w-full sm:w-40 bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-1.5 text-sm font-mono text-white focus:outline-none placeholder:text-neutral-600" 
+                />
+                <button 
+                  onClick={handleUpsertBudget}
+                  disabled={isSubmitting || !budgetCategoryId || !budgetAmount}
+                  className="px-4 py-1.5 rounded-lg bg-orange-500 text-white font-semibold text-sm hover:bg-orange-400 cursor-pointer w-full sm:w-auto disabled:opacity-50"
+                >
+                  {isSubmitting ? "Đang lưu..." : "Lưu"}
+                </button>
+              </div>
+            )}
+            
+            <div className="space-y-3">
+              {initialBudgets.length === 0 ? (
+                <p className="text-sm text-neutral-500 text-center py-8">Chưa có ngân sách nào được thiết lập cho tháng này.</p>
+              ) : (
+                initialBudgets.map(budget => (
+                  <div key={budget.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingBudgetId === budget.id ? 'bg-orange-500/5 border-orange-500/20' : 'bg-[#1A1A1A] border-white/[0.02]'}`}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-orange-500/10">
+                        {budget.category?.icon || "📝"}
+                      </div>
+                      <div>
+                        <span className="font-medium text-neutral-200 block">{budget.category?.name || "Danh mục không xác định"}</span>
+                        <span className="text-[10px] uppercase font-mono tracking-tight text-neutral-500">
+                          Hạn mức
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                       <span className="font-mono text-neutral-300 font-medium">{(budget.amountLimit || 0).toLocaleString('vi-VN')}đ</span>
+                       <button 
+                         onClick={() => startEditBudget(budget)}
+                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingBudgetId === budget.id ? 'text-orange-400 bg-orange-500/10' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}
+                       >
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                       </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Similar tabs for other sections but kept minimal for mockup */}
-        {(activeTab !== "funds" && activeTab !== "categories") && (
+        {(activeTab !== "funds" && activeTab !== "categories" && activeTab !== "budget") && (
           <div className="py-12 text-center text-neutral-500 text-sm">
             Nội dung {activeTab} sẽ được mở rộng trong tương lai...
           </div>

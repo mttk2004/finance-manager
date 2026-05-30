@@ -34,6 +34,7 @@ export const categoriesRelations = relations(categories, ({ many }) => ({
 export const transactions = pgTable('transactions', {
   id: uuid('id').defaultRandom().primaryKey(),
   fundId: uuid('fund_id').notNull().references(() => funds.id, { onDelete: 'cascade' }),
+  toFundId: uuid('to_fund_id').references(() => funds.id, { onDelete: 'set null' }), // Used for transfers
   categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'set null' }),
   amount: bigint('amount', { mode: 'number' }).notNull(),
   type: transactionTypeEnum('type').notNull(),
@@ -46,6 +47,12 @@ export const transactionsRelations = relations(transactions, ({ one }) => ({
   fund: one(funds, {
     fields: [transactions.fundId],
     references: [funds.id],
+    relationName: 'fromFund',
+  }),
+  toFund: one(funds, {
+    fields: [transactions.toFundId],
+    references: [funds.id],
+    relationName: 'toFund',
   }),
   category: one(categories, {
     fields: [transactions.categoryId],
