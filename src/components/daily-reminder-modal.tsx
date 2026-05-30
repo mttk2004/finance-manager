@@ -2,17 +2,21 @@
 
 import { useState, useEffect } from "react";
 
-export function DailyReminderModal() {
+interface DailyReminderModalProps {
+  show?: boolean;
+}
+
+export function DailyReminderModal({ show = false }: DailyReminderModalProps) {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Mock the logic: show if user hasn't logged anything yesterday.
-    // For now, always show after 1s for simulation.
-    const timer = setTimeout(() => {
-      setIsOpen(true);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+    if (show) {
+      const timer = setTimeout(() => {
+        setIsOpen(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [show]);
 
   if (!isOpen) return null;
 

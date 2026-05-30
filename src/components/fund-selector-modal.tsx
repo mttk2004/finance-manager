@@ -1,20 +1,21 @@
 "use client";
 
+interface Fund {
+  id: string;
+  name: string;
+  balance: number;
+}
+
 interface FundSelectorModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentFund: string;
   onSelectFund: (fund: string) => void;
+  funds?: Fund[];
 }
 
-export function FundSelectorModal({ isOpen, onClose, currentFund, onSelectFund }: FundSelectorModalProps) {
+export function FundSelectorModal({ isOpen, onClose, currentFund, onSelectFund, funds = [] }: FundSelectorModalProps) {
   if (!isOpen) return null;
-
-  const funds = [
-    { id: "1", name: "Quỹ chính", balance: 45500000 },
-    { id: "2", name: "Quỹ dự phòng", balance: 20000000 },
-    { id: "3", name: "Quỹ du lịch", balance: 5000000 },
-  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
@@ -27,27 +28,31 @@ export function FundSelectorModal({ isOpen, onClose, currentFund, onSelectFund }
         </div>
         
         <div className="space-y-2 mb-6">
-          {funds.map(fund => (
-            <button 
-              key={fund.id}
-              onClick={() => {
-                onSelectFund(fund.name);
-                onClose();
-              }}
-              className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
-                currentFund === fund.name 
-                  ? 'bg-emerald-500/10 border-emerald-500/20' 
-                  : 'bg-[#1A1A1A] border-white/[0.02] hover:bg-[#222222]'
-              }`}
-            >
-              <span className={`font-medium ${currentFund === fund.name ? 'text-emerald-400' : 'text-neutral-300'}`}>
-                {fund.name}
-              </span>
-              <span className={`font-mono text-sm ${currentFund === fund.name ? 'text-emerald-500/80' : 'text-neutral-500'}`}>
-                {fund.balance.toLocaleString('vi-VN')}đ
-              </span>
-            </button>
-          ))}
+          {funds.length === 0 ? (
+            <p className="text-sm text-neutral-500 text-center py-4">Chưa có quỹ nào</p>
+          ) : (
+            funds.map(fund => (
+              <button 
+                key={fund.id}
+                onClick={() => {
+                  onSelectFund(fund.name);
+                  onClose();
+                }}
+                className={`w-full flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                  currentFund === fund.name 
+                    ? 'bg-emerald-500/10 border-emerald-500/20' 
+                    : 'bg-[#1A1A1A] border-white/[0.02] hover:bg-[#222222]'
+                }`}
+              >
+                <span className={`font-medium ${currentFund === fund.name ? 'text-emerald-400' : 'text-neutral-300'}`}>
+                  {fund.name}
+                </span>
+                <span className={`font-mono text-sm ${currentFund === fund.name ? 'text-emerald-500/80' : 'text-neutral-500'}`}>
+                  {fund.balance.toLocaleString('vi-VN')}đ
+                </span>
+              </button>
+            ))
+          )}
         </div>
 
         <button 

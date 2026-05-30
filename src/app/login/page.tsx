@@ -30,7 +30,7 @@ export default function LoginPage() {
         const data = await res.json();
         setError(data.error || 'Đăng nhập thất bại');
       }
-    } catch (err) {
+    } catch {
       setError('Đã có lỗi xảy ra');
     } finally {
       setLoading(false);

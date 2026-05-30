@@ -22,7 +22,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: 'Mật khẩu không chính xác' }, { status: 401 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Đã có lỗi xảy ra' }, { status: 500 });
   }
 }

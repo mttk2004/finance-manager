@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 
 export function IncomeDistributionModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   if (!isOpen) return null;
