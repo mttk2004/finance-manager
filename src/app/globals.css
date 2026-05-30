@@ -116,6 +116,7 @@
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
 }
+
 @layer base {
   /* Remove number input arrows */
   input::-webkit-outer-spin-button,
@@ -127,7 +128,6 @@
   input[type=number] {
     -moz-appearance: textfield;
   }
-}
 
   html {
     @apply font-sans;
