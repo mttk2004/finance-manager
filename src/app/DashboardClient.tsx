@@ -314,7 +314,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           <div className="sticky top-32">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Giao dịch gần đây</h3>
-              <button className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">Xem tất cả</button>
+              <button onClick={() => router.push('/transactions')} className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">Xem tất cả</button>
             </div>
             
             <div className="space-y-8">

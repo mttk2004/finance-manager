@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from './index';
-import { funds, transactions } from './schema';
+import { funds, transactions, categories } from './schema';
 import { desc, eq, sql } from 'drizzle-orm';
 
 export async function getDashboardData() {
@@ -93,6 +93,45 @@ export async function createFund(data: {
 
 export async function getFunds() {
   return await db.select().from(funds);
+}
+
+export async function getCategories() {
+  return await db.select().from(categories);
+}
+
+export async function createCategory(data: {
+  name: string;
+  type: 'INCOME' | 'EXPENSE';
+  icon: string;
+}) {
+  const [newCat] = await db.insert(categories).values(data).returning();
+  return newCat;
+}
+
+export async function updateCategory(id: string, data: {
+  name?: string;
+  type?: 'INCOME' | 'EXPENSE';
+  icon?: string;
+}) {
+  const [updatedCat] = await db.update(categories)
+    .set(data)
+    .where(eq(categories.id, id))
+    .returning();
+  return updatedCat;
+}
+
+export async function deleteCategory(id: string) {
+  return await db.delete(categories).where(eq(categories.id, id)).returning();
+}
+
+export async function getAllTransactions() {
+  return await db.query.transactions.findMany({
+    with: {
+      category: true,
+      fund: true,
+    },
+    orderBy: [desc(transactions.date)],
+  });
 }
 
 export async function checkTransactionsYesterday() {
