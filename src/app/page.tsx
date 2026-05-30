@@ -136,21 +136,31 @@ export default function DashboardPage() {
               </div>
               
               <div className="grid grid-cols-2 gap-4 pt-4">
-                <button className="py-4 md:py-5 rounded-2xl bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 font-medium text-sm md:text-base border border-rose-500/10 hover:border-rose-500/20 active:scale-[0.98] transition-all cursor-pointer">
+                <button 
+                  disabled={!amount || amount === '0'}
+                  className="py-4 md:py-5 rounded-2xl bg-rose-500/5 hover:bg-rose-500/10 text-rose-500 font-medium text-sm md:text-base border border-rose-500/10 hover:border-rose-500/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:border-rose-500/10 disabled:hover:bg-rose-500/5"
+                >
                   CHI TIỀN
                 </button>
                 <button 
                   onClick={() => setDistributionModalOpen(true)}
-                  className="py-4 md:py-5 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 font-medium text-sm md:text-base border border-emerald-500/10 hover:border-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer"
+                  disabled={!amount || amount === '0'}
+                  className="py-4 md:py-5 rounded-2xl bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500 font-medium text-sm md:text-base border border-emerald-500/10 hover:border-emerald-500/20 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 disabled:hover:border-emerald-500/10 disabled:hover:bg-emerald-500/5"
                 >
                   THU VÀO
                 </button>
               </div>
               <div className="grid grid-cols-2 gap-4 mt-2">
-                <button className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer">
+                <button 
+                  disabled={!amount || amount === '0'}
+                  className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:text-neutral-400"
+                >
                   Đi vay (Borrow)
                 </button>
-                <button className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer">
+                <button 
+                  disabled={!amount || amount === '0'}
+                  className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:border-transparent disabled:hover:bg-transparent disabled:hover:text-neutral-400"
+                >
                   Cho vay (Lend)
                 </button>
               </div>

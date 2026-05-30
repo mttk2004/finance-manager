@@ -2,6 +2,7 @@
 
 import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
+import { TimeSeriesChart } from "@/components/time-series-chart";
 
 export default function ChartsPage() {
   return (
@@ -15,8 +16,21 @@ export default function ChartsPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl md:col-span-2">
           <div className="flex justify-between items-center mb-6">
+            <h3 className="text-sm font-medium text-neutral-300">Biến động số dư (Balance Trend)</h3>
+            <select className="bg-[#1A1A1A] border border-white/5 text-sm text-neutral-300 rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer transition-colors hover:bg-white/[0.05]">
+              <option>6 tháng gần nhất</option>
+              <option>Năm nay</option>
+            </select>
+          </div>
+          <div className="h-80 w-full relative -ml-4">
+             <TimeSeriesChart />
+          </div>
+        </div>
+
+        <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl md:col-span-2">
+          <div className="flex justify-between items-center mb-6">
             <h3 className="text-sm font-medium text-neutral-300">Dòng tiền theo tháng (MoM)</h3>
-            <select className="bg-[#1A1A1A] border border-white/5 text-sm text-neutral-300 rounded-lg px-3 py-1.5 focus:outline-none">
+            <select className="bg-[#1A1A1A] border border-white/5 text-sm text-neutral-300 rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer transition-colors hover:bg-white/[0.05]">
               <option>6 tháng gần nhất</option>
               <option>Năm nay</option>
             </select>
@@ -26,15 +40,15 @@ export default function ChartsPage() {
           </div>
         </div>
 
-        <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl">
-          <h3 className="text-sm font-medium text-neutral-300 mb-6">Phân bổ chi tiêu tháng này</h3>
-          <div className="h-64 w-full relative">
+        <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl h-96 flex flex-col">
+          <h3 className="text-sm font-medium text-neutral-300 mb-6 shrink-0">Phân bổ chi tiêu tháng này</h3>
+          <div className="flex-1 w-full relative">
              <CategoryDonutChart />
           </div>
         </div>
 
-        <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col">
-          <h3 className="text-sm font-medium text-neutral-300 mb-6">Top Danh mục chi nhiều nhất</h3>
+        <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col h-96">
+          <h3 className="text-sm font-medium text-neutral-300 mb-6 shrink-0">Top Danh mục chi nhiều nhất</h3>
           <div className="space-y-4 flex-1">
              {[
                { name: 'Ăn uống', amount: 3500000, percent: 35, color: 'bg-blue-500' },
@@ -42,10 +56,10 @@ export default function ChartsPage() {
                { name: 'Di chuyển', amount: 1200000, percent: 12, color: 'bg-purple-500' },
                { name: 'Sinh hoạt', amount: 900000, percent: 9, color: 'bg-emerald-500' },
              ].map(cat => (
-               <div key={cat.name} className="flex flex-col gap-2">
+               <div key={cat.name} className="flex flex-col gap-2 cursor-pointer group">
                  <div className="flex justify-between text-sm">
-                   <span className="text-neutral-400">{cat.name}</span>
-                   <span className="font-mono text-white">{cat.amount.toLocaleString('vi-VN')}đ</span>
+                   <span className="text-neutral-400 group-hover:text-white transition-colors">{cat.name}</span>
+                   <span className="font-mono text-white group-hover:text-neutral-300 transition-colors">{cat.amount.toLocaleString('vi-VN')}đ</span>
                  </div>
                  <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden">
                    <div className={`h-full ${cat.color}`} style={{ width: `${cat.percent}%` }}></div>

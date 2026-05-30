@@ -22,7 +22,7 @@ export default function SettingsPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`pb-2 px-1 text-sm font-medium whitespace-nowrap border-b-2 transition-colors ${
+            className={`pb-2 px-1 text-sm font-medium whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
               activeTab === tab.id ? "text-white border-white" : "text-neutral-500 border-transparent hover:text-neutral-300"
             }`}
           >
@@ -36,7 +36,7 @@ export default function SettingsPage() {
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-medium text-white">Quản lý Quỹ (Funds)</h3>
-              <button className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors">
+              <button className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer">
                 + Thêm quỹ
               </button>
             </div>
@@ -58,7 +58,7 @@ export default function SettingsPage() {
                   </div>
                   <div className="flex items-center gap-4">
                      <span className="font-mono text-neutral-400 text-sm">{fund.balance.toLocaleString('vi-VN')}đ</span>
-                     <button className="text-neutral-500 hover:text-white transition-colors">
+                     <button className="text-neutral-500 hover:text-white transition-colors cursor-pointer">
                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                      </button>
                   </div>

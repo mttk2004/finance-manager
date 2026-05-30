@@ -13,7 +13,7 @@ const data = [
 
 export function CashFlowChart() {
   return (
-    <div className="h-40 w-full relative -ml-4">
+    <div className="h-full w-full relative">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
@@ -23,16 +23,16 @@ export function CashFlowChart() {
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 10, fill: '#737373' }} 
-            dy={10} 
+            tick={{ fontSize: 12, fill: '#737373', fontFamily: 'monospace' }} 
+            dy={15} 
           />
           <Tooltip 
             cursor={{fill: 'rgba(255, 255, 255, 0.05)'}}
-            contentStyle={{ backgroundColor: '#171717', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
+            contentStyle={{ backgroundColor: '#171717', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '13px', color: '#fff' }}
             formatter={(value: any) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
           />
-          <Bar dataKey="income" fill="#10b981" radius={[2, 2, 0, 0]} maxBarSize={12} />
-          <Bar dataKey="expense" fill="#f43f5e" radius={[2, 2, 0, 0]} maxBarSize={12} />
+          <Bar dataKey="income" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={28} />
+          <Bar dataKey="expense" fill="#f43f5e" radius={[4, 4, 0, 0]} maxBarSize={28} />
         </BarChart>
       </ResponsiveContainer>
     </div>
