@@ -28,11 +28,24 @@ interface TransactionsClientProps {
 
 export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE'>('ALL');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 15;
 
   const filteredTransactions = initialTransactions.filter(tx => {
     if (filter === 'ALL') return true;
     return tx.type === filter;
   });
+
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const paginatedTransactions = filteredTransactions.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const handleFilterChange = (newFilter: 'ALL' | 'INCOME' | 'EXPENSE') => {
+    setFilter(newFilter);
+    setCurrentPage(1);
+  };
 
   const handleExportCSV = () => {
     window.open('/api/export', '_blank');
@@ -58,7 +71,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
         {['ALL', 'EXPENSE', 'INCOME'].map((type) => (
           <button
             key={type}
-            onClick={() => setFilter(type as 'ALL' | 'INCOME' | 'EXPENSE')}
+            onClick={() => handleFilterChange(type as 'ALL' | 'INCOME' | 'EXPENSE')}
             className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer ${
               filter === type 
                 ? 'bg-white text-black border-white' 
@@ -71,46 +84,72 @@ export default function TransactionsClient({ initialTransactions }: Transactions
       </div>
 
       <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-4 md:p-6 overflow-hidden">
-        {filteredTransactions.length === 0 ? (
+        {paginatedTransactions.length === 0 ? (
           <p className="text-sm text-neutral-500 text-center py-12">Không có giao dịch nào phù hợp.</p>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead>
-                <tr className="text-neutral-500 border-b border-white/[0.05]">
-                  <th className="font-medium px-4 py-3 whitespace-nowrap">Thời gian</th>
-                  <th className="font-medium px-4 py-3 whitespace-nowrap">Danh mục</th>
-                  <th className="font-medium px-4 py-3 whitespace-nowrap">Quỹ</th>
-                  <th className="font-medium px-4 py-3 whitespace-nowrap">Ghi chú</th>
-                  <th className="font-medium px-4 py-3 text-right whitespace-nowrap">Số tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredTransactions.map(tx => (
-                  <tr key={tx.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors group">
-                    <td className="px-4 py-4 whitespace-nowrap text-neutral-400">
-                      {new Date(tx.date!).toLocaleString('vi-VN')}
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        <span>{tx.category?.icon || "📝"}</span>
-                        <span className="text-neutral-200">{tx.category?.name || "Khác"}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-4 whitespace-nowrap text-neutral-400">
-                      {tx.fund?.name || "Khác"}
-                    </td>
-                    <td className="px-4 py-4 text-neutral-300 max-w-[200px] truncate">
-                      {tx.note || "-"}
-                    </td>
-                    <td className={`px-4 py-4 whitespace-nowrap text-right font-mono font-medium ${tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                      {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
-                    </td>
+          <>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead>
+                  <tr className="text-neutral-500 border-b border-white/[0.05]">
+                    <th className="font-medium px-4 py-3 whitespace-nowrap">Thời gian</th>
+                    <th className="font-medium px-4 py-3 whitespace-nowrap">Danh mục</th>
+                    <th className="font-medium px-4 py-3 whitespace-nowrap">Quỹ</th>
+                    <th className="font-medium px-4 py-3 whitespace-nowrap">Ghi chú</th>
+                    <th className="font-medium px-4 py-3 text-right whitespace-nowrap">Số tiền</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {paginatedTransactions.map(tx => (
+                    <tr key={tx.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors group">
+                      <td className="px-4 py-4 whitespace-nowrap text-neutral-400">
+                        {new Date(tx.date!).toLocaleString('vi-VN')}
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2">
+                          <span>{tx.category?.icon || "📝"}</span>
+                          <span className="text-neutral-200">{tx.category?.name || "Khác"}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-4 whitespace-nowrap text-neutral-400">
+                        {tx.fund?.name || "Khác"}
+                      </td>
+                      <td className="px-4 py-4 text-neutral-300 max-w-[200px] truncate">
+                        {tx.note || "-"}
+                      </td>
+                      <td className={`px-4 py-4 whitespace-nowrap text-right font-mono font-medium ${tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                        {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            {totalPages > 1 && (
+              <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/[0.05]">
+                <p className="text-xs text-neutral-500">
+                  Trang {currentPage} / {totalPages}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 text-neutral-300 text-xs font-medium hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Trước
+                  </button>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-1.5 rounded-lg bg-white/5 text-neutral-300 text-xs font-medium hover:bg-white/10 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    Sau
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

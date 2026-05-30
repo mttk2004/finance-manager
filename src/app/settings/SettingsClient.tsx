@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { createFund, updateFund, createCategory, updateCategory, deleteCategory } from "@/lib/db/actions";
+import { createFund, updateFund, deleteFund, createCategory, updateCategory, deleteCategory } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 
 interface Fund {
@@ -33,6 +33,7 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
   // --- Fund States ---
   const [isAddingFund, setIsAddingFund] = useState(false);
   const [editingFundId, setEditingFundId] = useState<string | null>(null);
+  const [fundToDelete, setFundToDelete] = useState<Fund | null>(null);
   const [fundName, setFundName] = useState("");
   const [fundBalance, setFundBalance] = useState("");
 
@@ -69,6 +70,21 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
       router.refresh();
     } catch (error) {
       console.error("Failed to update fund:", error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteFund = async () => {
+    if (!fundToDelete || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await deleteFund(fundToDelete.id);
+      setFundToDelete(null);
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to delete fund:", error);
+      alert(error instanceof Error ? error.message : "Không thể xóa quỹ");
     } finally {
       setIsSubmitting(false);
     }
@@ -257,12 +273,22 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
                               </span>
                             )}
                           </div>
-                          <button 
-                            onClick={() => startEditFund(fund)}
-                            className={`p-2 rounded-full transition-colors cursor-pointer ${editingFundId === fund.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
-                          </button>
+                          <div className="flex gap-2">
+                            {!fund.isDefault && (
+                              <button 
+                                onClick={() => setFundToDelete(fund)}
+                                className={`p-2 rounded-full transition-colors cursor-pointer bg-white/5 text-white/40 hover:bg-rose-500/20 hover:text-rose-400`}
+                              >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => startEditFund(fund)}
+                              className={`p-2 rounded-full transition-colors cursor-pointer ${editingFundId === fund.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                            </button>
+                          </div>
                         </div>
 
                         <div className="mt-6">
@@ -382,6 +408,38 @@ export default function SettingsClient({ initialFunds, initialCategories }: Sett
           </div>
         )}
       </div>
+
+      {fundToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
+            <div className="mb-6">
+              <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-4">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+              </div>
+              <h2 className="text-xl font-semibold text-white tracking-tight mb-2">Xóa quỹ?</h2>
+              <p className="text-sm text-neutral-400">
+                Bạn có chắc chắn muốn xóa quỹ <strong className="text-white">{fundToDelete.name}</strong> không? Các giao dịch liên quan đến quỹ này có thể bị mất. Hành động này không thể hoàn tác.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setFundToDelete(null)}
+                disabled={isSubmitting}
+                className="flex-1 py-3 px-4 rounded-xl text-neutral-400 font-medium text-sm hover:bg-white/[0.03] transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={handleDeleteFund}
+                disabled={isSubmitting}
+                className="flex-1 py-3 px-4 rounded-xl bg-rose-500 text-white font-semibold text-sm hover:bg-rose-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+              >
+                {isSubmitting ? "Đang xóa..." : "Xóa quỹ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -91,6 +91,19 @@ export async function createFund(data: {
   return newFund;
 }
 
+export async function deleteFund(id: string) {
+  // Prevent deleting the default fund
+  const fund = await db.query.funds.findFirst({
+    where: eq(funds.id, id),
+  });
+  
+  if (fund?.isDefault) {
+    throw new Error("Cannot delete the default fund");
+  }
+
+  return await db.delete(funds).where(eq(funds.id, id)).returning();
+}
+
 export async function getFunds() {
   return await db.select().from(funds);
 }
