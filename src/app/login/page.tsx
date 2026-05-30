@@ -52,9 +52,9 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Sign in</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Đăng nhập</h1>
           <p className="mt-2 text-sm text-neutral-400 text-balance">
-            Enter your personal password to access your finance dashboard.
+            Nhập mật khẩu cá nhân để truy cập ứng dụng quản lý tài chính.
           </p>
         </div>
         
@@ -62,11 +62,11 @@ export default function LoginPage() {
           <div className="space-y-2">
             <Input
               type="password"
-              placeholder="Enter password..."
+              placeholder="Nhập mật khẩu..."
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full h-11 bg-neutral-800/50 border-white/5 text-white focus:border-blue-500 focus-visible:ring-1 focus-visible:ring-blue-500 placeholder:text-neutral-500"
+              className="w-full h-11 bg-[#1A1A1A] border-white/[0.04] text-white focus:border-white focus-visible:ring-1 focus-visible:ring-white placeholder:text-neutral-600 rounded-xl transition-colors"
               autoFocus
             />
             {error && (
@@ -75,8 +75,8 @@ export default function LoginPage() {
               </p>
             )}
           </div>
-          <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-bold bg-blue-600 hover:bg-blue-500 text-white rounded-xl">
-            {loading ? 'ĐANG XÁC THỰC...' : 'UNLOCK'}
+          <Button type="submit" disabled={loading} className="w-full h-11 text-sm font-bold bg-white text-black hover:bg-neutral-200 rounded-xl transition-colors">
+            {loading ? 'ĐANG MỞ KHÓA...' : 'MỞ KHÓA'}
           </Button>
         </form>
       </div>

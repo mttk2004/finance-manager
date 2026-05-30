@@ -5,14 +5,20 @@ import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
 import { DailyReminderModal } from "@/components/daily-reminder-modal";
 import { IncomeDistributionModal } from "@/components/income-distribution-modal";
+import { AmountInput } from "@/components/amount-input";
+import { FundSelectorModal } from "@/components/fund-selector-modal";
 
 export default function DashboardPage() {
   const [isDistributionModalOpen, setDistributionModalOpen] = useState(false);
+  const [isFundSelectorOpen, setFundSelectorOpen] = useState(false);
+  const [amount, setAmount] = useState("");
+  const [activeFund, setActiveFund] = useState("Quỹ chính");
 
   return (
     <>
       <DailyReminderModal />
       <IncomeDistributionModal isOpen={isDistributionModalOpen} onClose={() => setDistributionModalOpen(false)} />
+      <FundSelectorModal isOpen={isFundSelectorOpen} onClose={() => setFundSelectorOpen(false)} currentFund={activeFund} onSelectFund={setActiveFund} />
       <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
       {/* 1. Header & Summary */}
       <section className="px-4 md:px-0">
@@ -81,10 +87,13 @@ export default function DashboardPage() {
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Nhập nhanh (One-Tap)</h3>
-                <div className="text-[10px] uppercase font-mono font-medium tracking-tight bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-500/20">
+                <button 
+                  onClick={() => setFundSelectorOpen(true)}
+                  className="text-[10px] uppercase font-mono font-medium tracking-tight bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
+                >
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-                  Quỹ chính
-                </div>
+                  {activeFund}
+                </button>
               </div>
               {/* Quick Templates integrated here */}
               <div className="hidden md:flex gap-2">
@@ -108,9 +117,9 @@ export default function DashboardPage() {
             <div className="space-y-6 md:space-y-8 mt-4 md:mt-8">
               <div className="relative group">
                 <label className="text-[10px] uppercase tracking-widest text-neutral-600 mb-2 block">Số tiền (VND)</label>
-                <input 
-                  type="text" 
-                  inputMode="numeric"
+                <AmountInput 
+                  value={amount}
+                  onChange={setAmount}
                   placeholder="0" 
                   className="w-full bg-transparent text-5xl md:text-7xl font-mono text-white py-2 focus:outline-none placeholder:text-neutral-800 text-center md:text-left border-b border-white/5 focus:border-white transition-colors pb-4" 
                 />
