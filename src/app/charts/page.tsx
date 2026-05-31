@@ -7,10 +7,10 @@ import { TimeSeriesChart } from "@/components/time-series-chart";
 import { MomLineChart } from "@/components/mom-line-chart";
 import { getCashFlowData, getDashboardData, getBalanceHistory } from "@/lib/db/actions";
 
-type Range = 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'this-year';
+type Range = 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time';
 
 export default function ChartsPage() {
-  const [balanceRange, setBalanceRange] = useState<'last-6-months' | 'this-year' | 'all-time'>('last-6-months');
+  const [balanceRange, setBalanceRange] = useState<Range>('last-6-months');
   const [trendRange, setTrendRange] = useState<Range>('last-6-months');
   const [barRange, setBarRange] = useState<Range>('last-6-months');
   
@@ -84,8 +84,11 @@ export default function ChartsPage() {
               onChange={(e) => setBalanceRange(e.target.value as any)}
               className="bg-[#1A1A1A] border border-white/5 text-sm text-neutral-300 rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer transition-colors hover:bg-white/[0.05]"
             >
+              <option value="this-month">Tháng này</option>
+              <option value="last-month">Tháng trước</option>
+              <option value="last-3-months">3 tháng gần nhất</option>
               <option value="last-6-months">6 tháng gần nhất</option>
-              <option value="this-year">Năm nay</option>
+              <option value="last-12-months">12 tháng gần nhất</option>
               <option value="all-time">Tất cả thời gian</option>
             </select>
           </div>
@@ -102,9 +105,12 @@ export default function ChartsPage() {
               onChange={(e) => setTrendRange(e.target.value as any)}
               className="bg-[#1A1A1A] border border-white/5 text-sm text-neutral-300 rounded-lg px-3 py-1.5 focus:outline-none cursor-pointer transition-colors hover:bg-white/[0.05]"
             >
+              <option value="this-month">Tháng này</option>
+              <option value="last-month">Tháng trước</option>
               <option value="last-3-months">3 tháng gần nhất</option>
               <option value="last-6-months">6 tháng gần nhất</option>
-              <option value="this-year">Năm nay</option>
+              <option value="last-12-months">12 tháng gần nhất</option>
+              <option value="all-time">Tất cả thời gian</option>
             </select>
           </div>
           <div className="h-80 w-full relative -ml-4">
@@ -124,6 +130,8 @@ export default function ChartsPage() {
               <option value="last-month">Tháng trước</option>
               <option value="last-3-months">3 tháng gần nhất</option>
               <option value="last-6-months">6 tháng gần nhất</option>
+              <option value="last-12-months">12 tháng gần nhất</option>
+              <option value="all-time">Tất cả thời gian</option>
             </select>
           </div>
           <div className="h-80 w-full relative -ml-4">

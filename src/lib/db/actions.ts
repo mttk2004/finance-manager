@@ -421,7 +421,7 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
   }
 }
 
-export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'this-year') {
+export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time') {
   const now = new Date();
   let startDate = new Date();
   let aggregateBy: 'day' | 'month' = 'day';
@@ -431,8 +431,7 @@ export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last
     aggregateBy = 'day';
   } else if (range === 'last-month') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endDate = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of last month
-    // We'll filter for just that month
+    const endDate = new Date(now.getFullYear(), now.getMonth(), 0);
     return await aggregateTransactions(startDate, endDate, 'day');
   } else if (range === 'last-3-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
@@ -440,8 +439,14 @@ export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last
   } else if (range === 'last-6-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
     aggregateBy = 'month';
-  } else if (range === 'this-year') {
-    startDate = new Date(now.getFullYear(), 0, 1);
+  } else if (range === 'last-12-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    aggregateBy = 'month';
+  } else if (range === 'all-time') {
+    const firstTx = await db.query.transactions.findFirst({
+      orderBy: [transactions.date],
+    });
+    startDate = firstTx?.date ? new Date(firstTx.date) : new Date(now.getFullYear(), 0, 1);
     aggregateBy = 'month';
   }
 
@@ -495,18 +500,23 @@ async function aggregateTransactions(startDate: Date, endDate: Date, by: 'day' |
   return Object.values(groups);
 }
 
-export async function getBalanceHistory(range: 'last-6-months' | 'this-year' | 'all-time') {
+export async function getBalanceHistory(range: 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time') {
   const allFunds = await db.select().from(funds);
   const currentTotalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
   
   const now = new Date();
   let startDate = new Date();
-  let aggregateBy: 'month' = 'month';
 
-  if (range === 'last-6-months') {
+  if (range === 'this-month') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (range === 'last-month') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  } else if (range === 'last-3-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  } else if (range === 'last-6-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-  } else if (range === 'this-year') {
-    startDate = new Date(now.getFullYear(), 0, 1);
+  } else if (range === 'last-12-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
   } else {
     // all-time: find oldest transaction
     const firstTx = await db.query.transactions.findFirst({
