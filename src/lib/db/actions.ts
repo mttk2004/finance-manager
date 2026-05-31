@@ -335,9 +335,26 @@ export async function getBudgets(period: string) {
   });
 
   const globalBudgets = await getGlobalBudgets();
+  const allCategories = await db.query.categories.findMany({
+    where: eq(categories.type, 'EXPENSE'),
+  });
   
   // Return combined view for settings
-  return monthBudgets;
+  return allCategories.map(cat => {
+    const override = monthBudgets.find(b => b.categoryId === cat.id);
+    const limit = override ? override.amountLimit : (globalBudgets[cat.id] || 0);
+    
+    if (limit === 0 && !override) return null;
+
+    return {
+      id: override?.id || `global-${cat.id}`,
+      categoryId: cat.id,
+      amountLimit: limit,
+      period: period,
+      isOverride: !!override,
+      category: cat
+    };
+  }).filter((b): b is NonNullable<typeof b> => b !== null);
 }
 
 export async function upsertBudget(data: {
