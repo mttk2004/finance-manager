@@ -438,7 +438,7 @@ export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last
     aggregateBy = 'day';
   } else if (range === 'last-6-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    aggregateBy = 'day';
+    aggregateBy = 'month';
   } else if (range === 'last-12-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
     aggregateBy = 'month';
