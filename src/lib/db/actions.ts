@@ -84,29 +84,41 @@ export async function createTransaction(data: {
 
     // Automatic category detection from hashtag if not explicitly provided
     if (!finalCategoryId && data.note) {
-      const hashtags = data.note.match(/#\w+/g);
-      if (hashtags) {
-        // Priority mapping for common hashtags to standard categories
-        const tagMap: Record<string, string> = {
-          '#mua_sam': 'Mua sắm',
-          '#an_sang': 'Ăn uống',
-          '#cafe': 'Ăn uống',
-          '#di_chuyen': 'Di chuyển',
-          '#vui_ve': 'Giải trí',
-          '#lam_viec': 'Học tập',
-          '#luong': 'Lương',
-          '#thuong': 'Tiền thưởng',
-        };
+      const foundHashtags = data.note.match(/#\w+/g);
+      if (foundHashtags) {
+        const lowerHashtags = foundHashtags.map(t => t.toLowerCase());
+        
+        // 1. Check database for categories with these hashtags
+        const allCategories = await tx.query.categories.findMany();
+        const matchedCategory = allCategories.find(cat => 
+          cat.hashtags?.some(h => lowerHashtags.includes(h.toLowerCase()))
+        );
 
-        for (const tag of hashtags) {
-          const categoryName = tagMap[tag.toLowerCase()];
-          if (categoryName) {
-            const matchedCategory = await tx.query.categories.findFirst({
-              where: eq(categories.name, categoryName),
-            });
-            if (matchedCategory) {
-              finalCategoryId = matchedCategory.id;
-              break;
+        if (matchedCategory) {
+          finalCategoryId = matchedCategory.id;
+        } else {
+          // 2. Fallback to hardcoded priority mapping
+          const tagMap: Record<string, string> = {
+            '#mua_sam': 'Mua sắm',
+            '#an_sang': 'Ăn uống',
+            '#cafe': 'Ăn uống',
+            '#di_chuyen': 'Di chuyển',
+            '#vui_ve': 'Giải trí',
+            '#lam_viec': 'Học tập',
+            '#luong': 'Lương',
+            '#thuong': 'Tiền thưởng',
+            '#kinh_doanh': 'Kinh doanh',
+            '#qua_tang': 'Quà tặng',
+          };
+
+          for (const tag of lowerHashtags) {
+            const categoryName = tagMap[tag];
+            if (categoryName) {
+              const matchedByLocal = allCategories.find(c => c.name === categoryName);
+              if (matchedByLocal) {
+                finalCategoryId = matchedByLocal.id;
+                break;
+              }
             }
           }
         }
@@ -156,6 +168,49 @@ export async function createTransaction(data: {
     }
 
     return newTx;
+  });
+}
+
+export async function deleteTransaction(id: string) {
+  return await db.transaction(async (tx) => {
+    const transaction = await tx.query.transactions.findFirst({
+      where: eq(transactions.id, id),
+    });
+
+    if (!transaction) throw new Error("Transaction not found");
+
+    // Revert balance changes
+    const fund = await tx.query.funds.findFirst({
+      where: eq(funds.id, transaction.fundId),
+    });
+
+    if (fund) {
+      let newBalance = fund.balance || 0;
+      // Reverse the logic of createTransaction
+      if (transaction.type === 'INCOME' || transaction.type === 'BORROW') {
+        newBalance -= transaction.amount;
+      } else if (transaction.type === 'EXPENSE' || transaction.type === 'LEND' || transaction.type === 'TRANSFER') {
+        newBalance += transaction.amount;
+      }
+
+      await tx.update(funds)
+        .set({ balance: newBalance, updatedAt: new Date() })
+        .where(eq(funds.id, transaction.fundId));
+    }
+
+    if (transaction.type === 'TRANSFER' && transaction.toFundId) {
+      const toFund = await tx.query.funds.findFirst({
+        where: eq(funds.id, transaction.toFundId),
+      });
+
+      if (toFund) {
+        await tx.update(funds)
+          .set({ balance: (toFund.balance || 0) - transaction.amount, updatedAt: new Date() })
+          .where(eq(funds.id, transaction.toFundId));
+      }
+    }
+
+    return await tx.delete(transactions).where(eq(transactions.id, id)).returning();
   });
 }
 

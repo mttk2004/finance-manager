@@ -7,7 +7,7 @@ import { DailyReminderModal } from "@/components/daily-reminder-modal";
 import { IncomeDistributionModal } from "@/components/income-distribution-modal";
 import { AmountInput } from "@/components/amount-input";
 import { FundSelectorModal, type Fund } from "@/components/fund-selector-modal";
-import { createTransaction } from "@/lib/db/actions";
+import { createTransaction, deleteTransaction } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -96,7 +96,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     return acc;
   }, {});
 
-  const hashtags = ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec'];
+  const hashtags = ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec', '#luong', '#thuong', '#kinh_doanh', '#qua_tang'];
 
   const handleTransaction = async (type: 'INCOME' | 'EXPENSE' | 'LEND' | 'BORROW' | 'TRANSFER') => {
     if (!amount || amount === '0' || isSubmitting) return;
@@ -107,7 +107,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     
     setIsSubmitting(true);
     try {
-      await createTransaction({
+      const newTx = await createTransaction({
         fundId: activeFund.id,
         toFundId: type === 'TRANSFER' ? transferToFund?.id : undefined,
         amount: parseInt(amount),
@@ -121,6 +121,19 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         type === 'EXPENSE' ? "Đã ghi nhận chi tiêu" : "Đã ghi nhận giao dịch",
         {
           description: `${parseInt(amount).toLocaleString('vi-VN')}đ từ ${activeFund.name}`,
+          duration: 5000,
+          action: {
+            label: "Hoàn tác",
+            onClick: async () => {
+              try {
+                await deleteTransaction(newTx.id);
+                toast.success("Đã hoàn tác giao dịch");
+                router.refresh();
+              } catch (err) {
+                toast.error("Không thể hoàn tác giao dịch");
+              }
+            }
+          }
         }
       );
 

@@ -23,6 +23,7 @@ export const categories = pgTable('categories', {
   name: text('name').notNull(),
   type: categoryTypeEnum('type').notNull(),
   icon: text('icon'),
+  hashtags: jsonb('hashtags').$type<string[]>().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
