@@ -435,10 +435,10 @@ export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last
     return await aggregateTransactions(startDate, endDate, 'day');
   } else if (range === 'last-3-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-    aggregateBy = 'month';
+    aggregateBy = 'day';
   } else if (range === 'last-6-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-    aggregateBy = 'month';
+    aggregateBy = 'day';
   } else if (range === 'last-12-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
     aggregateBy = 'month';
@@ -451,6 +451,60 @@ export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last
   }
 
   return await aggregateTransactions(startDate, now, aggregateBy);
+}
+
+export async function getCategorySpendingData(range: 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time') {
+  const now = new Date();
+  let startDate = new Date();
+
+  if (range === 'this-month') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (range === 'last-month') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth(), 0);
+    return await calculateCategorySpending(startDate, endDate);
+  } else if (range === 'last-3-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+  } else if (range === 'last-6-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  } else if (range === 'last-12-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  } else {
+    const firstTx = await db.query.transactions.findFirst({
+      orderBy: [transactions.date],
+    });
+    startDate = firstTx?.date ? new Date(firstTx.date) : new Date(now.getFullYear(), 0, 1);
+  }
+
+  return await calculateCategorySpending(startDate, now);
+}
+
+async function calculateCategorySpending(startDate: Date, endDate: Date) {
+  const txs = await db.query.transactions.findMany({
+    where: and(
+      gte(transactions.date, startDate),
+      lt(transactions.date, new Date(endDate.getTime() + 86400000)),
+      eq(transactions.type, 'EXPENSE')
+    ),
+    with: {
+      category: true,
+    }
+  });
+
+  const spendingMap: Record<string, { category: { name: string }, spent: number }> = {};
+
+  txs.forEach(tx => {
+    const catId = tx.categoryId || 'other';
+    if (!spendingMap[catId]) {
+      spendingMap[catId] = {
+        category: { name: tx.category?.name || 'Khác' },
+        spent: 0
+      };
+    }
+    spendingMap[catId].spent += tx.amount;
+  });
+
+  return Object.values(spendingMap);
 }
 
 async function aggregateTransactions(startDate: Date, endDate: Date, by: 'day' | 'month') {
