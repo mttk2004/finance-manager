@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from './index';
-import { funds, transactions, categories, budgets } from './schema';
+import { funds, transactions, categories, budgets, globalSettings } from './schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
 
 export async function getDashboardData() {
@@ -33,6 +33,7 @@ export async function getDashboardData() {
     }
   });
 
+  // Get month-specific budgets
   const monthBudgets = await db.query.budgets.findMany({
     where: eq(budgets.period, currentMonthPeriod),
     with: {
@@ -40,24 +41,44 @@ export async function getDashboardData() {
     }
   });
 
-  // Calculate total spent for the month
-  const totalSpentMonth = monthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
+  // Get global budgets from settings
+  const globalBudgetsSetting = await db.query.globalSettings.findFirst({
+    where: eq(globalSettings.key, 'global_budgets'),
+  });
+  const globalBudgets = (globalBudgetsSetting?.value as Record<string, number>) || {};
 
-  // Calculate budget tracking
-  const budgetTracking = monthBudgets.map(budget => {
-    const spent = monthTransactions
-      .filter(tx => tx.categoryId === budget.categoryId)
-      .reduce((acc, tx) => acc + tx.amount, 0);
-    return {
-      ...budget,
-      spent
-    };
+  // Combine global budgets with overrides
+  const expenseCategories = await db.query.categories.findMany({
+    where: eq(categories.type, 'EXPENSE'),
   });
 
-  const totalBudgetMonth = monthBudgets.reduce((acc, b) => acc + b.amountLimit, 0);
+  const budgetTracking = expenseCategories.map(cat => {
+    const override = monthBudgets.find(b => b.categoryId === cat.id);
+    const limit = override ? override.amountLimit : (globalBudgets[cat.id] || 0);
+    
+    if (limit === 0 && !override) return null; // Skip categories with no budget set
+
+    const spent = monthTransactions
+      .filter(tx => tx.categoryId === cat.id)
+      .reduce((acc, tx) => acc + tx.amount, 0);
+
+    return {
+      id: override?.id || cat.id,
+      categoryId: cat.id,
+      amountLimit: limit,
+      period: currentMonthPeriod,
+      spent,
+      category: cat,
+      isOverride: !!override
+    };
+  }).filter((b): b is NonNullable<typeof b> => b !== null);
+
+  const totalSpentMonth = monthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
+  const totalBudgetMonth = budgetTracking.reduce((acc, b) => acc + b.amountLimit, 0);
 
   const totalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
   const hasTransactionsYesterday = await checkTransactionsYesterday();
+  const allCategories = await db.query.categories.findMany();
   
   return {
     allFunds,
@@ -68,6 +89,7 @@ export async function getDashboardData() {
     totalSpentMonth,
     totalBudgetMonth,
     currentMonthPeriod,
+    allCategories,
   };
 }
 
@@ -265,8 +287,12 @@ export async function createCategory(data: {
   name: string;
   type: 'INCOME' | 'EXPENSE';
   icon: string;
+  hashtags?: string[];
 }) {
-  const [newCat] = await db.insert(categories).values(data).returning();
+  const [newCat] = await db.insert(categories).values({
+    ...data,
+    hashtags: data.hashtags || [],
+  }).returning();
   return newCat;
 }
 
@@ -274,9 +300,13 @@ export async function updateCategory(id: string, data: {
   name?: string;
   type?: 'INCOME' | 'EXPENSE';
   icon?: string;
+  hashtags?: string[];
 }) {
   const [updatedCat] = await db.update(categories)
-    .set(data)
+    .set({
+      ...data,
+      hashtags: data.hashtags,
+    })
     .where(eq(categories.id, id))
     .returning();
   return updatedCat;
@@ -297,18 +327,24 @@ export async function getAllTransactions() {
 }
 
 export async function getBudgets(period: string) {
-  return await db.query.budgets.findMany({
+  const monthBudgets = await db.query.budgets.findMany({
     where: eq(budgets.period, period),
     with: {
       category: true,
     }
   });
+
+  const globalBudgets = await getGlobalBudgets();
+  
+  // Return combined view for settings
+  return monthBudgets;
 }
 
 export async function upsertBudget(data: {
   categoryId: string;
   amountLimit: number;
   period: string;
+  isOverride?: boolean;
 }) {
   const existing = await db.query.budgets.findFirst({
     where: and(eq(budgets.categoryId, data.categoryId), eq(budgets.period, data.period)),
@@ -316,7 +352,10 @@ export async function upsertBudget(data: {
 
   if (existing) {
     const [updated] = await db.update(budgets)
-      .set({ amountLimit: data.amountLimit })
+      .set({ 
+        amountLimit: data.amountLimit,
+        isOverride: data.isOverride ?? true
+      })
       .where(eq(budgets.id, existing.id))
       .returning();
     return updated;
@@ -326,9 +365,40 @@ export async function upsertBudget(data: {
         categoryId: data.categoryId,
         amountLimit: data.amountLimit,
         period: data.period,
+        isOverride: data.isOverride ?? true
       })
       .returning();
     return created;
+  }
+}
+
+export async function getGlobalBudgets() {
+  const setting = await db.query.globalSettings.findFirst({
+    where: eq(globalSettings.key, 'global_budgets'),
+  });
+  return (setting?.value as Record<string, number>) || {};
+}
+
+export async function setGlobalBudget(categoryId: string, amountLimit: number) {
+  const existing = await db.query.globalSettings.findFirst({
+    where: eq(globalSettings.key, 'global_budgets'),
+  });
+
+  const currentValues = (existing?.value as Record<string, number>) || {};
+  const newValues = { ...currentValues, [categoryId]: amountLimit };
+
+  if (existing) {
+    return await db.update(globalSettings)
+      .set({ value: newValues, updatedAt: new Date() })
+      .where(eq(globalSettings.id, existing.id))
+      .returning();
+  } else {
+    return await db.insert(globalSettings)
+      .values({
+        key: 'global_budgets',
+        value: newValues,
+      })
+      .returning();
   }
 }
 

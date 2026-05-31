@@ -18,6 +18,7 @@ interface Category {
   name: string;
   type: 'INCOME' | 'EXPENSE';
   icon: string | null;
+  hashtags: string[] | null;
   createdAt: Date | null;
 }
 
@@ -26,6 +27,7 @@ interface Budget {
   categoryId: string;
   amountLimit: number;
   period: string;
+  isOverride: boolean | null;
   category?: Category | null;
 }
 
@@ -53,6 +55,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const [catName, setCatName] = useState("");
   const [catType, setCatType] = useState<'INCOME' | 'EXPENSE'>("EXPENSE");
   const [catIcon, setCatIcon] = useState("");
+  const [catHashtags, setCatHashtags] = useState("");
   
   // --- Budget States ---
   const [isAddingBudget, setIsAddingBudget] = useState(false);
@@ -380,35 +383,47 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             </div>
             
             {(isAddingCategory || editingCategoryId) && (
-              <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-[#1A1A1A] p-3 rounded-xl border border-white/[0.05]">
-                <select 
-                  value={catType} 
-                  onChange={(e) => setCatType(e.target.value as 'INCOME' | 'EXPENSE')}
-                  className="bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-white focus:outline-none w-full sm:w-auto"
-                >
-                  <option value="EXPENSE">Chi tiêu</option>
-                  <option value="INCOME">Thu nhập</option>
-                </select>
-                <input 
-                  type="text" 
-                  value={catIcon}
-                  onChange={(e) => setCatIcon(e.target.value)}
-                  placeholder="Icon (VD: 🍜)" 
-                  className="w-full sm:w-20 bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-1.5 text-sm text-center text-white focus:outline-none placeholder:text-neutral-600" 
-                />
-                <input 
-                  type="text" 
-                  value={catName}
-                  onChange={(e) => setCatName(e.target.value)}
-                  placeholder="Tên danh mục (VD: Ăn uống)" 
-                  className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-neutral-600 px-2 w-full" 
-                />
+              <div className="space-y-4 mb-6 bg-[#1A1A1A] p-4 rounded-xl border border-white/[0.05]">
+                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                  <select 
+                    value={catType} 
+                    onChange={(e) => setCatType(e.target.value as 'INCOME' | 'EXPENSE')}
+                    className="bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-white focus:outline-none w-full sm:w-auto"
+                  >
+                    <option value="EXPENSE">Chi tiêu</option>
+                    <option value="INCOME">Thu nhập</option>
+                  </select>
+                  <input 
+                    type="text" 
+                    value={catIcon}
+                    onChange={(e) => setCatIcon(e.target.value)}
+                    placeholder="Icon (VD: 🍜)" 
+                    className="w-full sm:w-20 bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-1.5 text-sm text-center text-white focus:outline-none placeholder:text-neutral-600" 
+                  />
+                  <input 
+                    type="text" 
+                    value={catName}
+                    onChange={(e) => setCatName(e.target.value)}
+                    placeholder="Tên danh mục (VD: Ăn uống)" 
+                    className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-neutral-600 px-2 w-full" 
+                  />
+                </div>
+                <div>
+                  <input 
+                    type="text" 
+                    value={catHashtags}
+                    onChange={(e) => setCatHashtags(e.target.value)}
+                    placeholder="Hashtags (VD: #an_uong, #cafe)" 
+                    className="w-full bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-white focus:outline-none placeholder:text-neutral-600" 
+                  />
+                  <p className="text-[10px] text-neutral-500 mt-1 px-1">Phân tách bằng dấu phẩy, bắt đầu bằng dấu #</p>
+                </div>
                 <button 
                   onClick={editingCategoryId ? handleUpdateCategory : handleAddCategory}
                   disabled={isSubmitting}
-                  className="px-4 py-1.5 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-400 cursor-pointer w-full sm:w-auto disabled:opacity-50"
+                  className="w-full py-2 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-400 cursor-pointer disabled:opacity-50"
                 >
-                  {isSubmitting ? "Đang lưu..." : "Lưu"}
+                  {isSubmitting ? "Đang lưu..." : "Lưu danh mục"}
                 </button>
               </div>
             )}
@@ -425,9 +440,14 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                       </div>
                       <div>
                         <span className="font-medium text-neutral-200 block">{cat.name}</span>
-                        <span className={`text-[10px] uppercase font-mono tracking-tight ${cat.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                          {cat.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu'}
-                        </span>
+                        <div className="flex flex-wrap gap-1 mt-0.5">
+                          <span className={`text-[9px] uppercase font-mono tracking-tight mr-1 ${cat.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {cat.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu'}
+                          </span>
+                          {(cat.hashtags || []).map(tag => (
+                            <span key={tag} className="text-[9px] text-neutral-500 bg-white/5 px-1.5 py-0.5 rounded-full">{tag}</span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">

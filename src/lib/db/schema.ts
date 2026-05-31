@@ -66,10 +66,18 @@ export const budgets = pgTable('budgets', {
   categoryId: uuid('category_id').notNull().references(() => categories.id, { onDelete: 'cascade' }),
   amountLimit: bigint('amount_limit', { mode: 'number' }).notNull(),
   period: text('period').notNull(), // Format: YYYY-MM
+  isOverride: boolean('is_override').default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 }, (t) => [
   unique().on(t.categoryId, t.period)
 ]);
+
+export const globalSettings = pgTable('global_settings', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  key: text('key').notNull().unique(),
+  value: jsonb('value').notNull(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+});
 
 export const budgetsRelations = relations(budgets, ({ one }) => ({
   category: one(categories, {

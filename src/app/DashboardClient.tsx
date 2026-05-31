@@ -32,6 +32,7 @@ interface Transaction {
     id: string;
     name: string;
     icon: string | null;
+    hashtags: string[] | null;
   } | null;
   fund?: {
     name: string;
@@ -47,6 +48,7 @@ interface BudgetTracking {
   amountLimit: number;
   period: string;
   spent: number;
+  isOverride: boolean;
   category?: {
     id: string;
     name: string;
@@ -64,6 +66,7 @@ interface DashboardClientProps {
     totalSpentMonth: number;
     totalBudgetMonth: number;
     currentMonthPeriod: string;
+    allCategories: { id: string; name: string; type: 'INCOME' | 'EXPENSE'; hashtags: string[] | null }[];
   };
 }
 
@@ -79,6 +82,20 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     initialData.allFunds.find(f => f.isDefault) || initialData.allFunds[0]
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Logic to disable buttons based on hashtag
+  const detectedCategory = (() => {
+    const foundHashtags = note.match(/#\w+/g);
+    if (!foundHashtags) return null;
+    const lowerHashtags = foundHashtags.map(t => t.toLowerCase());
+    
+    return initialData.allCategories.find(cat => 
+      cat.hashtags?.some(h => lowerHashtags.includes(h.toLowerCase()))
+    );
+  })();
+
+  const isIncomeDisabled = detectedCategory?.type === 'EXPENSE';
+  const isExpenseDisabled = detectedCategory?.type === 'INCOME';
 
   // Group transactions by date
   const groupedTransactions = initialData.recentTransactions.reduce((acc: Record<string, Transaction[]>, tx) => {
@@ -374,7 +391,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               <div className="grid grid-cols-2 gap-4 pt-4">
                 <button 
                   onClick={() => handleTransaction('EXPENSE')}
-                  disabled={!amount || amount === '0' || isSubmitting}
+                  disabled={!amount || amount === '0' || isSubmitting || isExpenseDisabled}
                   className="group relative py-4 md:py-5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-sm md:text-base border border-rose-500/20 hover:border-rose-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:shadow-[0_0_30px_rgba(244,63,94,0.2)]"
                 >
                   <span className="relative z-10">{isSubmitting ? 'ĐANG XỬ LÝ...' : 'CHI TIỀN'}</span>
@@ -382,7 +399,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 </button>
                 <button 
                   onClick={() => handleTransaction('INCOME')}
-                  disabled={!amount || amount === '0' || isSubmitting}
+                  disabled={!amount || amount === '0' || isSubmitting || isIncomeDisabled}
                   className="group relative py-4 md:py-5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold text-sm md:text-base border border-emerald-500/20 hover:border-emerald-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.1)] hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]"
                 >
                   <span className="relative z-10">{isSubmitting ? 'ĐANG XỬ LÝ...' : 'THU VÀO'}</span>
