@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "db:push": "drizzle-kit push",
-    "db:seed": "tsx src/lib/db/seed.ts"
+    "db:push": "node --env-file=.env node_modules/.bin/drizzle-kit push",
+    "db:seed": "node --env-file=.env node_modules/.bin/tsx src/lib/db/seed.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
