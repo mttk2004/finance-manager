@@ -2,16 +2,21 @@
 
 import { BarChart, Bar, XAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
-const data = [
-  { name: 'Tháng 5', income: 15000000, expense: 12000000 },
-  { name: 'Tháng 6', income: 15000000, expense: 14000000 },
-  { name: 'Tháng 7', income: 18000000, expense: 13500000 },
-  { name: 'Tháng 8', income: 15000000, expense: 16000000 },
-  { name: 'Tháng 9', income: 16000000, expense: 11000000 },
-  { name: 'Tháng 10', income: 15000000, expense: 4000000 },
-];
+interface CashFlowData {
+  name: string;
+  income: number;
+  expense: number;
+}
 
-export function CashFlowChart() {
+export function CashFlowChart({ data }: { data: CashFlowData[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-neutral-600 text-xs">
+        Không có dữ liệu
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full relative">
       <ResponsiveContainer width="100%" height="100%">
@@ -39,18 +44,24 @@ export function CashFlowChart() {
           <Tooltip 
             cursor={{fill: 'rgba(255, 255, 255, 0.03)'}}
             contentStyle={{ 
-              backgroundColor: 'rgba(23, 23, 23, 0.8)', 
-              backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.05)', 
-              borderRadius: '16px', 
+              backgroundColor: 'rgba(23, 23, 23, 0.9)', 
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.08)', 
+              borderRadius: '20px', 
               fontSize: '12px', 
-              boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+              boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+              padding: '12px'
             }}
+            itemStyle={{ padding: '2px 0' }}
+            labelStyle={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter={(value: any) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)), '']}
+            formatter={(value: any, name: any) => {
+              const label = name === 'income' ? 'Thu nhập' : 'Chi tiêu';
+              return [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)), label];
+            }}
           />
-          <Bar dataKey="income" fill="url(#colorIncome)" radius={[6, 6, 0, 0]} maxBarSize={24} />
-          <Bar dataKey="expense" fill="url(#colorExpense)" radius={[6, 6, 0, 0]} maxBarSize={24} />
+          <Bar name="income" dataKey="income" fill="url(#colorIncome)" radius={[6, 6, 0, 0]} maxBarSize={24} />
+          <Bar name="expense" dataKey="expense" fill="url(#colorExpense)" radius={[6, 6, 0, 0]} maxBarSize={24} />
         </BarChart>
       </ResponsiveContainer>
     </div>

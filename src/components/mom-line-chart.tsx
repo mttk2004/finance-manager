@@ -2,16 +2,21 @@
 
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 
-const data = [
-  { name: 'T5', income: 15000000, expense: 12000000 },
-  { name: 'T6', income: 15000000, expense: 14000000 },
-  { name: 'T7', income: 18000000, expense: 13500000 },
-  { name: 'T8', income: 15000000, expense: 16000000 },
-  { name: 'T9', income: 16000000, expense: 11000000 },
-  { name: 'T10', income: 15000000, expense: 4000000 },
-];
+interface CashFlowData {
+  name: string;
+  income: number;
+  expense: number;
+}
 
-export function MomLineChart() {
+export function MomLineChart({ data }: { data: CashFlowData[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-neutral-600 text-xs">
+        Không có dữ liệu
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full relative">
       <ResponsiveContainer width="100%" height="100%">
@@ -24,18 +29,34 @@ export function MomLineChart() {
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 12, fill: '#737373', fontFamily: 'monospace' }} 
+            tick={{ fontSize: 10, fill: '#737373', fontFamily: 'monospace' }} 
             dy={15} 
           />
           <Tooltip 
-            contentStyle={{ backgroundColor: '#171717', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '13px', color: '#fff' }}
+            contentStyle={{ 
+              backgroundColor: 'rgba(23, 23, 23, 0.9)', 
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.08)', 
+              borderRadius: '20px', 
+              fontSize: '12px', 
+              boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+              padding: '12px'
+            }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter={(value: any) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
-            labelStyle={{ color: '#a3a3a3', marginBottom: '4px' }}
+            formatter={(value: any, name: any) => {
+              const label = name === 'income' ? 'Thu nhập' : 'Chi tiêu';
+              return [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)), label];
+            }}
+            labelStyle={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}
           />
-          <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', color: '#a3a3a3' }} />
+          <Legend 
+            verticalAlign="top" 
+            align="right" 
+            iconType="circle" 
+            wrapperStyle={{ fontSize: '10px', color: '#a3a3a3', paddingBottom: '20px' }} 
+          />
           <Line 
-            name="Thu vào"
+            name="income"
             type="monotone" 
             dataKey="income" 
             stroke="#10b981" 
@@ -44,7 +65,7 @@ export function MomLineChart() {
             activeDot={{ r: 6, strokeWidth: 0, fill: '#34d399' }}
           />
           <Line 
-            name="Chi ra"
+            name="expense"
             type="monotone" 
             dataKey="expense" 
             stroke="#f43f5e" 

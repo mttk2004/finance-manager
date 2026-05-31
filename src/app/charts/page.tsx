@@ -1,11 +1,44 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
 import { TimeSeriesChart } from "@/components/time-series-chart";
 import { MomLineChart } from "@/components/mom-line-chart";
+import { getCashFlowData, getDashboardData } from "@/lib/db/actions";
 
 export default function ChartsPage() {
+  const [cashFlowData, setCashFlowData] = useState<any[]>([]);
+  const [budgetTracking, setBudgetTracking] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [cf, dbData] = await Promise.all([
+          getCashFlowData('last-6-months'),
+          getDashboardData()
+        ]);
+        setCashFlowData(cf);
+        setBudgetTracking(dbData.budgetTracking);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const dummyTimeSeries = [
+    { name: 'T5', balance: 35000000 },
+    { name: 'T6', balance: 36000000 },
+    { name: 'T7', balance: 40500000 },
+    { name: 'T8', balance: 39500000 },
+    { name: 'T9', balance: 44500000 },
+    { name: 'T10', balance: 45500000 },
+  ];
+
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8 px-4 md:px-0">
       <div className="mb-4">
@@ -24,7 +57,7 @@ export default function ChartsPage() {
             </select>
           </div>
           <div className="h-80 w-full relative -ml-4">
-             <TimeSeriesChart />
+             <TimeSeriesChart data={dummyTimeSeries} />
           </div>
         </div>
 
@@ -37,7 +70,7 @@ export default function ChartsPage() {
             </select>
           </div>
           <div className="h-80 w-full relative -ml-4">
-             <MomLineChart />
+             <MomLineChart data={cashFlowData} />
           </div>
         </div>
 
@@ -50,14 +83,14 @@ export default function ChartsPage() {
             </select>
           </div>
           <div className="h-80 w-full relative -ml-4">
-             <CashFlowChart />
+             <CashFlowChart data={cashFlowData} />
           </div>
         </div>
 
         <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col h-auto min-h-96">
           <h3 className="text-sm font-medium text-neutral-300 mb-6 shrink-0">Phân bổ chi tiêu tháng này</h3>
           <div className="flex-1 w-full relative min-h-[250px]">
-             <CategoryDonutChart />
+             <CategoryDonutChart data={budgetTracking} />
           </div>
         </div>
 

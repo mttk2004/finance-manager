@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CashFlowChart } from "@/components/cash-flow-chart";
+import { MomLineChart } from "@/components/mom-line-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
 import { DailyReminderModal } from "@/components/daily-reminder-modal";
 import { IncomeDistributionModal } from "@/components/income-distribution-modal";
 import { AmountInput } from "@/components/amount-input";
 import { FundSelectorModal, type Fund } from "@/components/fund-selector-modal";
-import { createTransaction, deleteTransaction } from "@/lib/db/actions";
+import { createTransaction, deleteTransaction, getCashFlowData } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -56,6 +57,12 @@ interface BudgetTracking {
   } | null;
 }
 
+interface CashFlowItem {
+  name: string;
+  income: number;
+  expense: number;
+}
+
 interface DashboardClientProps {
   initialData: {
     allFunds: DashboardFund[];
@@ -67,6 +74,7 @@ interface DashboardClientProps {
     totalBudgetMonth: number;
     currentMonthPeriod: string;
     allCategories: { id: string; name: string; type: 'INCOME' | 'EXPENSE'; hashtags: string[] | null }[];
+    initialCashFlow: CashFlowItem[];
   };
 }
 
@@ -82,6 +90,27 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     initialData.allFunds.find(f => f.isDefault) || initialData.allFunds[0]
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Chart Range State
+  const [chartRange, setChartRange] = useState<'this-month' | 'last-month' | 'last-3-months' | 'this-year'>('this-month');
+  const [cashFlowData, setCashFlowData] = useState<CashFlowItem[]>(initialData.initialCashFlow);
+  const [isLoadingChart, setIsLoadingChart] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      if (chartRange === 'this-month' && cashFlowData === initialData.initialCashFlow) return;
+      setIsLoadingChart(true);
+      try {
+        const data = await getCashFlowData(chartRange);
+        setCashFlowData(data);
+      } catch (err) {
+        console.error("Failed to fetch chart data:", err);
+      } finally {
+        setIsLoadingChart(false);
+      }
+    };
+    fetchData();
+  }, [chartRange]);
 
   // Logic to disable buttons based on hashtag
   const detectedCategory = (() => {
@@ -433,18 +462,58 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           </section>
 
           {/* Charts */}
-          <section className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col justify-between aspect-square md:aspect-auto md:h-80">
-              <h3 className="text-xs uppercase tracking-widest text-neutral-500 mb-4 font-medium">So sánh Thu/Chi (MoM)</h3>
-              <div className="flex-1 w-full relative -ml-2">
-                 <CashFlowChart />
+          <section className="space-y-4">
+            <div className="flex justify-between items-center px-2">
+              <h3 className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Biến động Thu/Chi</h3>
+              <div className="flex bg-[#121212] border border-white/[0.04] p-1 rounded-xl">
+                {[
+                  { id: 'this-month', label: 'Tháng này' },
+                  { id: 'last-month', label: 'Tháng trước' },
+                  { id: 'last-3-months', label: '3 tháng' },
+                  { id: 'this-year', label: 'Năm nay' },
+                ].map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setChartRange(r.id as any)}
+                    className={`px-3 py-1.5 rounded-lg text-[10px] font-medium transition-all cursor-pointer ${
+                      chartRange === r.id 
+                        ? 'bg-white/10 text-white shadow-sm' 
+                        : 'text-neutral-500 hover:text-neutral-300'
+                    }`}
+                  >
+                    {r.label}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col justify-between aspect-square md:aspect-auto md:h-80">
-              <h3 className="text-xs uppercase tracking-widest text-neutral-500 mb-4 font-medium">Phân bổ chi tiêu tháng</h3>
-              <div className="flex-1 w-full relative">
-                 <CategoryDonutChart />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+              <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col justify-between aspect-square md:aspect-auto md:h-80 relative overflow-hidden">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Cột so sánh</h3>
+                  {isLoadingChart && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>}
+                </div>
+                <div className="flex-1 w-full relative -ml-2">
+                   <CashFlowChart data={cashFlowData} />
+                </div>
               </div>
+              <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl flex flex-col justify-between aspect-square md:aspect-auto md:h-80 relative overflow-hidden">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Xu hướng MoM</h3>
+                  {isLoadingChart && <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>}
+                </div>
+                <div className="flex-1 w-full relative">
+                   <MomLineChart data={cashFlowData} />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Category Distribution Chart */}
+          <section className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl md:h-80 flex flex-col">
+            <h3 className="text-xs uppercase tracking-widest text-neutral-500 mb-4 font-medium">Phân bổ chi tiêu tháng</h3>
+            <div className="flex-1 w-full relative">
+               <CategoryDonutChart data={initialData.budgetTracking} />
             </div>
           </section>
 

@@ -2,16 +2,20 @@
 
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
-const data = [
-  { name: 'T5', balance: 35000000 },
-  { name: 'T6', balance: 36000000 },
-  { name: 'T7', balance: 40500000 },
-  { name: 'T8', balance: 39500000 },
-  { name: 'T9', balance: 44500000 },
-  { name: 'T10', balance: 45500000 },
-];
+interface TimeSeriesData {
+  name: string;
+  balance: number;
+}
 
-export function TimeSeriesChart() {
+export function TimeSeriesChart({ data }: { data: TimeSeriesData[] }) {
+  if (!data || data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-full text-neutral-600 text-xs">
+        Không có dữ liệu
+      </div>
+    );
+  }
+
   return (
     <div className="h-full w-full relative">
       <ResponsiveContainer width="100%" height="100%">
@@ -24,14 +28,22 @@ export function TimeSeriesChart() {
             dataKey="name" 
             axisLine={false} 
             tickLine={false} 
-            tick={{ fontSize: 12, fill: '#737373', fontFamily: 'monospace' }} 
+            tick={{ fontSize: 10, fill: '#737373', fontFamily: 'monospace' }} 
             dy={15} 
           />
           <Tooltip 
-            contentStyle={{ backgroundColor: '#171717', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '13px', color: '#fff' }}
+            contentStyle={{ 
+              backgroundColor: 'rgba(23, 23, 23, 0.9)', 
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(255,255,255,0.08)', 
+              borderRadius: '20px', 
+              fontSize: '12px', 
+              boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
+              padding: '12px'
+            }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={(value: any) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
-            labelStyle={{ color: '#a3a3a3', marginBottom: '4px' }}
+            labelStyle={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}
           />
           <Line 
             type="monotone" 

@@ -79,6 +79,7 @@ export async function getDashboardData() {
   const totalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
   const hasTransactionsYesterday = await checkTransactionsYesterday();
   const allCategories = await db.query.categories.findMany();
+  const initialCashFlow = await getCashFlowData('this-month');
   
   return {
     allFunds,
@@ -90,6 +91,7 @@ export async function getDashboardData() {
     totalBudgetMonth,
     currentMonthPeriod,
     allCategories,
+    initialCashFlow,
   };
 }
 
@@ -417,6 +419,80 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
       })
       .returning();
   }
+}
+
+export async function getCashFlowData(range: 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'this-year') {
+  const now = new Date();
+  let startDate = new Date();
+  let aggregateBy: 'day' | 'month' = 'day';
+
+  if (range === 'this-month') {
+    startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    aggregateBy = 'day';
+  } else if (range === 'last-month') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endDate = new Date(now.getFullYear(), now.getMonth(), 0); // Last day of last month
+    // We'll filter for just that month
+    return await aggregateTransactions(startDate, endDate, 'day');
+  } else if (range === 'last-3-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    aggregateBy = 'month';
+  } else if (range === 'last-6-months') {
+    startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    aggregateBy = 'month';
+  } else if (range === 'this-year') {
+    startDate = new Date(now.getFullYear(), 0, 1);
+    aggregateBy = 'month';
+  }
+
+  return await aggregateTransactions(startDate, now, aggregateBy);
+}
+
+async function aggregateTransactions(startDate: Date, endDate: Date, by: 'day' | 'month') {
+  const txs = await db.query.transactions.findMany({
+    where: and(
+      gte(transactions.date, startDate),
+      lt(transactions.date, new Date(endDate.getTime() + 86400000))
+    ),
+  });
+
+  const groups: Record<string, { name: string, income: number, expense: number }> = {};
+
+  // Initialize groups to ensure all periods are represented
+  let current = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const end = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+  
+  while (current <= end) {
+    const key = by === 'day' 
+      ? current.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+      : `T${current.getMonth() + 1}`;
+    
+    if (!groups[key]) {
+      groups[key] = { name: key, income: 0, expense: 0 };
+    }
+    
+    if (by === 'day') {
+      current.setDate(current.getDate() + 1);
+    } else {
+      // Move to first day of next month to avoid day 31 issues
+      current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    }
+  }
+
+  txs.forEach(tx => {
+    if (!tx.date) return;
+    const date = new Date(tx.date);
+    const key = by === 'day'
+      ? date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+      : `T${date.getMonth() + 1}`;
+    
+    if (groups[key]) {
+      if (tx.type === 'INCOME') groups[key].income += tx.amount;
+      else if (tx.type === 'EXPENSE') groups[key].expense += tx.amount;
+    }
+  });
+
+  return Object.values(groups);
 }
 
 export async function checkTransactionsYesterday() {
