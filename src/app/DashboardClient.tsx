@@ -9,6 +9,7 @@ import { AmountInput } from "@/components/amount-input";
 import { FundSelectorModal, type Fund } from "@/components/fund-selector-modal";
 import { createTransaction } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface DashboardFund extends Fund {
   isDefault: boolean | null;
@@ -20,6 +21,7 @@ interface DashboardFund extends Fund {
 interface Transaction {
   id: string;
   fundId: string;
+  toFundId: string | null;
   categoryId: string | null;
   amount: number;
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
@@ -30,6 +32,12 @@ interface Transaction {
     id: string;
     name: string;
     icon: string | null;
+  } | null;
+  fund?: {
+    name: string;
+  } | null;
+  toFund?: {
+    name: string;
   } | null;
 }
 
@@ -106,12 +114,25 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         type,
         note,
       });
+      
+      toast.success(
+        type === 'TRANSFER' ? "Chuyển tiền thành công" :
+        type === 'INCOME' ? "Đã ghi nhận thu nhập" :
+        type === 'EXPENSE' ? "Đã ghi nhận chi tiêu" : "Đã ghi nhận giao dịch",
+        {
+          description: `${parseInt(amount).toLocaleString('vi-VN')}đ từ ${activeFund.name}`,
+        }
+      );
+
       setAmount("");
       setNote("");
       if (type === 'TRANSFER') setTransferModalOpen(false);
       router.refresh();
     } catch (error) {
       console.error("Failed to create transaction:", error);
+      toast.error("Lỗi khi thực hiện giao dịch", {
+        description: "Vui lòng thử lại sau."
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -458,21 +479,33 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                         <div key={tx.id} className="p-4 rounded-3xl bg-[#121212] border border-white/[0.02] flex items-center justify-between hover:bg-[#161616] cursor-pointer transition-all hover:translate-x-1 group">
                           <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg shrink-0 shadow-inner transition-colors ${
-                              tx.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-400' : 
-                              tx.type === 'EXPENSE' ? 'bg-rose-500/10 text-rose-400' : 
+                              tx.type === 'INCOME' || tx.type === 'BORROW' ? 'bg-emerald-500/10 text-emerald-400' : 
+                              tx.type === 'EXPENSE' || tx.type === 'LEND' ? 'bg-rose-500/10 text-rose-400' : 
                               'bg-blue-500/10 text-blue-400'
                             }`}>
-                              {tx.category?.icon || (tx.type === 'INCOME' ? "💰" : "💸")}
+                              {tx.type === 'TRANSFER' ? '⇄' : (tx.category?.icon || (tx.type === 'INCOME' ? "💰" : "💸"))}
                             </div>
                             <div>
-                              <p className="text-sm text-neutral-200 font-medium mb-0.5">{tx.note || tx.category?.name || "Giao dịch"}</p>
+                              <p className="text-sm text-neutral-200 font-medium mb-0.5">
+                                {tx.type === 'TRANSFER' ? (
+                                  <>
+                                    {tx.fund?.name} <span className="text-neutral-500 mx-1">→</span> {tx.toFund?.name}
+                                  </>
+                                ) : (
+                                  tx.note || tx.category?.name || "Giao dịch"
+                                )}
+                              </p>
                               <p className="text-[10px] text-neutral-500 font-mono tracking-tight uppercase">
-                                {tx.category?.name || (tx.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu')}
+                                {tx.type === 'TRANSFER' ? 'Chuyển quỹ' : (tx.category?.name || (tx.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu'))}
                               </p>
                             </div>
                           </div>
-                          <span className={`text-sm font-mono font-bold ${tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                            {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
+                          <span className={`text-sm font-mono font-bold ${
+                            tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 
+                            tx.type === 'EXPENSE' || tx.type === 'LEND' ? 'text-rose-400' : 
+                            'text-blue-400'
+                          }`}>
+                            {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
                           </span>
                         </div>
                       ))}

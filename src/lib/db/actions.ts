@@ -15,6 +15,8 @@ export async function getDashboardData() {
   const recentTransactions = await db.query.transactions.findMany({
     with: {
       category: true,
+      fund: true,
+      toFund: true,
     },
     orderBy: [desc(transactions.date)],
     limit: 5,
@@ -78,11 +80,44 @@ export async function createTransaction(data: {
   note?: string;
 }) {
   return await db.transaction(async (tx) => {
+    let finalCategoryId = data.categoryId;
+
+    // Automatic category detection from hashtag if not explicitly provided
+    if (!finalCategoryId && data.note) {
+      const hashtags = data.note.match(/#\w+/g);
+      if (hashtags) {
+        // Priority mapping for common hashtags to standard categories
+        const tagMap: Record<string, string> = {
+          '#mua_sam': 'Mua sắm',
+          '#an_sang': 'Ăn uống',
+          '#cafe': 'Ăn uống',
+          '#di_chuyen': 'Di chuyển',
+          '#vui_ve': 'Giải trí',
+          '#lam_viec': 'Học tập',
+          '#luong': 'Lương',
+          '#thuong': 'Tiền thưởng',
+        };
+
+        for (const tag of hashtags) {
+          const categoryName = tagMap[tag.toLowerCase()];
+          if (categoryName) {
+            const matchedCategory = await tx.query.categories.findFirst({
+              where: eq(categories.name, categoryName),
+            });
+            if (matchedCategory) {
+              finalCategoryId = matchedCategory.id;
+              break;
+            }
+          }
+        }
+      }
+    }
+
     // Insert transaction
     const [newTx] = await tx.insert(transactions).values({
       fundId: data.fundId,
       toFundId: data.toFundId,
-      categoryId: data.categoryId,
+      categoryId: finalCategoryId,
       amount: data.amount,
       type: data.type,
       note: data.note,
