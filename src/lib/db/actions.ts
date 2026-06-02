@@ -3,6 +3,7 @@
 import { db } from './index';
 import { funds, transactions, categories, budgets, globalSettings } from './schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 export async function getDashboardData() {
   const allFunds = await db.select().from(funds);
@@ -191,6 +192,7 @@ export async function createTransaction(data: {
       }
     }
 
+    revalidatePath('/', 'layout');
     return newTx;
   });
 }
@@ -234,7 +236,10 @@ export async function deleteTransaction(id: string) {
       }
     }
 
-    return await tx.delete(transactions).where(eq(transactions.id, id)).returning();
+    await tx.delete(transactions).where(eq(transactions.id, id));
+    
+    revalidatePath('/', 'layout');
+    return true;
   });
 }
 
@@ -249,6 +254,8 @@ export async function updateFund(id: string, data: {
     })
     .where(eq(funds.id, id))
     .returning();
+  
+  revalidatePath('/', 'layout');
   return updatedFund;
 }
 
@@ -261,6 +268,8 @@ export async function createFund(data: {
     balance: data.balance,
     isDefault: false,
   }).returning();
+
+  revalidatePath('/', 'layout');
   return newFund;
 }
 
@@ -274,7 +283,9 @@ export async function deleteFund(id: string) {
     throw new Error("Cannot delete the default fund");
   }
 
-  return await db.delete(funds).where(eq(funds.id, id)).returning();
+  const result = await db.delete(funds).where(eq(funds.id, id)).returning();
+  revalidatePath('/', 'layout');
+  return result;
 }
 
 export async function getFunds() {
@@ -295,6 +306,8 @@ export async function createCategory(data: {
     ...data,
     hashtags: data.hashtags || [],
   }).returning();
+
+  revalidatePath('/', 'layout');
   return newCat;
 }
 
@@ -311,11 +324,15 @@ export async function updateCategory(id: string, data: {
     })
     .where(eq(categories.id, id))
     .returning();
+
+  revalidatePath('/', 'layout');
   return updatedCat;
 }
 
 export async function deleteCategory(id: string) {
-  return await db.delete(categories).where(eq(categories.id, id)).returning();
+  const result = await db.delete(categories).where(eq(categories.id, id)).returning();
+  revalidatePath('/', 'layout');
+  return result;
 }
 
 export async function getAllTransactions() {
@@ -377,6 +394,7 @@ export async function upsertBudget(data: {
       })
       .where(eq(budgets.id, existing.id))
       .returning();
+    revalidatePath('/', 'layout');
     return updated;
   } else {
     const [created] = await db.insert(budgets)
@@ -387,6 +405,7 @@ export async function upsertBudget(data: {
         isOverride: data.isOverride ?? true
       })
       .returning();
+    revalidatePath('/', 'layout');
     return created;
   }
 }
@@ -407,17 +426,21 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
   const newValues = { ...currentValues, [categoryId]: amountLimit };
 
   if (existing) {
-    return await db.update(globalSettings)
+    const result = await db.update(globalSettings)
       .set({ value: newValues, updatedAt: new Date() })
       .where(eq(globalSettings.id, existing.id))
       .returning();
+    revalidatePath('/', 'layout');
+    return result;
   } else {
-    return await db.insert(globalSettings)
+    const result = await db.insert(globalSettings)
       .values({
         key: 'global_budgets',
         value: newValues,
       })
       .returning();
+    revalidatePath('/', 'layout');
+    return result;
   }
 }
 
