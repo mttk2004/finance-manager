@@ -5,6 +5,104 @@ import { funds, transactions, categories, budgets, globalSettings } from './sche
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
+export async function importTransactions(csvText: string) {
+  const lines = csvText.split('\n');
+  if (lines.length <= 1) return { success: false, count: 0 };
+
+  const allFunds = await db.select().from(funds);
+  const allCategories = await db.select().from(categories);
+
+  const typeMap: Record<string, 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW'> = {
+    'Thu nhập': 'INCOME',
+    'Chi tiêu': 'EXPENSE',
+    'Chuyển tiền': 'TRANSFER',
+    'Vay': 'BORROW',
+    'Cho vay': 'LEND',
+    'INCOME': 'INCOME',
+    'EXPENSE': 'EXPENSE',
+    'TRANSFER': 'TRANSFER',
+    'LEND': 'LEND',
+    'BORROW': 'BORROW'
+  };
+
+  const results = await db.transaction(async (tx) => {
+    let importedCount = 0;
+    
+    // Skip header
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      // Simple CSV split that handles quotes
+      const parts = [];
+      let current = '';
+      let inQuotes = false;
+      for (let j = 0; j < line.length; j++) {
+        const char = line[j];
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          parts.push(current);
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      parts.push(current);
+
+      // Expected order from export: ID, Ngày giờ, Loại, Danh mục, Quỹ, Số tiền, Ghi chú
+      // Or at least try to match headers if possible, but for now we follow export format
+      // Header: ['ID', 'Ngày giờ', 'Loại', 'Danh mục', 'Quỹ', 'Số tiền', 'Ghi chú']
+      if (parts.length < 6) continue;
+
+      const dateStr = parts[1];
+      const typeStr = parts[2];
+      const categoryName = parts[3];
+      const fundName = parts[4];
+      const amount = parseInt(parts[5]);
+      const note = parts[6]?.replace(/^"|"$/g, '').replace(/""/g, '"');
+
+      const fund = allFunds.find(f => f.name === fundName);
+      if (!fund) continue;
+
+      const category = allCategories.find(c => c.name === categoryName);
+      const type = typeMap[typeStr] || 'EXPENSE';
+
+      // Insert transaction
+      const [newTx] = await tx.insert(transactions).values({
+        fundId: fund.id,
+        categoryId: category?.id,
+        amount,
+        type,
+        note,
+        date: dateStr ? new Date(dateStr) : new Date(),
+      }).returning();
+
+      // Update fund balance
+      let newBalance = fund.balance || 0;
+      if (type === 'INCOME' || type === 'BORROW') {
+        newBalance += amount;
+      } else if (type === 'EXPENSE' || type === 'LEND' || type === 'TRANSFER') {
+        newBalance -= amount;
+      }
+      
+      await tx.update(funds)
+        .set({ balance: newBalance, updatedAt: new Date() })
+        .where(eq(funds.id, fund.id));
+      
+      // Update fund in local list so subsequent rows use updated balance
+      fund.balance = newBalance;
+
+      importedCount++;
+    }
+
+    return importedCount;
+  });
+
+  revalidatePath('/', 'layout');
+  return { success: true, count: results };
+}
+
 export async function getDashboardData() {
   const allFunds = await db.select().from(funds);
   

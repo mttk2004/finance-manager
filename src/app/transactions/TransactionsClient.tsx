@@ -1,6 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { importTransactions } from "@/lib/db/actions";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface Transaction {
   id: string;
@@ -27,10 +30,42 @@ interface TransactionsClientProps {
 }
 
 export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isImporting, setIsImporting] = useState(false);
   const itemsPerPage = 15;
+
+  const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const text = event.target?.result as string;
+      try {
+        const result = await importTransactions(text);
+        if (result.success) {
+          toast.success(`Nhập dữ liệu thành công!`, {
+            description: `Đã nhập ${result.count} giao dịch mới.`
+          });
+          router.refresh();
+        } else {
+          toast.error("Lỗi khi nhập dữ liệu CSV.");
+        }
+      } catch (err) {
+        console.error("Import failed:", err);
+        toast.error("Lỗi khi nhập dữ liệu CSV.");
+      } finally {
+        setIsImporting(false);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const filteredTransactions = initialTransactions.filter(tx => {
     // Note search filter
@@ -65,13 +100,30 @@ export default function TransactionsClient({ initialTransactions }: Transactions
           <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Tất cả giao dịch</h1>
           <p className="text-neutral-400">Xem và xuất lịch sử thu chi chi tiết của bạn.</p>
         </div>
-        <button 
-          onClick={handleExportCSV}
-          className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-medium px-4 py-2 rounded-xl transition-colors border border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer shrink-0"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-          Xuất CSV
-        </button>
+        <div className="flex gap-2">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleImportCSV} 
+            accept=".csv" 
+            className="hidden" 
+          />
+          <button 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isImporting}
+            className="flex items-center gap-2 bg-white/[0.05] hover:bg-white/[0.1] text-white font-medium px-4 py-2 rounded-xl transition-colors border border-white/[0.05] hover:border-white/[0.1] cursor-pointer shrink-0 disabled:opacity-50"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            {isImporting ? "Đang nhập..." : "Nhập CSV"}
+          </button>
+          <button 
+            onClick={handleExportCSV}
+            className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-medium px-4 py-2 rounded-xl transition-colors border border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer shrink-0"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Xuất CSV
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
