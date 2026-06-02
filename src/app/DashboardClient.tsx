@@ -75,6 +75,15 @@ interface DashboardClientProps {
     currentMonthPeriod: string;
     allCategories: { id: string; name: string; type: 'INCOME' | 'EXPENSE'; hashtags: string[] | null }[];
     initialCashFlow: CashFlowItem[];
+    allTemplates: { 
+      id: string; 
+      title: string; 
+      type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW'; 
+      categoryId: string | null; 
+      amount: number | null; 
+      notePreset: string | null;
+      category?: { icon: string | null } | null;
+    }[];
   };
 }
 
@@ -90,6 +99,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     initialData.allFunds.find(f => f.isDefault) || initialData.allFunds[0]
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const applyTemplate = (template: typeof initialData.allTemplates[0]) => {
+    if (template.amount) setAmount(template.amount.toString());
+    if (template.notePreset) setNote(template.notePreset);
+    toast.info(`Đã áp dụng lối tắt: ${template.title}`);
+  };
 
   // Chart Range State
   const [chartRange, setChartRange] = useState<'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time'>('this-month');
@@ -368,37 +383,45 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                   {activeFund.name}
                 </button>
               </div>
-              {/* Quick Templates integrated here */}
+              {/* Dynamic Shortcuts from Database */}
               <div className="hidden md:flex gap-2">
-                {["☕ 30k", "⛽ 50k", "🍜 40k", "🚌 25k"].map((t) => (
+                {initialData.allTemplates.slice(0, 4).map((template) => (
                    <button 
-                    key={t} 
-                    onClick={() => {
-                      const val = t.split(' ')[1].replace('k', '');
-                      setAmount((parseInt(val) * 1000).toString());
-                    }}
-                    className="px-4 py-2 border border-white/5 rounded-full bg-[#1A1A1A] hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-neutral-400 hover:text-neutral-200 cursor-pointer"
+                    key={template.id} 
+                    onClick={() => applyTemplate(template)}
+                    className="px-4 py-2 border border-white/5 rounded-full bg-[#1A1A1A] hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-neutral-400 hover:text-neutral-200 cursor-pointer flex items-center gap-1.5"
                   >
-                      {t}
+                      <span>{template.category?.icon || "⚡"}</span>
+                      <span>{template.title}</span>
                    </button>
                 ))}
+                <button 
+                  onClick={() => router.push('/settings?tab=shortcuts')}
+                  className="px-4 py-2 border border-white/5 rounded-full bg-[#1A1A1A]/50 hover:bg-[#1A1A1A] transition-all text-xs font-medium text-neutral-600 hover:text-neutral-400 cursor-pointer"
+                >
+                  +
+                </button>
               </div>
             </div>
 
             {/* Mobile quick templates */}
             <div className="flex md:hidden overflow-x-auto pb-4 gap-2 snap-x scrollbar-hide -mx-2 px-2 mb-2">
-               {["☕ 30k", "⛽ 50k", "🍜 40k", "🚌 25k"].map((t) => (
+               {initialData.allTemplates.map((template) => (
                  <button 
-                  key={t} 
-                  onClick={() => {
-                    const val = t.split(' ')[1].replace('k', '');
-                    setAmount((parseInt(val) * 1000).toString());
-                  }}
-                  className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-[#1A1A1A] hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-neutral-400 cursor-pointer"
+                  key={template.id} 
+                  onClick={() => applyTemplate(template)}
+                  className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-[#1A1A1A] hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-neutral-400 cursor-pointer flex items-center gap-1.5"
                  >
-                    {t}
+                    <span>{template.category?.icon || "⚡"}</span>
+                    <span>{template.title}</span>
                  </button>
                ))}
+               <button 
+                onClick={() => router.push('/settings?tab=shortcuts')}
+                className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-[#1A1A1A]/50 text-xs font-medium text-neutral-600 cursor-pointer"
+               >
+                + Thêm
+               </button>
             </div>
             
             <div className="space-y-6 md:space-y-8 mt-4 md:mt-8">

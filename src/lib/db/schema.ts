@@ -89,6 +89,7 @@ export const budgetsRelations = relations(budgets, ({ one }) => ({
 export const templates = pgTable('templates', {
   id: uuid('id').defaultRandom().primaryKey(),
   title: text('title').notNull(),
+  type: transactionTypeEnum('type').notNull().default('EXPENSE'),
   categoryId: uuid('category_id').references(() => categories.id, { onDelete: 'cascade' }),
   amount: bigint('amount', { mode: 'number' }),
   notePreset: text('note_preset'),

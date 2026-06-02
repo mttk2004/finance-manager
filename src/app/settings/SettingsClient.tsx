@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
-import { createFund, updateFund, deleteFund, createCategory, updateCategory, deleteCategory, upsertBudget } from "@/lib/db/actions";
+import { useState, useEffect } from "react";
+import { 
+  createFund, updateFund, deleteFund, 
+  createCategory, updateCategory, deleteCategory, 
+  upsertBudget,
+  createTemplate, updateTemplate, deleteTemplate
+} from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 interface Fund {
   id: string;
   name: string;
-  isDefault: boolean | null;
   balance: number | null;
+  isDefault: boolean | null;
+  attributes: unknown;
   createdAt: Date | null;
   updatedAt: Date | null;
 }
@@ -19,7 +26,6 @@ interface Category {
   type: 'INCOME' | 'EXPENSE';
   icon: string | null;
   hashtags: string[] | null;
-  createdAt: Date | null;
 }
 
 interface Budget {
@@ -27,7 +33,17 @@ interface Budget {
   categoryId: string;
   amountLimit: number;
   period: string;
-  isOverride: boolean | null;
+  isOverride: boolean;
+  category?: Category | null;
+}
+
+interface Template {
+  id: string;
+  title: string;
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
+  categoryId: string | null;
+  amount: number | null;
+  notePreset: string | null;
   category?: Category | null;
 }
 
@@ -35,12 +51,23 @@ interface SettingsClientProps {
   initialFunds: Fund[];
   initialCategories: Category[];
   initialBudgets: Budget[];
+  initialTemplates: Template[];
   currentMonthPeriod: string;
 }
 
-export default function SettingsClient({ initialFunds, initialCategories, initialBudgets, currentMonthPeriod }: SettingsClientProps) {
+export default function SettingsClient({ initialFunds, initialCategories, initialBudgets, initialTemplates, currentMonthPeriod }: SettingsClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("funds");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab && ["funds", "categories", "shortcuts", "budget"].includes(tab)) {
+        setActiveTab(tab);
+      }
+    }
+  }, []);
   
   // --- Fund States ---
   const [isAddingFund, setIsAddingFund] = useState(false);
@@ -62,6 +89,15 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
   const [budgetCategoryId, setBudgetCategoryId] = useState("");
   const [budgetAmount, setBudgetAmount] = useState("");
+
+  // --- Shortcut (Template) States ---
+  const [isAddingTemplate, setIsAddingTemplate] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
+  const [templateTitle, setTemplateTitle] = useState("");
+  const [templateType, setTemplateType] = useState<'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW'>('EXPENSE');
+  const [templateCategoryId, setTemplateCategoryId] = useState("");
+  const [templateAmount, setTemplateAmount] = useState("");
+  const [templateNote, setTemplateNote] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -213,6 +249,86 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     setBudgetCategoryId(budget.categoryId);
     setBudgetAmount(budget.amountLimit.toString());
     setIsAddingBudget(false);
+  };
+
+  // --- Shortcut (Template) Handlers ---
+  const handleAddTemplate = async () => {
+    if (!templateTitle || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await createTemplate({
+        title: templateTitle,
+        type: templateType,
+        categoryId: templateCategoryId || undefined,
+        amount: parseInt(templateAmount) || undefined,
+        notePreset: templateNote || undefined,
+      });
+      resetTemplateForm();
+      toast.success("Đã thêm lối tắt mới");
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to add template:", error);
+      toast.error("Lỗi khi thêm lối tắt");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUpdateTemplate = async () => {
+    if (!editingTemplateId || !templateTitle || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await updateTemplate(editingTemplateId, {
+        title: templateTitle,
+        type: templateType,
+        categoryId: templateCategoryId || undefined,
+        amount: parseInt(templateAmount) || undefined,
+        notePreset: templateNote || undefined,
+      });
+      resetTemplateForm();
+      toast.success("Đã cập nhật lối tắt");
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to update template:", error);
+      toast.error("Lỗi khi cập nhật lối tắt");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    if (!confirm("Bạn có chắc chắn muốn xóa lối tắt này?") || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await deleteTemplate(id);
+      toast.success("Đã xóa lối tắt");
+      router.refresh();
+    } catch (error) {
+      console.error("Failed to delete template:", error);
+      toast.error("Lỗi khi xóa lối tắt");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetTemplateForm = () => {
+    setTemplateTitle("");
+    setTemplateType("EXPENSE");
+    setTemplateCategoryId("");
+    setTemplateAmount("");
+    setTemplateNote("");
+    setIsAddingTemplate(false);
+    setEditingTemplateId(null);
+  };
+
+  const startEditTemplate = (template: Template) => {
+    setEditingTemplateId(template.id);
+    setTemplateTitle(template.title);
+    setTemplateType(template.type);
+    setTemplateCategoryId(template.categoryId || "");
+    setTemplateAmount(template.amount?.toString() || "");
+    setTemplateNote(template.notePreset || "");
+    setIsAddingTemplate(false);
   };
 
   return (
@@ -551,10 +667,135 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
           </div>
         )}
 
-        {/* Similar tabs for other sections but kept minimal for mockup */}
-        {(activeTab !== "funds" && activeTab !== "categories" && activeTab !== "budget") && (
-          <div className="py-12 text-center text-neutral-500 text-sm">
-            Nội dung {activeTab} sẽ được mở rộng trong tương lai...
+        {activeTab === "shortcuts" && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-medium text-white">Quản lý Lối tắt nhanh</h3>
+              <button 
+                onClick={() => {
+                  if (isAddingTemplate || editingTemplateId) {
+                    resetTemplateForm();
+                  } else {
+                    setIsAddingTemplate(true);
+                  }
+                }} 
+                className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+              >
+                {isAddingTemplate || editingTemplateId ? "Hủy" : "+ Thêm lối tắt mới"}
+              </button>
+            </div>
+            
+            {(isAddingTemplate || editingTemplateId) && (
+              <div className="space-y-4 bg-[#1A1A1A] p-4 rounded-2xl border border-white/[0.05]">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs text-neutral-500 font-medium ml-1">Tên lối tắt</label>
+                    <input 
+                      type="text" 
+                      value={templateTitle}
+                      onChange={(e) => setTemplateTitle(e.target.value)}
+                      placeholder="VD: Mua cafe sáng" 
+                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none placeholder:text-neutral-600" 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-neutral-500 font-medium ml-1">Loại giao dịch</label>
+                    <select 
+                      value={templateType} 
+                      onChange={(e) => setTemplateType(e.target.value as any)}
+                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
+                    >
+                      <option value="EXPENSE">Chi tiêu</option>
+                      <option value="INCOME">Thu nhập</option>
+                      <option value="TRANSFER">Chuyển tiền</option>
+                      <option value="LEND">Cho vay</option>
+                      <option value="BORROW">Vay nợ</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-neutral-500 font-medium ml-1">Danh mục (tùy chọn)</label>
+                    <select 
+                      value={templateCategoryId} 
+                      onChange={(e) => setTemplateCategoryId(e.target.value)}
+                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
+                    >
+                      <option value="">-- Tự động theo hashtag --</option>
+                      {initialCategories.filter(c => c.type === (templateType === 'INCOME' ? 'INCOME' : 'EXPENSE')).map(c => (
+                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-neutral-500 font-medium ml-1">Số tiền (tùy chọn)</label>
+                    <input 
+                      type="number" 
+                      value={templateAmount}
+                      onChange={(e) => setTemplateAmount(e.target.value)}
+                      placeholder="VD: 30000" 
+                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm font-mono text-white focus:outline-none placeholder:text-neutral-600" 
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs text-neutral-500 font-medium ml-1">Ghi chú / Hashtag (VD: #cafe)</label>
+                  <input 
+                    type="text" 
+                    value={templateNote}
+                    onChange={(e) => setTemplateNote(e.target.value)}
+                    placeholder="Ghi chú mặc định..." 
+                    className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none placeholder:text-neutral-600" 
+                  />
+                </div>
+                <button 
+                  onClick={editingTemplateId ? handleUpdateTemplate : handleAddTemplate}
+                  disabled={isSubmitting || !templateTitle}
+                  className="w-full py-2.5 rounded-xl bg-blue-500 text-white font-semibold text-sm hover:bg-blue-400 cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? "Đang lưu..." : "Lưu lối tắt"}
+                </button>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {initialTemplates.length === 0 ? (
+                <p className="text-sm text-neutral-500 text-center py-8 col-span-2">Chưa có lối tắt nào</p>
+              ) : (
+                initialTemplates.map((template) => (
+                  <div key={template.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${editingTemplateId === template.id ? 'bg-blue-500/5 border-blue-500/20' : 'bg-[#1A1A1A] border-white/[0.02]'}`}>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-blue-500/10">
+                        {template.category?.icon || "⚡"}
+                      </div>
+                      <div>
+                        <span className="font-medium text-neutral-200 block">{template.title}</span>
+                        <div className="flex gap-2 items-center">
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-tight ${template.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                            {template.type === 'INCOME' ? 'Thu' : 'Chi'}
+                          </span>
+                          {template.amount && (
+                            <span className="text-[10px] font-mono text-neutral-500">{template.amount.toLocaleString('vi-VN')}đ</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                       <button 
+                         onClick={() => startEditTemplate(template)}
+                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingTemplateId === template.id ? 'text-blue-400 bg-blue-500/10' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}
+                       >
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
+                       </button>
+                       <button 
+                         onClick={() => handleDeleteTemplate(template.id)}
+                         className="p-2 transition-colors cursor-pointer rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10"
+                       >
+                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                       </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
       </div>

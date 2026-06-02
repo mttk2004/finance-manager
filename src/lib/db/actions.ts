@@ -1,9 +1,57 @@
 'use server'
 
 import { db } from './index';
-import { funds, transactions, categories, budgets, globalSettings } from './schema';
+import { funds, transactions, categories, budgets, globalSettings, templates } from './schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+
+export async function getTemplates() {
+  return await db.query.templates.findMany({
+    with: {
+      category: true,
+    },
+    orderBy: [desc(templates.createdAt)],
+  });
+}
+
+export async function createTemplate(data: {
+  title: string;
+  type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
+  categoryId?: string;
+  amount?: number;
+  notePreset?: string;
+}) {
+  const [newTemplate] = await db.insert(templates).values({
+    ...data,
+  }).returning();
+  
+  revalidatePath('/', 'layout');
+  return newTemplate;
+}
+
+export async function updateTemplate(id: string, data: {
+  title?: string;
+  type?: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
+  categoryId?: string;
+  amount?: number;
+  notePreset?: string;
+}) {
+  const [updatedTemplate] = await db.update(templates)
+    .set({
+      ...data,
+    })
+    .where(eq(templates.id, id))
+    .returning();
+  
+  revalidatePath('/', 'layout');
+  return updatedTemplate;
+}
+
+export async function deleteTemplate(id: string) {
+  const result = await db.delete(templates).where(eq(templates.id, id)).returning();
+  revalidatePath('/', 'layout');
+  return result;
+}
 
 export async function importTransactions(csvText: string) {
   const lines = csvText.split('\n');
@@ -179,6 +227,7 @@ export async function getDashboardData() {
   const hasTransactionsYesterday = await checkTransactionsYesterday();
   const allCategories = await db.query.categories.findMany();
   const initialCashFlow = await getCashFlowData('this-month');
+  const allTemplates = await getTemplates();
   
   return {
     allFunds,
@@ -191,6 +240,7 @@ export async function getDashboardData() {
     currentMonthPeriod,
     allCategories,
     initialCashFlow,
+    allTemplates,
   };
 }
 
