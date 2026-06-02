@@ -223,6 +223,18 @@ export async function getDashboardData() {
   const totalSpentMonth = monthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
   const totalBudgetMonth = budgetTracking.reduce((acc, b) => acc + b.amountLimit, 0);
 
+  // Statistics for insights
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+  const lastMonthTransactions = await db.query.transactions.findMany({
+    where: and(
+      gte(transactions.date, startOfLastMonth),
+      lt(transactions.date, new Date(endOfLastMonth.getTime() + 86400000)),
+      eq(transactions.type, 'EXPENSE')
+    ),
+  });
+  const totalSpentLastMonth = lastMonthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
+
   const totalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
   const hasTransactionsYesterday = await checkTransactionsYesterday();
   const allCategories = await db.query.categories.findMany();
@@ -236,6 +248,7 @@ export async function getDashboardData() {
     showReminder: !hasTransactionsYesterday && recentTransactions.length > 0,
     budgetTracking,
     totalSpentMonth,
+    totalSpentLastMonth,
     totalBudgetMonth,
     currentMonthPeriod,
     allCategories,
