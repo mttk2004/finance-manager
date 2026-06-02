@@ -725,6 +725,48 @@ async function aggregateTransactions(startDate: Date, endDate: Date, by: 'day' |
   return Object.values(groups);
 }
 
+export async function getReportData(startDate: Date, endDate: Date) {
+  const txs = await db.query.transactions.findMany({
+    where: and(
+      gte(transactions.date, startDate),
+      lt(transactions.date, new Date(endDate.getTime() + 86400000))
+    ),
+    with: {
+      category: true,
+      fund: true,
+    }
+  });
+
+  const income = txs.filter(t => t.type === 'INCOME').reduce((acc, t) => acc + t.amount, 0);
+  const expense = txs.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
+  
+  // Aggregate by category
+  const categoryMap: Record<string, { name: string, icon: string | null, spent: number }> = {};
+  txs.filter(t => t.type === 'EXPENSE').forEach(t => {
+    const catId = t.categoryId || 'other';
+    const catName = t.category?.name || 'Khác';
+    if (!categoryMap[catId]) {
+      categoryMap[catId] = { name: catName, icon: t.category?.icon || null, spent: 0 };
+    }
+    categoryMap[catId].spent += t.amount;
+  });
+
+  // Aggregate by day for chart
+  const cashFlow = await aggregateTransactions(startDate, endDate, 'day');
+
+  return {
+    summary: {
+      income,
+      expense,
+      net: income - expense,
+      transactionCount: txs.length
+    },
+    categorySpending: Object.values(categoryMap).sort((a, b) => b.spent - a.spent),
+    cashFlow,
+    topTransactions: [...txs].sort((a, b) => b.amount - a.amount).slice(0, 5)
+  };
+}
+
 export async function getBalanceHistory(range: 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time') {
   const allFunds = await db.select().from(funds);
   const currentTotalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
