@@ -104,13 +104,13 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
   // Insights logic
   const diff = initialData.totalSpentMonth - initialData.totalSpentLastMonth;
   const percentageDiff = initialData.totalSpentLastMonth > 0 
-    ? Math.abs(Math.round((diff / initialData.totalSpentLastMonth) * 100))
-    : 0;
+    ? (Math.abs(diff / initialData.totalSpentLastMonth) * 100).toFixed(1)
+    : "0";
   
   const budgetRemaining = initialData.totalBudgetMonth - initialData.totalSpentMonth;
   const budgetPercentage = initialData.totalBudgetMonth > 0
-    ? Math.round((initialData.totalSpentMonth / initialData.totalBudgetMonth) * 100)
-    : 0;
+    ? (initialData.totalSpentMonth / initialData.totalBudgetMonth * 100).toFixed(1)
+    : "0";
 
   const applyTemplate = (template: typeof initialData.allTemplates[0]) => {
     if (template.amount) setAmount(template.amount.toString());
@@ -552,7 +552,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
               <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${budgetPercentage <= 80 ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${parseFloat(budgetPercentage) <= 80 ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="6" x2="12" y2="12"></line><line x1="16" y1="14" x2="12" y2="12"></line></svg>
                   </div>
                   <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Ngân sách còn lại</h4>
@@ -564,8 +564,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                     </p>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full transition-all duration-1000 ${budgetPercentage > 90 ? 'bg-rose-500' : budgetPercentage > 70 ? 'bg-orange-500' : 'bg-blue-500'}`}
-                        style={{ width: `${Math.min(budgetPercentage, 100)}%` }}
+                        className={`h-full transition-all duration-1000 ${parseFloat(budgetPercentage) > 90 ? 'bg-rose-500' : parseFloat(budgetPercentage) > 70 ? 'bg-orange-500' : 'bg-blue-500'}`}
+                        style={{ width: `${Math.min(parseFloat(budgetPercentage), 100)}%` }}
                       ></div>
                     </div>
                   </>
