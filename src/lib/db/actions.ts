@@ -857,3 +857,39 @@ export async function checkTransactionsYesterday() {
 
   return yesterdayTx.length > 0;
 }
+
+export async function resetData() {
+  return await db.transaction(async (tx) => {
+    // 1. Clean existing data
+    await tx.delete(transactions);
+    await tx.delete(budgets);
+    await tx.delete(templates);
+    await tx.delete(globalSettings);
+    await tx.delete(categories);
+    await tx.delete(funds);
+
+    // 2. Seed Default Funds
+    const fundData = [
+      { name: 'Quỹ chính', isDefault: true, balance: 0 },
+      { name: 'Tiết kiệm', isDefault: false, balance: 0 },
+      { name: 'Đầu tư', isDefault: false, balance: 0 },
+    ];
+    await tx.insert(funds).values(fundData);
+
+    // 3. Seed Default Categories
+    const categoryData = [
+      { name: 'Ăn uống', type: 'EXPENSE' as const, icon: '🍜', hashtags: ['#an_sang', '#cafe', '#an_trua', '#an_toi'] },
+      { name: 'Lương', type: 'INCOME' as const, icon: '💰', hashtags: ['#luong', '#salary'] },
+      { name: 'Di chuyển', type: 'EXPENSE' as const, icon: '🚌', hashtags: ['#di_chuyen', '#xang', '#grab'] },
+      { name: 'Mua sắm', type: 'EXPENSE' as const, icon: '🛒', hashtags: ['#mua_sam', '#shopee', '#lazada'] },
+      { name: 'Giải trí', type: 'EXPENSE' as const, icon: '🎮', hashtags: ['#vui_ve', '#netflix', '#game'] },
+      { name: 'Học tập', type: 'EXPENSE' as const, icon: '📚', hashtags: ['#lam_viec', '#hoc_tap', '#book'] },
+      { name: 'Tiền thưởng', type: 'INCOME' as const, icon: '🧧', hashtags: ['#thuong', '#bonus'] },
+      { name: 'Kinh doanh', type: 'INCOME' as const, icon: '📈', hashtags: ['#kinh_doanh', '#business'] },
+    ];
+    await tx.insert(categories).values(categoryData);
+
+    revalidatePath('/', 'layout');
+    return { success: true };
+  });
+}
