@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 
 export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
@@ -34,21 +34,23 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
     setIsGenerating(true);
     
     try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#121212",
-        logging: false
+      // Use html-to-image to generate a high-quality PNG
+      const dataUrl = await toPng(reportRef.current, { 
+        pixelRatio: 2,
+        backgroundColor: "var(--card)", // Use theme-aware background
+        cacheBust: true,
       });
       
-      const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF({
         orientation: "portrait",
-        unit: "px",
-        format: [canvas.width / 2, canvas.height / 2]
+        unit: "px"
       });
       
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width / 2, canvas.height / 2);
+      const imgProps = pdf.getImageProperties(dataUrl);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`Bao_cao_tai_chinh_${startDate}_den_${endDate}.pdf`);
       toast.success("Đã xuất báo cáo PDF thành công!");
       onClose();
