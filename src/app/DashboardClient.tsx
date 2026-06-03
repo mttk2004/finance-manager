@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { CashFlowChart } from "@/components/cash-flow-chart";
 import { MomLineChart } from "@/components/mom-line-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
@@ -92,6 +92,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ initialData }: DashboardClientProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [isDistributionModalOpen, setDistributionModalOpen] = useState(false);
   const [isFundSelectorOpen, setFundSelectorOpen] = useState(false);
   const [isTransferModalOpen, setTransferModalOpen] = useState(false);
@@ -157,7 +158,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       }
     };
     fetchData();
-  }, [categoryRange]);
+  }, [categoryRange, initialData]);
 
   // Logic to disable buttons based on hashtag
   const detectedCategory = (() => {
@@ -221,7 +222,9 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               try {
                 await deleteTransaction(newTx.id);
                 toast.success("Đã hoàn tác giao dịch");
-                router.refresh();
+                startTransition(() => {
+                  router.refresh();
+                });
               } catch (err) {
                 toast.error("Không thể hoàn tác giao dịch");
               }
@@ -233,7 +236,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       setAmount("");
       setNote("");
       if (type === 'TRANSFER') setTransferModalOpen(false);
-      router.refresh();
+      
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to create transaction:", error);
       toast.error("Lỗi khi thực hiện giao dịch", {

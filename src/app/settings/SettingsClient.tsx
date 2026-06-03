@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { 
   createFund, updateFund, deleteFund, 
   createCategory, updateCategory, deleteCategory, 
@@ -59,6 +59,7 @@ interface SettingsClientProps {
 
 export default function SettingsClient({ initialFunds, initialCategories, initialBudgets, initialTemplates, currentMonthPeriod }: SettingsClientProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("funds");
 
   useEffect(() => {
@@ -112,7 +113,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
       await resetData();
       toast.success("Đã xóa toàn bộ dữ liệu và thiết lập lại mặc định!");
       setIsResetConfirmOpen(false);
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to reset data:", error);
       toast.error("Không thể xóa dữ liệu");
@@ -128,7 +131,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     try {
       await createFund({ name: fundName, balance: parseInt(fundBalance) || 0 });
       resetFundForm();
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to create fund:", error);
     } finally {
@@ -142,7 +147,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     try {
       await updateFund(editingFundId, { name: fundName, balance: parseInt(fundBalance) || 0 });
       resetFundForm();
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to update fund:", error);
     } finally {
@@ -156,7 +163,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     try {
       await deleteFund(fundToDelete.id);
       setFundToDelete(null);
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to delete fund:", error);
       alert(error instanceof Error ? error.message : "Không thể xóa quỹ");
@@ -186,7 +195,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     try {
       await createCategory({ name: catName, type: catType, icon: catIcon });
       resetCategoryForm();
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to create category:", error);
     } finally {
@@ -200,7 +211,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     try {
       await updateCategory(editingCategoryId, { name: catName, type: catType, icon: catIcon });
       resetCategoryForm();
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to update category:", error);
     } finally {
@@ -213,7 +226,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
       setIsSubmitting(true);
       try {
         await deleteCategory(id);
+        startTransition(() => {
         router.refresh();
+      });
       } catch (error) {
         console.error("Failed to delete category:", error);
       } finally {
@@ -249,7 +264,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         period: currentMonthPeriod,
       });
       resetBudgetForm();
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to save budget:", error);
     } finally {
@@ -285,7 +302,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
       });
       resetTemplateForm();
       toast.success("Đã thêm lối tắt mới");
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to add template:", error);
       toast.error("Lỗi khi thêm lối tắt");
@@ -307,7 +326,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
       });
       resetTemplateForm();
       toast.success("Đã cập nhật lối tắt");
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to update template:", error);
       toast.error("Lỗi khi cập nhật lối tắt");
@@ -323,7 +344,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
       await deleteTemplate(templateToDelete.id);
       setTemplateToDelete(null);
       toast.success("Đã xóa lối tắt");
-      router.refresh();
+      startTransition(() => {
+        router.refresh();
+      });
     } catch (error) {
       console.error("Failed to delete template:", error);
       toast.error("Lỗi khi xóa lối tắt");

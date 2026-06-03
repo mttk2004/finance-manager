@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useTransition } from "react";
 import { importTransactions } from "@/lib/db/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
@@ -34,6 +34,7 @@ interface TransactionsClientProps {
 
 export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
   const router = useRouter();
+  const [isPending, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,7 +57,9 @@ export default function TransactionsClient({ initialTransactions }: Transactions
           toast.success(`Nhập dữ liệu thành công!`, {
             description: `Đã nhập ${result.count} giao dịch mới.`
           });
-          router.refresh();
+          startTransition(() => {
+            router.refresh();
+          });
         } else {
           toast.error("Lỗi khi nhập dữ liệu CSV.");
         }
