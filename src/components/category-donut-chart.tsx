@@ -66,7 +66,7 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
         </PieChart>
       </ResponsiveContainer>
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1">Tổng chi</span>
+        <span className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Tổng chi</span>
         <span className="text-lg font-mono font-bold text-white">
           {(totalSpent / 1000000).toFixed(1)}M
         </span>

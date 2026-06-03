@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,17 +26,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased bg-[#0a0a0a] text-neutral-200 min-h-screen overflow-x-hidden`}
+        className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300`}
       >
-        <div className="w-full max-w-7xl mx-auto flex flex-col min-h-screen">
-          <BottomNav />
-          <div className="flex-1 pb-16 md:pb-0 md:pt-20 md:px-8 overflow-y-auto w-full">
-            {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="w-full max-w-7xl mx-auto flex flex-col min-h-screen">
+            <BottomNav />
+            <div className="flex-1 pb-16 md:pb-0 md:pt-20 md:px-8 overflow-y-auto w-full">
+              {children}
+            </div>
           </div>
-        </div>
-        <Toaster position="top-center" expand={false} richColors theme="dark" />
+          <Toaster position="top-center" expand={false} richColors />
+        </ThemeProvider>
       </body>
     </html>
   );

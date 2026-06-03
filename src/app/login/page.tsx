@@ -38,7 +38,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0a0a] text-neutral-200 font-sans p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background text-foreground font-sans p-4">
       <div className="w-full max-w-md rounded-2xl bg-neutral-900/50 p-8 border border-white/5">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-800 border border-white/10">
@@ -53,7 +53,7 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-white">Đăng nhập</h1>
-          <p className="mt-2 text-sm text-neutral-400 text-balance">
+          <p className="mt-2 text-sm text-muted-foreground text-balance">
             Nhập mật khẩu cá nhân để truy cập ứng dụng quản lý tài chính.
           </p>
         </div>
@@ -66,7 +66,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full h-11 bg-[#1A1A1A] border-white/[0.04] text-white focus:border-white focus-visible:ring-1 focus-visible:ring-white placeholder:text-neutral-600 rounded-xl transition-colors"
+              className="w-full h-11 bg-secondary border-border text-white focus:border-white focus-visible:ring-1 focus-visible:ring-white placeholder:text-neutral-600 rounded-xl transition-colors"
               autoFocus
             />
             {error && (

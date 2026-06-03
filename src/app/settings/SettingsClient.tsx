@@ -9,6 +9,7 @@ import {
 } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { CustomSelect } from "@/components/ui/custom-select";
 
 interface Fund {
   id: string;
@@ -336,11 +337,11 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 max-w-3xl mx-auto mt-4 md:mt-8 px-4 md:px-0">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Cài đặt</h1>
-        <p className="text-neutral-400">Quản lý các quỹ, danh mục và lối tắt của bạn.</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">Cài đặt</h1>
+        <p className="text-muted-foreground">Quản lý các quỹ, danh mục và lối tắt của bạn.</p>
       </div>
 
-      <div className="flex gap-4 border-b border-white/[0.04] mb-8 overflow-x-auto scrollbar-hide pb-2">
+      <div className="flex gap-4 border-b border-border mb-8 overflow-x-auto scrollbar-hide pb-2">
         {[
           { id: "funds", name: "Quỹ" },
           { id: "categories", name: "Danh mục" },
@@ -356,7 +357,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
               resetBudgetForm();
             }}
             className={`pb-2 px-1 text-sm font-medium whitespace-nowrap border-b-2 transition-colors cursor-pointer ${
-              activeTab === tab.id ? "text-white border-white" : "text-neutral-500 border-transparent hover:text-neutral-300"
+              activeTab === tab.id ? "text-foreground border-foreground" : "text-muted-foreground border-transparent hover:text-neutral-300"
             }`}
           >
             {tab.name}
@@ -364,11 +365,11 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         ))}
       </div>
 
-      <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6">
+      <div className="bg-card border border-border rounded-3xl p-6">
         {activeTab === "funds" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium text-white">Quản lý Quỹ (Funds)</h3>
+              <h3 className="font-medium text-foreground">Quản lý Quỹ (Funds)</h3>
               <button 
                 onClick={() => {
                   if (isAddingFund || editingFundId) {
@@ -377,27 +378,27 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     setIsAddingFund(true);
                   }
                 }} 
-                className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
               >
                 {isAddingFund || editingFundId ? "Hủy" : "+ Thêm quỹ mới"}
               </button>
             </div>
             
             {(isAddingFund || editingFundId) && (
-              <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-[#1A1A1A] p-3 rounded-xl border border-white/[0.05]">
+              <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-secondary p-3 rounded-xl border border-border">
                 <input 
                   type="text" 
                   value={fundName}
                   onChange={(e) => setFundName(e.target.value)}
                   placeholder="Tên quỹ (VD: Tiết kiệm)" 
-                  className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-neutral-600 px-2 w-full" 
+                  className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-2 w-full" 
                 />
                 <input 
                   type="number" 
                   value={fundBalance}
                   onChange={(e) => setFundBalance(e.target.value)}
                   placeholder="Số dư" 
-                  className="sm:w-32 bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-1.5 text-sm font-mono text-white focus:outline-none placeholder:text-neutral-600 w-full" 
+                  className="sm:w-32 bg-card border border-border rounded-lg px-3 py-1.5 text-sm font-mono text-foreground focus:outline-none placeholder:text-muted-foreground/60 w-full" 
                 />
                 <button 
                   onClick={editingFundId ? handleUpdateFund : handleAddFund}
@@ -411,7 +412,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {initialFunds.length === 0 ? (
-                <p className="text-sm text-neutral-500 text-center py-8 col-span-2">Chưa có quỹ nào</p>
+                <p className="text-sm text-muted-foreground text-center py-8 col-span-2">Chưa có quỹ nào</p>
               ) : (
                 initialFunds.map((fund, idx) => {
                   const gradients = [
@@ -437,7 +438,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                       <div className="relative z-10 flex flex-col h-full justify-between min-h-[140px]">
                         <div className="flex justify-between items-start">
                           <div>
-                            <h4 className="text-white font-bold text-lg mb-1">{fund.name}</h4>
+                            <h4 className="text-foreground font-bold text-lg mb-1">{fund.name}</h4>
                             {fund.isDefault && (
                               <span className="text-[9px] uppercase tracking-widest font-bold bg-white/10 text-white/70 px-2 py-0.5 rounded-full border border-white/5">
                                 Mặc định
@@ -455,7 +456,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                             )}
                             <button 
                               onClick={() => startEditFund(fund)}
-                              className={`p-2 rounded-full transition-colors cursor-pointer ${editingFundId === fund.id ? 'bg-white text-black' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                              className={`p-2 rounded-full transition-colors cursor-pointer ${editingFundId === fund.id ? 'bg-foreground text-background' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
                             >
                               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                             </button>
@@ -464,7 +465,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
 
                         <div className="mt-6">
                           <p className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold mb-1">Số dư hiện tại</p>
-                          <div className="text-2xl font-mono text-white font-bold tracking-tighter">
+                          <div className="text-2xl font-mono text-foreground font-bold tracking-tighter">
                             {(fund.balance || 0).toLocaleString('vi-VN')}<span className="text-white/20 ml-1">đ</span>
                           </div>
                         </div>
@@ -472,7 +473,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                       
                       {/* Decorative background element */}
                       <div className="absolute -right-4 -bottom-4 opacity-10 group-hover:opacity-20 transition-opacity">
-                         <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-white"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                         <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="text-foreground"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
                       </div>
                     </div>
                   )
@@ -485,7 +486,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         {activeTab === "categories" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium text-white">Quản lý Danh mục (Categories)</h3>
+              <h3 className="font-medium text-foreground">Quản lý Danh mục (Categories)</h3>
               <button 
                 onClick={() => {
                   if (isAddingCategory || editingCategoryId) {
@@ -494,36 +495,37 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     setIsAddingCategory(true);
                   }
                 }} 
-                className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
               >
                 {isAddingCategory || editingCategoryId ? "Hủy" : "+ Thêm danh mục mới"}
               </button>
             </div>
             
             {(isAddingCategory || editingCategoryId) && (
-              <div className="space-y-4 mb-6 bg-[#1A1A1A] p-4 rounded-xl border border-white/[0.05]">
+              <div className="space-y-4 mb-6 bg-secondary p-4 rounded-xl border border-border">
                 <div className="flex flex-col sm:flex-row gap-3 items-center">
-                  <select 
+                  <CustomSelect 
                     value={catType} 
                     onChange={(e) => setCatType(e.target.value as 'INCOME' | 'EXPENSE')}
-                    className="bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-white focus:outline-none w-full sm:w-auto"
-                  >
-                    <option value="EXPENSE">Chi tiêu</option>
-                    <option value="INCOME">Thu nhập</option>
-                  </select>
+                    options={[
+                      { value: "EXPENSE", label: "Chi tiêu" },
+                      { value: "INCOME", label: "Thu nhập" }
+                    ]}
+                    className="w-full sm:w-auto"
+                  />
                   <input 
                     type="text" 
                     value={catIcon}
                     onChange={(e) => setCatIcon(e.target.value)}
                     placeholder="Icon (VD: 🍜)" 
-                    className="w-full sm:w-20 bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-1.5 text-sm text-center text-white focus:outline-none placeholder:text-neutral-600" 
+                    className="w-full sm:w-20 bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-center text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
                   />
                   <input 
                     type="text" 
                     value={catName}
                     onChange={(e) => setCatName(e.target.value)}
                     placeholder="Tên danh mục (VD: Ăn uống)" 
-                    className="flex-1 bg-transparent text-sm text-white focus:outline-none placeholder:text-neutral-600 px-2 w-full" 
+                    className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-2 w-full" 
                   />
                 </div>
                 <div>
@@ -532,9 +534,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     value={catHashtags}
                     onChange={(e) => setCatHashtags(e.target.value)}
                     placeholder="Hashtags (VD: #an_uong, #cafe)" 
-                    className="w-full bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-white focus:outline-none placeholder:text-neutral-600" 
+                    className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
                   />
-                  <p className="text-[10px] text-neutral-500 mt-1 px-1">Phân tách bằng dấu phẩy, bắt đầu bằng dấu #</p>
+                  <p className="text-[10px] text-muted-foreground mt-1 px-1">Phân tách bằng dấu phẩy, bắt đầu bằng dấu #</p>
                 </div>
                 <button 
                   onClick={editingCategoryId ? handleUpdateCategory : handleAddCategory}
@@ -548,22 +550,22 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             
             <div className="space-y-3">
               {initialCategories.length === 0 ? (
-                <p className="text-sm text-neutral-500 text-center py-8">Chưa có danh mục nào</p>
+                <p className="text-sm text-muted-foreground text-center py-8">Chưa có danh mục nào</p>
               ) : (
                 initialCategories.map(cat => (
-                  <div key={cat.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingCategoryId === cat.id ? 'bg-blue-500/5 border-blue-500/20' : 'bg-[#1A1A1A] border-white/[0.02]'}`}>
+                  <div key={cat.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingCategoryId === cat.id ? 'bg-blue-500/5 border-blue-500/20' : 'bg-secondary border-white/[0.02]'}`}>
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${cat.type === 'INCOME' ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
                         {cat.icon || "📝"}
                       </div>
                       <div>
-                        <span className="font-medium text-neutral-200 block">{cat.name}</span>
+                        <span className="font-medium text-foreground block">{cat.name}</span>
                         <div className="flex flex-wrap gap-1 mt-0.5">
                           <span className={`text-[9px] uppercase font-mono tracking-tight mr-1 ${cat.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
                             {cat.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu'}
                           </span>
                           {(cat.hashtags || []).map(tag => (
-                            <span key={tag} className="text-[9px] text-neutral-500 bg-white/5 px-1.5 py-0.5 rounded-full">{tag}</span>
+                            <span key={tag} className="text-[9px] text-muted-foreground bg-white/5 px-1.5 py-0.5 rounded-full">{tag}</span>
                           ))}
                         </div>
                       </div>
@@ -571,13 +573,13 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     <div className="flex items-center gap-2">
                        <button 
                          onClick={() => startEditCategory(cat)}
-                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingCategoryId === cat.id ? 'text-blue-400 bg-blue-500/10' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}
+                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingCategoryId === cat.id ? 'text-blue-400 bg-blue-500/10' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                        >
                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                        </button>
                        <button 
                          onClick={() => handleDeleteCategory(cat.id)}
-                         className="p-2 transition-colors cursor-pointer rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10"
+                         className="p-2 transition-colors cursor-pointer rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
                        >
                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                        </button>
@@ -592,7 +594,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         {activeTab === "budget" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium text-white">Ngân sách Tháng {new Date().getMonth() + 1}</h3>
+              <h3 className="font-medium text-foreground">Ngân sách Tháng {new Date().getMonth() + 1}</h3>
               <button 
                 onClick={() => {
                   if (isAddingBudget || editingBudgetId) {
@@ -601,30 +603,32 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     setIsAddingBudget(true);
                   }
                 }} 
-                className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
               >
                 {isAddingBudget || editingBudgetId ? "Hủy" : "+ Thiết lập ngân sách"}
               </button>
             </div>
             
             {(isAddingBudget || editingBudgetId) && (
-              <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-[#1A1A1A] p-3 rounded-xl border border-white/[0.05]">
-                <select 
+              <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-secondary p-3 rounded-xl border border-border">
+                <CustomSelect 
                   value={budgetCategoryId} 
                   onChange={(e) => setBudgetCategoryId(e.target.value)}
-                  className="bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-2 text-sm text-white focus:outline-none w-full sm:flex-1"
-                >
-                  <option value="" disabled>-- Chọn danh mục chi tiêu --</option>
-                  {initialCategories.filter(c => c.type === 'EXPENSE').map(c => (
-                    <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                  ))}
-                </select>
+                  options={[
+                    { value: "", label: "-- Chọn danh mục chi tiêu --" },
+                    ...initialCategories.filter(c => c.type === 'EXPENSE').map(c => ({
+                      value: c.id,
+                      label: `${c.icon} ${c.name}`
+                    }))
+                  ]}
+                  className="w-full sm:flex-1"
+                />
                 <input 
                   type="number" 
                   value={budgetAmount}
                   onChange={(e) => setBudgetAmount(e.target.value)}
                   placeholder="Hạn mức (VND)" 
-                  className="w-full sm:w-40 bg-[#121212] border border-white/[0.05] rounded-lg px-3 py-1.5 text-sm font-mono text-white focus:outline-none placeholder:text-neutral-600" 
+                  className="w-full sm:w-40 bg-card border border-border rounded-lg px-3 py-1.5 text-sm font-mono text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
                 />
                 <button 
                   onClick={handleUpsertBudget}
@@ -638,26 +642,26 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             
             <div className="space-y-3">
               {initialBudgets.length === 0 ? (
-                <p className="text-sm text-neutral-500 text-center py-8">Chưa có ngân sách nào được thiết lập cho tháng này.</p>
+                <p className="text-sm text-muted-foreground text-center py-8">Chưa có ngân sách nào được thiết lập cho tháng này.</p>
               ) : (
                 initialBudgets.map(budget => (
-                  <div key={budget.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingBudgetId === budget.id ? 'bg-orange-500/5 border-orange-500/20' : 'bg-[#1A1A1A] border-white/[0.02]'}`}>
+                  <div key={budget.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingBudgetId === budget.id ? 'bg-orange-500/5 border-orange-500/20' : 'bg-secondary border-white/[0.02]'}`}>
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-orange-500/10">
                         {budget.category?.icon || "📝"}
                       </div>
                       <div>
-                        <span className="font-medium text-neutral-200 block">{budget.category?.name || "Danh mục không xác định"}</span>
-                        <span className="text-[10px] uppercase font-mono tracking-tight text-neutral-500">
+                        <span className="font-medium text-foreground block">{budget.category?.name || "Danh mục không xác định"}</span>
+                        <span className="text-[10px] uppercase font-mono tracking-tight text-muted-foreground">
                           Hạn mức
                         </span>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
-                       <span className="font-mono text-neutral-300 font-medium">{(budget.amountLimit || 0).toLocaleString('vi-VN')}đ</span>
+                       <span className="font-mono text-muted-foreground font-medium">{(budget.amountLimit || 0).toLocaleString('vi-VN')}đ</span>
                        <button 
                          onClick={() => startEditBudget(budget)}
-                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingBudgetId === budget.id ? 'text-orange-400 bg-orange-500/10' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}
+                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingBudgetId === budget.id ? 'text-orange-400 bg-orange-500/10' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                        >
                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                        </button>
@@ -672,7 +676,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         {activeTab === "shortcuts" && (
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium text-white">Quản lý Lối tắt nhanh</h3>
+              <h3 className="font-medium text-foreground">Quản lý Lối tắt nhanh</h3>
               <button 
                 onClick={() => {
                   if (isAddingTemplate || editingTemplateId) {
@@ -681,71 +685,74 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     setIsAddingTemplate(true);
                   }
                 }} 
-                className="text-xs bg-white text-black font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
               >
                 {isAddingTemplate || editingTemplateId ? "Hủy" : "+ Thêm lối tắt mới"}
               </button>
             </div>
             
             {(isAddingTemplate || editingTemplateId) && (
-              <div className="space-y-4 bg-[#1A1A1A] p-4 rounded-2xl border border-white/[0.05]">
+              <div className="space-y-4 bg-secondary p-4 rounded-2xl border border-border">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs text-neutral-500 font-medium ml-1">Tên lối tắt</label>
+                    <label className="text-xs text-muted-foreground font-medium ml-1">Tên lối tắt</label>
                     <input 
                       type="text" 
                       value={templateTitle}
                       onChange={(e) => setTemplateTitle(e.target.value)}
                       placeholder="VD: Mua cafe sáng" 
-                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none placeholder:text-neutral-600" 
+                      className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs text-neutral-500 font-medium ml-1">Loại giao dịch</label>
-                    <select 
+                    <label className="text-xs text-muted-foreground font-medium ml-1">Loại giao dịch</label>
+                    <CustomSelect 
                       value={templateType} 
                       onChange={(e) => setTemplateType(e.target.value as any)}
-                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
-                    >
-                      <option value="EXPENSE">Chi tiêu</option>
-                      <option value="INCOME">Thu nhập</option>
-                      <option value="TRANSFER">Chuyển tiền</option>
-                      <option value="LEND">Cho vay</option>
-                      <option value="BORROW">Vay nợ</option>
-                    </select>
+                      options={[
+                        { value: "EXPENSE", label: "Chi tiêu" },
+                        { value: "INCOME", label: "Thu nhập" },
+                        { value: "TRANSFER", label: "Chuyển tiền" },
+                        { value: "LEND", label: "Cho vay" },
+                        { value: "BORROW", label: "Vay nợ" }
+                      ]}
+                      className="w-full"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs text-neutral-500 font-medium ml-1">Danh mục (tùy chọn)</label>
-                    <select 
+                    <label className="text-xs text-muted-foreground font-medium ml-1">Danh mục (tùy chọn)</label>
+                    <CustomSelect 
                       value={templateCategoryId} 
                       onChange={(e) => setTemplateCategoryId(e.target.value)}
-                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
-                    >
-                      <option value="">-- Tự động theo hashtag --</option>
-                      {initialCategories.filter(c => c.type === (templateType === 'INCOME' ? 'INCOME' : 'EXPENSE')).map(c => (
-                        <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: "", label: "-- Tự động theo hashtag --" },
+                        ...initialCategories.filter(c => c.type === (templateType === 'INCOME' ? 'INCOME' : 'EXPENSE')).map(c => ({
+                          value: c.id,
+                          label: `${c.icon} ${c.name}`
+                        }))
+                      ]}
+                      className="w-full"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-xs text-neutral-500 font-medium ml-1">Số tiền (tùy chọn)</label>
+                    <label className="text-xs text-muted-foreground font-medium ml-1">Số tiền (tùy chọn)</label>
                     <input 
                       type="number" 
                       value={templateAmount}
                       onChange={(e) => setTemplateAmount(e.target.value)}
                       placeholder="VD: 30000" 
-                      className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm font-mono text-white focus:outline-none placeholder:text-neutral-600" 
+                      className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm font-mono text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-xs text-neutral-500 font-medium ml-1">Ghi chú / Hashtag (VD: #cafe)</label>
+                  <label className="text-xs text-muted-foreground font-medium ml-1">Ghi chú / Hashtag (VD: #cafe)</label>
                   <input 
                     type="text" 
                     value={templateNote}
                     onChange={(e) => setTemplateNote(e.target.value)}
                     placeholder="Ghi chú mặc định..." 
-                    className="w-full bg-[#121212] border border-white/[0.05] rounded-xl px-4 py-2 text-sm text-white focus:outline-none placeholder:text-neutral-600" 
+                    className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
                   />
                 </div>
                 <button 
@@ -760,22 +767,22 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {initialTemplates.length === 0 ? (
-                <p className="text-sm text-neutral-500 text-center py-8 col-span-2">Chưa có lối tắt nào</p>
+                <p className="text-sm text-muted-foreground text-center py-8 col-span-2">Chưa có lối tắt nào</p>
               ) : (
                 initialTemplates.map((template) => (
-                  <div key={template.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${editingTemplateId === template.id ? 'bg-blue-500/5 border-blue-500/20' : 'bg-[#1A1A1A] border-white/[0.02]'}`}>
+                  <div key={template.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${editingTemplateId === template.id ? 'bg-blue-500/5 border-blue-500/20' : 'bg-secondary border-white/[0.02]'}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-blue-500/10">
                         {template.category?.icon || "⚡"}
                       </div>
                       <div>
-                        <span className="font-medium text-neutral-200 block">{template.title}</span>
+                        <span className="font-medium text-foreground block">{template.title}</span>
                         <div className="flex gap-2 items-center">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded uppercase font-bold tracking-tight ${template.type === 'INCOME' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                             {template.type === 'INCOME' ? 'Thu' : 'Chi'}
                           </span>
                           {template.amount && (
-                            <span className="text-[10px] font-mono text-neutral-500">{template.amount.toLocaleString('vi-VN')}đ</span>
+                            <span className="text-[10px] font-mono text-muted-foreground">{template.amount.toLocaleString('vi-VN')}đ</span>
                           )}
                         </div>
                       </div>
@@ -783,13 +790,13 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     <div className="flex items-center gap-1">
                        <button 
                          onClick={() => startEditTemplate(template)}
-                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingTemplateId === template.id ? 'text-blue-400 bg-blue-500/10' : 'text-neutral-500 hover:text-white hover:bg-white/5'}`}
+                         className={`p-2 transition-colors cursor-pointer rounded-lg ${editingTemplateId === template.id ? 'text-blue-400 bg-blue-500/10' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                        >
                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                        </button>
                        <button 
                          onClick={() => setTemplateToDelete(template)}
-                         className="p-2 transition-colors cursor-pointer rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10"
+                         className="p-2 transition-colors cursor-pointer rounded-lg text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10"
                        >
                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
                        </button>
@@ -804,21 +811,21 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
 
       {fundToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-sm w-full shadow-2xl relative">
             <div className="mb-6">
               <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-4">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
               </div>
-              <h2 className="text-xl font-semibold text-white tracking-tight mb-2">Xóa quỹ?</h2>
-              <p className="text-sm text-neutral-400">
-                Bạn có chắc chắn muốn xóa quỹ <strong className="text-white">{fundToDelete.name}</strong> không? Các giao dịch liên quan đến quỹ này có thể bị mất. Hành động này không thể hoàn tác.
+              <h2 className="text-xl font-semibold text-foreground tracking-tight mb-2">Xóa quỹ?</h2>
+              <p className="text-sm text-muted-foreground">
+                Bạn có chắc chắn muốn xóa quỹ <strong className="text-foreground">{fundToDelete.name}</strong> không? Các giao dịch liên quan đến quỹ này có thể bị mất. Hành động này không thể hoàn tác.
               </p>
             </div>
             <div className="flex gap-3">
               <button 
                 onClick={() => setFundToDelete(null)}
                 disabled={isSubmitting}
-                className="flex-1 py-3 px-4 rounded-xl text-neutral-400 font-medium text-sm hover:bg-white/[0.03] transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 py-3 px-4 rounded-xl text-muted-foreground font-medium text-sm hover:bg-white/[0.03] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Hủy bỏ
               </button>
@@ -836,21 +843,21 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
 
       {templateToDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-sm w-full shadow-2xl relative">
             <div className="mb-6">
               <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-4">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
               </div>
-              <h2 className="text-xl font-semibold text-white tracking-tight mb-2">Xóa lối tắt?</h2>
-              <p className="text-sm text-neutral-400">
-                Bạn có chắc chắn muốn xóa lối tắt <strong className="text-white">{templateToDelete.title}</strong> không? Hành động này không thể hoàn tác.
+              <h2 className="text-xl font-semibold text-foreground tracking-tight mb-2">Xóa lối tắt?</h2>
+              <p className="text-sm text-muted-foreground">
+                Bạn có chắc chắn muốn xóa lối tắt <strong className="text-foreground">{templateToDelete.title}</strong> không? Hành động này không thể hoàn tác.
               </p>
             </div>
             <div className="flex gap-3">
               <button 
                 onClick={() => setTemplateToDelete(null)}
                 disabled={isSubmitting}
-                className="flex-1 py-3 px-4 rounded-xl text-neutral-400 font-medium text-sm hover:bg-white/[0.03] transition-colors cursor-pointer disabled:opacity-50"
+                className="flex-1 py-3 px-4 rounded-xl text-muted-foreground font-medium text-sm hover:bg-white/[0.03] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Hủy bỏ
               </button>

@@ -62,13 +62,13 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4 py-6">
-      <div className="bg-[#0a0a0a] border border-white/[0.08] rounded-[32px] w-full max-w-4xl max-h-full overflow-hidden flex flex-col shadow-2xl">
-        <div className="p-6 md:p-8 border-b border-white/[0.05] flex justify-between items-center">
+      <div className="bg-background border border-border rounded-[32px] w-full max-w-4xl max-h-full overflow-hidden flex flex-col shadow-2xl">
+        <div className="p-6 md:p-8 border-b border-border flex justify-between items-center">
           <div>
             <h2 className="text-2xl font-semibold text-white tracking-tight">Xuất báo cáo PDF</h2>
-            <p className="text-sm text-neutral-500">Chọn khoảng thời gian để tạo báo cáo phân tích chi tiết.</p>
+            <p className="text-sm text-muted-foreground">Chọn khoảng thời gian để tạo báo cáo phân tích chi tiết.</p>
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors text-neutral-400">
+          <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground">
              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
           </button>
         </div>
@@ -76,21 +76,21 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
         <div className="flex-1 overflow-y-auto p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-neutral-500 ml-1">Từ ngày</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Từ ngày</label>
               <input 
                 type="date" 
                 value={startDate} 
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full bg-[#121212] border border-white/[0.08] rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-white/20 transition-all"
+                className="w-full bg-card border border-border rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-white/20 transition-all"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-widest text-neutral-500 ml-1">Đến ngày</label>
+              <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground ml-1">Đến ngày</label>
               <input 
                 type="date" 
                 value={endDate} 
                 onChange={(e) => setEndDate(e.target.value)}
-                className="w-full bg-[#121212] border border-white/[0.08] rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-white/20 transition-all"
+                className="w-full bg-card border border-border rounded-2xl px-4 py-3 text-white focus:outline-none focus:border-white/20 transition-all"
               />
             </div>
           </div>
@@ -101,7 +101,7 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
               </div>
               <h3 className="text-lg font-medium text-white mb-2">Sẵn sàng tạo báo cáo</h3>
-              <p className="text-sm text-neutral-500 max-w-xs mb-6">Nhấn nút bên dưới để xem trước báo cáo dựa trên khoảng thời gian bạn đã chọn.</p>
+              <p className="text-sm text-muted-foreground max-w-xs mb-6">Nhấn nút bên dưới để xem trước báo cáo dựa trên khoảng thời gian bạn đã chọn.</p>
               <button 
                 onClick={handlePreview}
                 disabled={isGenerating}
@@ -112,29 +112,29 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
             </div>
           ) : (
             <div className="space-y-8">
-              <div ref={reportRef} className="bg-[#121212] border border-white/[0.05] rounded-[32px] p-8 md:p-12 text-white">
+              <div ref={reportRef} className="bg-card border border-border rounded-[32px] p-8 md:p-12 text-white">
                 <div className="flex justify-between items-start mb-12">
                   <div>
                     <h1 className="text-3xl font-bold mb-2">Báo cáo Tài chính</h1>
-                    <p className="text-neutral-500">Thời gian: {new Date(startDate).toLocaleDateString('vi-VN')} - {new Date(endDate).toLocaleDateString('vi-VN')}</p>
+                    <p className="text-muted-foreground">Thời gian: {new Date(startDate).toLocaleDateString('vi-VN')} - {new Date(endDate).toLocaleDateString('vi-VN')}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs font-bold uppercase tracking-widest text-neutral-600 mb-1">Ngày tạo</p>
-                    <p className="text-sm text-neutral-400">{new Date().toLocaleDateString('vi-VN')}</p>
+                    <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString('vi-VN')}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-3 gap-6 mb-12">
-                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/[0.05]">
-                    <p className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-2">Tổng thu nhập</p>
+                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Tổng thu nhập</p>
                     <p className="text-2xl font-mono text-emerald-400">+{reportData.summary.income.toLocaleString('vi-VN')}đ</p>
                   </div>
-                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/[0.05]">
-                    <p className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-2">Tổng chi tiêu</p>
+                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Tổng chi tiêu</p>
                     <p className="text-2xl font-mono text-rose-400">-{reportData.summary.expense.toLocaleString('vi-VN')}đ</p>
                   </div>
-                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-white/[0.05]">
-                    <p className="text-xs font-bold uppercase tracking-widest text-neutral-500 mb-2">Dư thuần</p>
+                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Dư thuần</p>
                     <p className={`text-2xl font-mono ${reportData.summary.net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
                       {reportData.summary.net >= 0 ? '+' : ''}{reportData.summary.net.toLocaleString('vi-VN')}đ
                     </p>
@@ -169,7 +169,7 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                   </h3>
                   <div className="space-y-4">
                     {reportData.categorySpending.slice(0, 5).map((cat: any, i: number) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-white/[0.05]">
+                      <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-border">
                         <div className="flex items-center gap-3">
                           <span className="text-xl">{cat.icon || "📊"}</span>
                           <span className="font-medium">{cat.name}</span>
@@ -185,10 +185,10 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
                     Giao dịch lớn nhất
                   </h3>
-                  <div className="overflow-hidden border border-white/[0.05] rounded-2xl">
+                  <div className="overflow-hidden border border-border rounded-2xl">
                     <table className="w-full text-sm text-left">
                       <thead>
-                        <tr className="bg-white/[0.03] text-neutral-500">
+                        <tr className="bg-white/[0.03] text-muted-foreground">
                           <th className="px-4 py-3 font-medium">Ngày</th>
                           <th className="px-4 py-3 font-medium">Danh mục</th>
                           <th className="px-4 py-3 font-medium">Ghi chú</th>
@@ -197,7 +197,7 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                       </thead>
                       <tbody className="divide-y divide-white/[0.02]">
                         {reportData.topTransactions.map((tx: any, i: number) => (
-                          <tr key={i} className="text-neutral-400">
+                          <tr key={i} className="text-muted-foreground">
                             <td className="px-4 py-3">{new Date(tx.date).toLocaleDateString('vi-VN')}</td>
                             <td className="px-4 py-3">{tx.category?.name || "Khác"}</td>
                             <td className="px-4 py-3 truncate max-w-[150px]">{tx.note || "-"}</td>
@@ -211,7 +211,7 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                   </div>
                 </div>
                 
-                <div className="mt-20 pt-8 border-t border-white/[0.05] text-center">
+                <div className="mt-20 pt-8 border-t border-border text-center">
                   <p className="text-xs text-neutral-600 italic">Báo cáo được tạo tự động bởi Personal Finance Manager</p>
                 </div>
               </div>
@@ -219,7 +219,7 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
               <div className="flex gap-4">
                 <button 
                   onClick={() => setReportData(null)}
-                  className="flex-1 py-4 rounded-2xl bg-white/5 text-neutral-400 font-semibold text-sm hover:bg-white/10 transition-all cursor-pointer"
+                  className="flex-1 py-4 rounded-2xl bg-white/5 text-muted-foreground font-semibold text-sm hover:bg-white/10 transition-all cursor-pointer"
                 >
                   Chọn lại thời gian
                 </button>

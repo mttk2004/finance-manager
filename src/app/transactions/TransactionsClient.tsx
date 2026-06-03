@@ -5,6 +5,8 @@ import { importTransactions } from "@/lib/db/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import ExportReportModal from "@/components/export-report-modal";
+import { EmptyState } from "@/components/empty-state";
+import { ReceiptText } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -99,8 +101,8 @@ export default function TransactionsClient({ initialTransactions }: Transactions
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 max-w-5xl mx-auto mt-4 md:mt-8 px-4 md:px-0">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white mb-2">Tất cả giao dịch</h1>
-          <p className="text-neutral-400">Xem và xuất lịch sử thu chi chi tiết của bạn.</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">Tất cả giao dịch</h1>
+          <p className="text-muted-foreground">Xem và xuất lịch sử thu chi chi tiết của bạn.</p>
         </div>
         <div className="flex gap-2">
           <input 
@@ -113,7 +115,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={isImporting}
-            className="flex items-center gap-2 bg-white/[0.05] hover:bg-white/[0.1] text-white font-medium px-4 py-2 rounded-xl transition-colors border border-white/[0.05] hover:border-white/[0.1] cursor-pointer shrink-0 disabled:opacity-50"
+            className="flex items-center gap-2 bg-white/[0.05] hover:bg-white/[0.1] text-foreground font-medium px-4 py-2 rounded-xl transition-colors border border-border hover:border-white/[0.1] cursor-pointer shrink-0 disabled:opacity-50"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             {isImporting ? "Đang nhập..." : "Nhập CSV"}
@@ -144,7 +146,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
               className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer ${
                 filter === type 
                   ? 'bg-white text-black border-white' 
-                  : 'bg-[#121212] text-neutral-400 border-white/[0.05] hover:border-white/20'
+                  : 'bg-secondary border border-border hover:border-white/20'
               }`}
             >
               {type === 'ALL' ? 'Tất cả' : type === 'INCOME' ? 'Thu nhập' : type === 'EXPENSE' ? 'Chi tiêu' : 'Chuyển tiền'}
@@ -162,22 +164,27 @@ export default function TransactionsClient({ initialTransactions }: Transactions
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-[#121212] border border-white/[0.05] rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+              className="w-full bg-card border border-border rounded-xl pl-10 pr-4 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
             />
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
           </div>
         </div>
       </div>
 
-      <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-4 md:p-6 overflow-hidden">
+      <div className="bg-card border border-border rounded-3xl p-4 md:p-6 overflow-hidden">
         {paginatedTransactions.length === 0 ? (
-          <p className="text-sm text-neutral-500 text-center py-12">Không có giao dịch nào phù hợp.</p>
+          <EmptyState 
+            icon={ReceiptText}
+            title="Không tìm thấy giao dịch"
+            description="Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc của bạn."
+            className="py-12"
+          />
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead>
-                  <tr className="text-neutral-500 border-b border-white/[0.05]">
+                  <tr className="text-muted-foreground border-b border-border">
                     <th className="font-medium px-4 py-3 whitespace-nowrap">Thời gian</th>
                     <th className="font-medium px-4 py-3 whitespace-nowrap">Danh mục</th>
                     <th className="font-medium px-4 py-3 whitespace-nowrap">Quỹ</th>
@@ -188,16 +195,16 @@ export default function TransactionsClient({ initialTransactions }: Transactions
                 <tbody>
                   {paginatedTransactions.map(tx => (
                     <tr key={tx.id} className="border-b border-white/[0.02] hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-4 py-4 whitespace-nowrap text-neutral-400">
+                      <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
                         {new Date(tx.date!).toLocaleString('vi-VN')}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span>{tx.category?.icon || "📝"}</span>
-                          <span className="text-neutral-200">{tx.category?.name || "Khác"}</span>
+                          <span className="text-foreground">{tx.category?.name || "Khác"}</span>
                         </div>
                       </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-neutral-400">
+                      <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
                         {tx.fund?.name || "Khác"}
                       </td>
                       <td className="px-4 py-4 text-neutral-300 max-w-[200px] truncate">
@@ -213,8 +220,8 @@ export default function TransactionsClient({ initialTransactions }: Transactions
             </div>
             
             {totalPages > 1 && (
-              <div className="flex justify-between items-center mt-6 pt-4 border-t border-white/[0.05]">
-                <p className="text-xs text-neutral-500">
+              <div className="flex justify-between items-center mt-6 pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground">
                   Trang {currentPage} / {totalPages}
                 </p>
                 <div className="flex gap-2">

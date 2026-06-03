@@ -11,6 +11,8 @@ import { FundSelectorModal, type Fund } from "@/components/fund-selector-modal";
 import { createTransaction, deleteTransaction, getCashFlowData, getCategorySpendingData } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { EmptyState } from "@/components/empty-state";
+import { ReceiptText, PieChart } from "lucide-react";
 
 interface DashboardFund extends Fund {
   isDefault: boolean | null;
@@ -259,37 +261,37 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       {/* Transfer Modal */}
       {isTransferModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
+          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-white tracking-tight">Chuyển tiền</h2>
-              <button onClick={() => setTransferModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-neutral-400">
+              <h2 className="text-xl font-semibold text-foreground tracking-tight">Chuyển tiền</h2>
+              <button onClick={() => setTransferModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
             
             <div className="space-y-4 mb-6">
               <div>
-                <p className="text-xs text-neutral-500 mb-2 font-medium">Từ quỹ</p>
-                <div className="w-full bg-[#1A1A1A] border border-white/[0.05] rounded-xl px-4 py-3 text-neutral-300">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Từ quỹ</p>
+                <div className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-neutral-300">
                   {activeFund.name}
                 </div>
               </div>
               
               <div className="flex justify-center -my-2 relative z-10">
-                <div className="w-8 h-8 rounded-full bg-[#121212] border border-white/[0.05] flex items-center justify-center text-neutral-400">
+                <div className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
                 </div>
               </div>
               
               <div>
-                <p className="text-xs text-neutral-500 mb-2 font-medium">Đến quỹ</p>
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Đến quỹ</p>
                 <select 
                   value={transferToFund?.id || ''} 
                   onChange={(e) => {
                     const fund = initialData.allFunds.find(f => f.id === e.target.value);
                     if (fund) setTransferToFund(fund);
                   }}
-                  className="w-full bg-[#1A1A1A] border border-white/[0.05] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white/20 transition-colors"
+                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-white/20 transition-colors"
                 >
                   <option value="" disabled>-- Chọn quỹ đích --</option>
                   {initialData.allFunds.filter(f => f.id !== activeFund.id).map(f => (
@@ -299,8 +301,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               </div>
               
               <div>
-                <p className="text-xs text-neutral-500 mb-2 font-medium">Số tiền chuyển</p>
-                <div className="text-2xl font-mono text-white tracking-tight bg-[#1A1A1A] border border-white/[0.05] rounded-xl px-4 py-3">
+                <p className="text-xs text-muted-foreground mb-2 font-medium">Số tiền chuyển</p>
+                <div className="text-2xl font-mono text-foreground tracking-tight bg-secondary border border-border rounded-xl px-4 py-3">
                   {parseInt(amount || '0').toLocaleString('vi-VN')}đ
                 </div>
               </div>
@@ -322,20 +324,20 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <div className="flex justify-between items-center mb-6 md:mb-8">
           <div>
             <div className="flex items-center gap-3 mb-1">
-              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">Chào Kiệt 👋</h1>
-              <span className="text-[10px] md:text-xs font-medium text-neutral-400 font-mono hidden sm:inline-block border border-white/10 px-2 py-0.5 rounded text-neutral-500">
+              <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">Chào Kiệt 👋</h1>
+              <span className="text-[10px] md:text-xs font-medium text-muted-foreground font-mono hidden sm:inline-block border border-white/10 px-2 py-0.5 rounded text-muted-foreground">
                 {new Date().toLocaleDateString('vi-VN')}
               </span>
             </div>
-            <p className="text-sm text-neutral-400">Hôm nay bạn đã chi tiêu thế nào?</p>
+            <p className="text-sm text-muted-foreground">Hôm nay bạn đã chi tiêu thế nào?</p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-[#121212] border border-white/10 flex items-center justify-center cursor-pointer hover:bg-neutral-800 transition-colors shrink-0">
+          <div className="w-10 h-10 rounded-full bg-card border border-white/10 flex items-center justify-center cursor-pointer hover:bg-neutral-800 transition-colors shrink-0">
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="md:col-span-2 bg-[#121212] p-5 md:p-6 rounded-3xl border border-white/[0.04] flex flex-col justify-center relative overflow-hidden group">
+          <div className="md:col-span-2 bg-card p-5 md:p-6 rounded-3xl border border-border flex flex-col justify-center relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-40 transition-opacity">
                 {/* Decorative element */}
                 <svg width="100" height="100" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -345,7 +347,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
              </div>
              <div className="flex justify-between items-end">
                <div>
-                 <span className="text-[10px] uppercase tracking-widest text-neutral-500 mb-1 block font-medium">Tổng số dư</span>
+                 <span className="text-[10px] uppercase tracking-widest text-muted-foreground mb-1 block font-medium">Tổng số dư</span>
                  <div className="text-3xl md:text-4xl font-mono text-emerald-400 font-bold tracking-tighter">
                     {initialData.totalBalance.toLocaleString('vi-VN')}<span className="text-emerald-700">đ</span>
                  </div>
@@ -357,17 +359,17 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
              </div>
           </div>
 
-          <div className="bg-[#121212] border border-white/[0.04] rounded-3xl p-5 md:p-6 flex flex-col justify-center">
+          <div className="bg-card border border-border rounded-3xl p-5 md:p-6 flex flex-col justify-center">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-xs font-medium text-neutral-400 uppercase tracking-wider">Ngân sách T{new Date().getMonth() + 1}</h3>
-              <span className="text-[10px] text-neutral-500">
+              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ngân sách T{new Date().getMonth() + 1}</h3>
+              <span className="text-[10px] text-muted-foreground">
                 {initialData.totalBudgetMonth > 0 
                   ? `Còn lại ${((initialData.totalBudgetMonth - initialData.totalSpentMonth) / 1000000).toFixed(1)}M` 
                   : 'Chưa thiết lập'}
               </span>
             </div>
-            <div className="text-xl font-mono text-white mb-3">
-              {(initialData.totalSpentMonth / 1000000).toFixed(1)}M<span className="text-neutral-500 text-sm"> / {(initialData.totalBudgetMonth / 1000000).toFixed(1)}M</span>
+            <div className="text-xl font-mono text-foreground mb-3">
+              {(initialData.totalSpentMonth / 1000000).toFixed(1)}M<span className="text-muted-foreground text-sm"> / {(initialData.totalBudgetMonth / 1000000).toFixed(1)}M</span>
             </div>
             
             <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden relative">
@@ -383,10 +385,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4 md:px-0">
         <div className="lg:col-span-2 space-y-8">
           {/* Action Zone - Minimalist */}
-          <section className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8">
+          <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
             <div className="flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
-                <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Nhập nhanh (One-Tap)</h3>
+                <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Nhập nhanh (One-Tap)</h3>
                 <button 
                   onClick={() => setFundSelectorOpen(true)}
                   className="text-[10px] uppercase font-mono font-medium tracking-tight bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer"
@@ -401,7 +403,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                    <button 
                     key={template.id} 
                     onClick={() => applyTemplate(template)}
-                    className="px-4 py-2 border border-white/5 rounded-full bg-[#1A1A1A] hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-neutral-400 hover:text-neutral-200 cursor-pointer flex items-center gap-1.5"
+                    className="px-4 py-2 border border-white/5 rounded-full bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1.5"
                   >
                       <span>{template.category?.icon || "⚡"}</span>
                       <span>{template.title}</span>
@@ -409,7 +411,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 ))}
                 <button 
                   onClick={() => router.push('/settings?tab=shortcuts')}
-                  className="px-4 py-2 border border-white/5 rounded-full bg-[#1A1A1A]/50 hover:bg-[#1A1A1A] transition-all text-xs font-medium text-neutral-600 hover:text-neutral-400 cursor-pointer"
+                  className="px-4 py-2 border border-white/5 rounded-full bg-secondary/50 hover:bg-secondary transition-all text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground cursor-pointer"
                 >
                   +
                 </button>
@@ -422,7 +424,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                  <button 
                   key={template.id} 
                   onClick={() => applyTemplate(template)}
-                  className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-[#1A1A1A] hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-neutral-400 cursor-pointer flex items-center gap-1.5"
+                  className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground cursor-pointer flex items-center gap-1.5"
                  >
                     <span>{template.category?.icon || "⚡"}</span>
                     <span>{template.title}</span>
@@ -430,7 +432,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                ))}
                <button 
                 onClick={() => router.push('/settings?tab=shortcuts')}
-                className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-[#1A1A1A]/50 text-xs font-medium text-neutral-600 cursor-pointer"
+                className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-secondary/50 text-xs font-medium text-muted-foreground/60 cursor-pointer"
                >
                 + Thêm
                </button>
@@ -438,31 +440,31 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             
             <div className="space-y-6 md:space-y-8 mt-4 md:mt-8">
               <div className="relative group">
-                <label className="text-[10px] uppercase tracking-widest text-neutral-600 mb-2 block">Số tiền (VND)</label>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Số tiền (VND)</label>
                 <AmountInput 
                   value={amount}
                   onChange={setAmount}
                   placeholder="0" 
-                  className="w-full bg-transparent text-5xl md:text-7xl font-mono text-white py-2 focus:outline-none placeholder:text-neutral-800 text-center md:text-left border-b border-white/5 focus:border-white transition-colors pb-4" 
+                  className="w-full bg-transparent text-5xl md:text-7xl font-mono text-foreground py-2 focus:outline-none placeholder:text-neutral-800 text-center md:text-left border-b border-white/5 focus:border-white transition-colors pb-4" 
                 />
-                <span className="absolute right-0 bottom-6 text-neutral-600 text-xl font-mono hidden md:block">đ</span>
+                <span className="absolute right-0 bottom-6 text-muted-foreground/60 text-xl font-mono hidden md:block">đ</span>
               </div>
               
               <div className="relative">
-                <label className="text-[10px] uppercase tracking-widest text-neutral-600 mb-2 block">Ghi chú & Hashtag</label>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Ghi chú & Hashtag</label>
                 <input 
                   type="text" 
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Ví dụ: Ăn trưa #vui_ve" 
-                  className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 placeholder:text-neutral-600 transition-colors" 
+                  className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 placeholder:text-muted-foreground/60 transition-colors" 
                 />
                 <div className="flex flex-wrap gap-2 mt-3">
                   {hashtags.map(tag => (
                     <button 
                       key={tag}
                       onClick={() => setNote(prev => prev.includes(tag) ? prev : (prev ? `${prev} ${tag}` : tag))}
-                      className="text-[10px] px-2 py-1 rounded-full bg-white/[0.03] border border-white/[0.05] text-neutral-500 hover:text-neutral-300 hover:bg-white/[0.08] transition-all cursor-pointer"
+                      className="text-[10px] px-2 py-1 rounded-full bg-white/[0.03] border border-border text-muted-foreground hover:text-neutral-300 hover:bg-white/[0.08] transition-all cursor-pointer"
                     >
                       {tag}
                     </button>
@@ -492,14 +494,14 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 <button 
                   onClick={() => handleTransaction('BORROW')}
                   disabled={!amount || amount === '0' || isSubmitting}
-                  className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer disabled:opacity-40"
+                  className="py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
                 >
                   Đi vay
                 </button>
                 <button 
                   onClick={() => handleTransaction('LEND')}
                   disabled={!amount || amount === '0' || isSubmitting}
-                  className="py-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-white/[0.05] transition-all cursor-pointer disabled:opacity-40"
+                  className="py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
                 >
                   Cho vay
                 </button>
@@ -517,7 +519,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Financial Insights */}
           <section className="space-y-4">
             <div className="flex justify-between items-center px-2">
-              <h3 className="text-[10px] uppercase tracking-widest text-neutral-500 font-bold">Nhận định tài chính</h3>
+              <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Nhận định tài chính</h3>
               <button 
                 onClick={() => router.push('/charts')}
                 className="text-[10px] text-blue-500 font-medium hover:underline flex items-center gap-1"
@@ -528,7 +530,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
+              <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${diff <= 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -538,10 +540,10 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                       }
                     </svg>
                   </div>
-                  <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">So với tháng trước</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">So với tháng trước</h4>
                 </div>
                 <p className="text-sm text-neutral-300 leading-relaxed">
-                  Tháng này bạn đã tiêu <strong className="text-white">{initialData.totalSpentMonth.toLocaleString('vi-VN')}đ</strong>. 
+                  Tháng này bạn đã tiêu <strong className="text-foreground">{initialData.totalSpentMonth.toLocaleString('vi-VN')}đ</strong>. 
                   {diff <= 0 
                     ? ` Tiết kiệm được ${Math.abs(diff).toLocaleString('vi-VN')}đ (${percentageDiff}%) so với tháng trước.`
                     : ` Tăng ${diff.toLocaleString('vi-VN')}đ (${percentageDiff}%) so với tháng trước.`
@@ -550,17 +552,17 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                 <div className={`absolute bottom-0 left-0 h-1 transition-all duration-500 ${diff <= 0 ? 'bg-emerald-500 w-full opacity-20' : 'bg-rose-500 w-full opacity-20'}`}></div>
               </div>
 
-              <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
+              <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center ${parseFloat(budgetPercentage) <= 80 ? 'bg-blue-500/10 text-blue-500' : 'bg-orange-500/10 text-orange-500'}`}>
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="6" x2="12" y2="12"></line><line x1="16" y1="14" x2="12" y2="12"></line></svg>
                   </div>
-                  <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Ngân sách còn lại</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ngân sách còn lại</h4>
                 </div>
                 {initialData.totalBudgetMonth > 0 ? (
                   <>
                     <p className="text-sm text-neutral-300 leading-relaxed mb-4">
-                      Bạn còn <strong className="text-white">{budgetRemaining > 0 ? budgetRemaining.toLocaleString('vi-VN') : '0'}đ</strong> trong tổng hạn mức. Đã sử dụng {budgetPercentage}% ngân sách.
+                      Bạn còn <strong className="text-foreground">{budgetRemaining > 0 ? budgetRemaining.toLocaleString('vi-VN') : '0'}đ</strong> trong tổng hạn mức. Đã sử dụng {budgetPercentage}% ngân sách.
                     </p>
                     <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
                       <div 
@@ -570,19 +572,19 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                     </div>
                   </>
                 ) : (
-                  <p className="text-sm text-neutral-500 italic">Bạn chưa thiết lập hạn mức chi tiêu tổng cho tháng này.</p>
+                  <p className="text-sm text-muted-foreground italic">Bạn chưa thiết lập hạn mức chi tiêu tổng cho tháng này.</p>
                 )}
               </div>
 
-              <div className="bg-[#121212] border border-white/[0.04] p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
+              <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-8 h-8 rounded-full bg-purple-500/10 text-purple-500 flex items-center justify-center">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                   </div>
-                  <h4 className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Số dư & Tài sản</h4>
+                  <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Số dư & Tài sản</h4>
                 </div>
                 <p className="text-sm text-neutral-300 leading-relaxed">
-                  Tổng tài sản hiện tại là <strong className="text-white">{initialData.totalBalance.toLocaleString('vi-VN')}đ</strong> phân bổ trên {initialData.allFunds.length} quỹ. 
+                  Tổng tài sản hiện tại là <strong className="text-foreground">{initialData.totalBalance.toLocaleString('vi-VN')}đ</strong> phân bổ trên {initialData.allFunds.length} quỹ. 
                   {initialData.totalBalance > 10000000 ? " Tình hình tài chính của bạn đang rất ổn định." : " Hãy tiếp tục duy trì thói quen ghi chép nhé."}
                 </p>
                 <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -595,13 +597,18 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           {/* Category Budgets tracking */}
 
           {/* Category Budgets tracking */}
-          <section className="bg-[#121212] border border-white/[0.04] rounded-3xl p-6 md:p-8">
+          <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Ngân sách con đang theo dõi</h3>
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Ngân sách con đang theo dõi</h3>
             </div>
             <div className="space-y-6">
               {initialData.budgetTracking.length === 0 ? (
-                <p className="text-xs text-neutral-600 text-center py-4">Chưa có ngân sách nào được thiết lập</p>
+                <EmptyState 
+                  icon={PieChart}
+                  title="Chưa có ngân sách"
+                  description="Thiết lập ngân sách để theo dõi chi tiêu của bạn tốt hơn."
+                  className="py-4"
+                />
               ) : (
                 initialData.budgetTracking.map((budget, i) => {
                   const percent = Math.min((budget.spent / budget.amountLimit) * 100, 100);
@@ -613,8 +620,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                        <span className="font-medium text-neutral-300 flex items-center gap-2">
                          <span>{budget.category?.icon || "📝"}</span> {budget.category?.name}
                        </span>
-                       <span className="font-mono text-neutral-500">
-                         <span className={isNearingLimit ? "text-rose-400 font-bold" : "text-white"}>
+                       <span className="font-mono text-muted-foreground">
+                         <span className={isNearingLimit ? "text-rose-400 font-bold" : "text-foreground"}>
                            {(budget.spent / 1000000).toFixed(1)}M
                          </span> / {(budget.amountLimit / 1000000).toFixed(1)}M
                        </span>
@@ -636,23 +643,31 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         <section className="lg:pl-4 mt-8 lg:mt-0">
           <div className="sticky top-32">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xs uppercase tracking-widest text-neutral-500 font-medium">Giao dịch gần đây</h3>
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Giao dịch gần đây</h3>
               <button onClick={() => router.push('/transactions')} className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">Xem tất cả</button>
             </div>
             
             <div className="space-y-8">
               {Object.keys(groupedTransactions).length === 0 ? (
-                <p className="text-xs text-neutral-600 text-center py-8">Chưa có giao dịch nào</p>
+                <EmptyState 
+                  icon={ReceiptText}
+                  title="Chưa có giao dịch"
+                  description="Các giao dịch gần đây của bạn sẽ xuất hiện tại đây."
+                  className="py-8"
+                />
               ) : (
                 Object.entries(groupedTransactions).map(([date, txs]) => (
                   <div key={date} className="space-y-3">
                     <div className="flex items-center gap-3">
-                      <span className="text-[10px] uppercase tracking-[0.2em] text-neutral-600 font-bold">{date}</span>
+                      <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground/60 font-bold">{date}</span>
                       <div className="h-[1px] flex-1 bg-white/[0.03]"></div>
                     </div>
                     <div className="space-y-2">
                       {txs.map((tx) => (
-                        <div key={tx.id} className="p-4 rounded-3xl bg-[#121212] border border-white/[0.02] flex items-center justify-between hover:bg-[#161616] cursor-pointer transition-all hover:translate-x-1 group">
+                        <button 
+                          key={tx.id} 
+                          className="w-full p-4 rounded-3xl bg-card border border-border flex items-center justify-between hover:bg-secondary/50 cursor-pointer transition-all hover:translate-x-1 group text-left"
+                        >
                           <div className="flex items-center gap-4">
                             <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg shrink-0 shadow-inner transition-colors ${
                               tx.type === 'INCOME' || tx.type === 'BORROW' ? 'bg-emerald-500/10 text-emerald-400' : 
@@ -662,16 +677,16 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                               {tx.type === 'TRANSFER' ? '⇄' : (tx.category?.icon || (tx.type === 'INCOME' ? "💰" : "💸"))}
                             </div>
                             <div>
-                              <p className="text-sm text-neutral-200 font-medium mb-0.5">
+                              <p className="text-sm text-foreground font-medium mb-0.5">
                                 {tx.type === 'TRANSFER' ? (
                                   <>
-                                    {tx.fund?.name} <span className="text-neutral-500 mx-1">→</span> {tx.toFund?.name}
+                                    {tx.fund?.name} <span className="text-muted-foreground mx-1">→</span> {tx.toFund?.name}
                                   </>
                                 ) : (
                                   tx.note || tx.category?.name || "Giao dịch"
                                 )}
                               </p>
-                              <p className="text-[10px] text-neutral-500 font-mono tracking-tight uppercase">
+                              <p className="text-[10px] text-muted-foreground font-mono tracking-tight uppercase">
                                 {tx.type === 'TRANSFER' ? 'Chuyển quỹ' : (tx.category?.name || (tx.type === 'INCOME' ? 'Thu nhập' : 'Chi tiêu'))}
                               </p>
                             </div>
@@ -683,7 +698,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                           }`}>
                             {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
                           </span>
-                        </div>
+                        </button>
                       ))}
                     </div>
                   </div>

@@ -52,11 +52,11 @@ export function AmountInput({ value, onChange, className, placeholder }: AmountI
         className={className}
       />
       {textValue && (
-        <div className="text-sm text-neutral-400 mt-2 min-h-5 italic">{textValue}</div>
+        <div className="text-sm text-muted-foreground mt-2 min-h-5 italic">{textValue}</div>
       )}
       
       {showSuggestions && value && (
-        <div className="absolute z-10 w-full mt-2 bg-[#1A1A1A] border border-white/[0.05] rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 flex flex-col md:w-64 md:left-0">
+        <div className="absolute z-10 w-full mt-2 bg-secondary border border-border rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 flex flex-col md:w-64 md:left-0">
           <div className="flex flex-col p-2 gap-1">
             {[
               { mult: 100, label: "x100" },
@@ -69,10 +69,10 @@ export function AmountInput({ value, onChange, className, placeholder }: AmountI
                 <button
                   key={sug.mult}
                   onClick={() => handleSuggestionClick(sug.mult)}
-                  className="px-4 py-3 rounded-xl bg-[#222222] hover:bg-white/[0.08] transition-all cursor-pointer border border-white/[0.02] hover:border-white/10 flex items-center justify-between group"
+                  className="px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-all cursor-pointer border border-border flex items-center justify-between group"
                 >
-                  <span className="text-[10px] uppercase tracking-widest text-neutral-500 group-hover:text-neutral-300 font-medium">{sug.label}</span>
-                  <span className="font-mono text-white text-base font-semibold">{suggestedFormatted}<span className="text-neutral-600 ml-1">đ</span></span>
+                  <span className="text-[10px] uppercase tracking-widest text-muted-foreground group-hover:text-foreground font-medium">{sug.label}</span>
+                  <span className="font-mono text-foreground text-base font-semibold">{suggestedFormatted}<span className="text-muted-foreground ml-1">đ</span></span>
                 </button>
               )
             })}
