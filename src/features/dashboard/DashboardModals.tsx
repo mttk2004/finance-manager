@@ -21,6 +21,7 @@ interface DashboardModalsProps {
   amount: string;
   handleTransfer: () => Promise<void>;
   isSubmitting: boolean;
+  isPending: boolean;
 }
 
 export function DashboardModals({
@@ -38,8 +39,11 @@ export function DashboardModals({
   setTransferToFund,
   amount,
   handleTransfer,
-  isSubmitting
+  isSubmitting,
+  isPending
 }: DashboardModalsProps) {
+  const isLoading = isSubmitting || isPending;
+
   return (
     <>
       <DailyReminderModal show={showReminder} />
@@ -60,7 +64,11 @@ export function DashboardModals({
           <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-foreground tracking-tight">Chuyển tiền</h2>
-              <button onClick={() => setTransferModalOpen(false)} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground cursor-pointer">
+              <button 
+                onClick={() => setTransferModalOpen(false)} 
+                disabled={isLoading}
+                className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground cursor-pointer disabled:opacity-50"
+              >
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
@@ -87,7 +95,8 @@ export function DashboardModals({
                     const fund = funds.find(f => f.id === e.target.value);
                     if (fund) setTransferToFund(fund);
                   }}
-                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-white/20 transition-colors"
+                  disabled={isLoading}
+                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-white/20 transition-colors disabled:opacity-50"
                 >
                   <option value="" disabled>-- Chọn quỹ đích --</option>
                   {funds.filter(f => f.id !== activeFund.id).map(f => (
@@ -106,10 +115,10 @@ export function DashboardModals({
 
             <button 
               onClick={handleTransfer}
-              disabled={isSubmitting || !transferToFund}
+              disabled={isLoading || !transferToFund}
               className="w-full py-4 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "ĐANG CHUYỂN..." : "XÁC NHẬN CHUYỂN"}
+              {isLoading ? "ĐANG CHUYỂN..." : "XÁC NHẬN CHUYỂN"}
             </button>
           </div>
         </div>

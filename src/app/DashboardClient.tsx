@@ -162,6 +162,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         amount={transferAmount}
         handleTransfer={handleTransfer}
         isSubmitting={isSubmitting}
+        isPending={isPending}
       />
 
       <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
@@ -181,6 +182,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               onOpenTransferModal={() => setTransferModalOpen(true)}
               handleTransaction={handleTransaction}
               isSubmitting={isSubmitting}
+              isPending={isPending}
             />
 
             <FinancialInsights 

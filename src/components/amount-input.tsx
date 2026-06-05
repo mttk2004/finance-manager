@@ -8,9 +8,10 @@ interface AmountInputProps {
   onChange: (value: string) => void;
   className?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
-export function AmountInput({ value, onChange, className, placeholder }: AmountInputProps) {
+export function AmountInput({ value, onChange, className, placeholder, disabled }: AmountInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Function to format number with spaces
@@ -44,18 +45,21 @@ export function AmountInput({ value, onChange, className, placeholder }: AmountI
       <input
         type="text"
         inputMode="numeric"
+        pattern="[0-9]*"
         placeholder={placeholder || "0"}
         value={displayValue}
         onChange={handleInputChange}
-        onFocus={() => { if (value.length > 0 && value.length < 5) setShowSuggestions(true); }}
+        onFocus={() => { if (value.length > 0 && value.length < 5 && !disabled) setShowSuggestions(true); }}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
         className={className}
+        disabled={disabled}
+        aria-label="Số tiền"
       />
       {textValue && (
         <div className="text-sm text-muted-foreground mt-2 min-h-5 italic">{textValue}</div>
       )}
       
-      {showSuggestions && value && (
+      {showSuggestions && value && !disabled && (
         <div className="absolute z-10 w-full mt-2 bg-secondary border border-border rounded-2xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-2 flex flex-col md:w-64 md:left-0">
           <div className="flex flex-col p-2 gap-1">
             {[
@@ -68,6 +72,7 @@ export function AmountInput({ value, onChange, className, placeholder }: AmountI
               return (
                 <button
                   key={sug.mult}
+                  type="button"
                   onClick={() => handleSuggestionClick(sug.mult)}
                   className="px-4 py-3 rounded-xl bg-secondary hover:bg-secondary/80 transition-all cursor-pointer border border-border flex items-center justify-between group"
                 >

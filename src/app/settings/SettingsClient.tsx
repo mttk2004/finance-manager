@@ -61,7 +61,7 @@ interface SettingsClientProps {
 export default function SettingsClient({ initialFunds, initialCategories, initialBudgets, initialTemplates, currentMonthPeriod }: SettingsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
+  const [isPending, startTransition] = useTransition();
   
   const activeTab = searchParams.get("tab") || "funds";
 
@@ -75,6 +75,9 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const [fundToDelete, setFundToDelete] = useState<Fund | null>(null);
   const [fundName, setFundName] = useState("");
   const [fundBalance, setFundBalance] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const isLoading = isSubmitting || isPending;
 
   // --- Category States ---
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -430,15 +433,16 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
           <div className="space-y-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-medium text-foreground">Quản lý Quỹ (Funds)</h3>
-              <button 
+              <button
                 onClick={() => {
                   if (isAddingFund || editingFundId) {
                     resetFundForm();
                   } else {
                     setIsAddingFund(true);
                   }
-                }} 
-                className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+                }}
+                disabled={isLoading}
+                className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isAddingFund || editingFundId ? "Hủy" : "+ Thêm quỹ mới"}
               </button>
