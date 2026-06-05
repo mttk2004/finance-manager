@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { budgets, categories, globalSettings } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { revalidatePath, unstable_cache } from 'next/cache';
+import { unstable_cache } from 'next/cache';
 
 export const getCachedGlobalBudgets = unstable_cache(
   async () => {
@@ -64,7 +64,7 @@ export async function upsertBudget(data: {
       .set({ amountLimit: data.amountLimit, isOverride: data.isOverride ?? true })
       .where(eq(budgets.id, existing.id))
       .returning();
-    revalidatePath('/', 'layout');
+    
     return updated;
   } else {
     const [created] = await db.insert(budgets)
@@ -75,7 +75,6 @@ export async function upsertBudget(data: {
         isOverride: data.isOverride ?? true
       })
       .returning();
-    revalidatePath('/', 'layout');
     return created;
   }
 }
@@ -93,13 +92,11 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
       .set({ value: newValues, updatedAt: new Date() })
       .where(eq(globalSettings.id, existing.id))
       .returning();
-    revalidatePath('/', 'layout');
     return result;
   } else {
     const result = await db.insert(globalSettings)
       .values({ key: 'global_budgets', value: newValues })
       .returning();
-    revalidatePath('/', 'layout');
     return result;
   }
 }

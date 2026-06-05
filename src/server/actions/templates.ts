@@ -3,7 +3,6 @@
 import { db } from '@/lib/db';
 import { templates } from '@/lib/db/schema';
 import { desc, eq } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
 
 export async function getTemplates() {
   return await db.query.templates.findMany({
@@ -25,7 +24,7 @@ export async function createTemplate(data: {
     ...data,
   }).returning();
   
-  revalidatePath('/', 'layout');
+  
   return newTemplate;
 }
 
@@ -43,12 +42,10 @@ export async function updateTemplate(id: string, data: {
     .where(eq(templates.id, id))
     .returning();
   
-  revalidatePath('/', 'layout');
   return updatedTemplate;
 }
 
 export async function deleteTemplate(id: string) {
   const result = await db.delete(templates).where(eq(templates.id, id)).returning();
-  revalidatePath('/', 'layout');
   return result;
 }

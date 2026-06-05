@@ -64,26 +64,33 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const [fundBalance, setFundBalance] = useState("");
 
   // --- Mutations ---
-  const invalidateAll = () => {
-    queryClient.invalidateQueries({ queryKey: ['funds'] });
-    queryClient.invalidateQueries({ queryKey: ['categories'] });
-    queryClient.invalidateQueries({ queryKey: ['budgets'] });
-    queryClient.invalidateQueries({ queryKey: ['templates'] });
-    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    queryClient.invalidateQueries({ queryKey: ['transactions'] });
-  };
-
   const fundMutations = {
     create: useMutation({
       mutationFn: createFund,
-      onMutate: () => resetFundForm(),
-      onSuccess: () => invalidateAll(),
-      onError: () => toast.error("Lỗi khi thêm quỹ")
+      onMutate: async (newFund) => {
+        resetFundForm();
+        toast.success("Đã thêm quỹ mới");
+        await queryClient.cancelQueries({ queryKey: ['funds'] });
+        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+        if (previousFunds) {
+          queryClient.setQueryData(['funds'], [...previousFunds, { id: Date.now().toString(), ...newFund, isDefault: previousFunds.length === 0, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Fund]);
+        }
+        return { previousFunds };
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['funds'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      },
+      onError: (err, newV, context) => {
+        if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
+        toast.error("Lỗi khi thêm quỹ");
+      }
     }),
     update: useMutation({
       mutationFn: (vars: { id: string, data: any }) => updateFund(vars.id, vars.data),
       onMutate: async ({ id, data }) => {
         resetFundForm();
+        toast.success("Đã cập nhật quỹ");
         await queryClient.cancelQueries({ queryKey: ['funds'] });
         const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
         if (previousFunds) {
@@ -93,17 +100,20 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         }
         return { previousFunds };
       },
-      onSuccess: () => invalidateAll(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['funds'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      },
       onError: (err, newV, context) => {
         if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
         toast.error("Lỗi khi cập nhật quỹ");
       },
-      onSettled: () => invalidateAll()
     }),
     delete: useMutation({
       mutationFn: deleteFund,
       onMutate: async (id) => {
         setFundToDelete(null);
+        toast.success("Đã xóa quỹ");
         await queryClient.cancelQueries({ queryKey: ['funds'] });
         const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
         if (previousFunds) {
@@ -111,16 +121,20 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         }
         return { previousFunds };
       },
-      onSuccess: () => invalidateAll(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['funds'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      },
       onError: (err, newV, context) => {
         if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
         toast.error(err instanceof Error ? err.message : "Lỗi khi xóa quỹ");
       },
-      onSettled: () => invalidateAll()
     }),
     setDefault: useMutation({
       mutationFn: setDefaultFund,
       onMutate: async (id) => {
+        toast.success("Đã thay đổi quỹ mặc định");
         await queryClient.cancelQueries({ queryKey: ['funds'] });
         const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
         if (previousFunds) {
@@ -131,30 +145,45 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         }
         return { previousFunds };
       },
-      onSuccess: () => { toast.success("Đã thay đổi quỹ mặc định"); },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['funds'] });
+      },
       onError: (err, newV, context) => {
         if (context?.previousFunds) {
           queryClient.setQueryData(['funds'], context.previousFunds);
         }
         toast.error("Lỗi khi thay đổi quỹ");
       },
-      onSettled: () => {
-        invalidateAll();
-      }
     })
   };
 
   const categoryMutations = {
     create: useMutation({
       mutationFn: createCategory,
-      onMutate: () => resetCategoryForm(),
-      onSuccess: () => invalidateAll(),
-      onError: () => toast.error("Lỗi khi thêm danh mục")
+      onMutate: async (newCat) => {
+        resetCategoryForm();
+        toast.success("Đã thêm danh mục mới");
+        await queryClient.cancelQueries({ queryKey: ['categories'] });
+        const previous = queryClient.getQueryData<Category[]>(['categories']);
+        if (previous) {
+          queryClient.setQueryData(['categories'], [...previous, { id: Date.now().toString(), ...newCat, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Category]);
+        }
+        return { previous };
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      },
+      onError: (err, newV, context) => {
+        if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
+        toast.error("Lỗi khi thêm danh mục");
+      }
     }),
     update: useMutation({
       mutationFn: (vars: { id: string, data: any }) => updateCategory(vars.id, vars.data),
       onMutate: async ({ id, data }) => {
         resetCategoryForm();
+        toast.success("Đã cập nhật danh mục");
         await queryClient.cancelQueries({ queryKey: ['categories'] });
         const previous = queryClient.getQueryData<Category[]>(['categories']);
         if (previous) {
@@ -164,16 +193,20 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         }
         return { previous };
       },
-      onSuccess: () => invalidateAll(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      },
       onError: (err, newV, context) => {
         if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
         toast.error("Lỗi khi cập nhật danh mục");
       },
-      onSettled: () => invalidateAll()
     }),
     delete: useMutation({
       mutationFn: deleteCategory,
       onMutate: async (id) => {
+        toast.success("Đã xóa danh mục");
         await queryClient.cancelQueries({ queryKey: ['categories'] });
         const previous = queryClient.getQueryData<Category[]>(['categories']);
         if (previous) {
@@ -181,12 +214,15 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         }
         return { previous };
       },
-      onSuccess: () => invalidateAll(),
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['categories'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      },
       onError: (err, newV, context) => {
         if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
         toast.error("Lỗi khi xóa danh mục");
       },
-      onSettled: () => invalidateAll()
     })
   };
 
@@ -194,6 +230,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     mutationFn: upsertBudget,
     onMutate: async (data) => {
       resetBudgetForm();
+      toast.success("Đã cập nhật ngân sách");
       const queryKey = ['budgets', currentMonthPeriod];
       await queryClient.cancelQueries({ queryKey });
       const previous = queryClient.getQueryData<Budget[]>(queryKey);
@@ -202,25 +239,37 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
       }
       return { previous, queryKey };
     },
-    onSuccess: () => invalidateAll(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] }),
     onError: (err, newV, context) => {
       if (context?.previous) queryClient.setQueryData(context.queryKey, context.previous);
       toast.error("Lỗi khi cập nhật ngân sách");
     },
-    onSettled: () => invalidateAll()
   });
 
   const templateMutations = {
     create: useMutation({
       mutationFn: createTemplate,
-      onMutate: () => resetTemplateForm(),
-      onSuccess: () => { invalidateAll(); toast.success("Đã thêm lối tắt mới"); },
-      onError: () => toast.error("Lỗi khi thêm lối tắt")
+      onMutate: async (newTpl) => {
+        resetTemplateForm();
+        toast.success("Đã thêm lối tắt mới");
+        await queryClient.cancelQueries({ queryKey: ['templates'] });
+        const previous = queryClient.getQueryData<Template[]>(['templates']);
+        if (previous) {
+          queryClient.setQueryData(['templates'], [...previous, { id: Date.now().toString(), ...newTpl, createdAt: new Date() } as unknown as Template]);
+        }
+        return { previous };
+      },
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['templates'] }),
+      onError: (err, newV, context) => {
+        if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
+        toast.error("Lỗi khi thêm lối tắt");
+      }
     }),
     update: useMutation({
       mutationFn: (vars: { id: string, data: any }) => updateTemplate(vars.id, vars.data),
       onMutate: async ({ id, data }) => {
         resetTemplateForm();
+        toast.success("Đã cập nhật lối tắt");
         await queryClient.cancelQueries({ queryKey: ['templates'] });
         const previous = queryClient.getQueryData<Template[]>(['templates']);
         if (previous) {
@@ -230,17 +279,17 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         }
         return { previous };
       },
-      onSuccess: () => { invalidateAll(); toast.success("Đã cập nhật lối tắt"); },
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['templates'] }),
       onError: (err, newV, context) => {
         if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
         toast.error("Lỗi khi cập nhật lối tắt");
       },
-      onSettled: () => invalidateAll()
     }),
     delete: useMutation({
       mutationFn: deleteTemplate,
       onMutate: async (id) => {
         setTemplateToDelete(null);
+        toast.success("Đã xóa lối tắt");
         await queryClient.cancelQueries({ queryKey: ['templates'] });
         const previous = queryClient.getQueryData<Template[]>(['templates']);
         if (previous) {
@@ -248,19 +297,18 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
         }
         return { previous };
       },
-      onSuccess: () => { invalidateAll(); toast.success("Đã xóa lối tắt"); },
+      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['templates'] }),
       onError: (err, newV, context) => {
         if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
         toast.error("Lỗi khi xóa lối tắt");
       },
-      onSettled: () => invalidateAll()
     })
   };
 
   const resetMutation = useMutation({
     mutationFn: resetData,
     onSuccess: () => {
-      invalidateAll();
+      queryClient.invalidateQueries();
       setIsResetConfirmOpen(false);
       toast.success("Đã xóa toàn bộ dữ liệu và thiết lập lại mặc định!");
     },

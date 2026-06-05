@@ -3,7 +3,6 @@
 import { db } from '@/lib/db';
 import { transactions, funds, categories } from '@/lib/db/schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
 
 export async function createTransaction(data: {
   fundId: string;
@@ -73,7 +72,7 @@ export async function createTransaction(data: {
       }
     }
 
-    revalidatePath('/', 'layout');
+    
     return newTx;
   });
 }
@@ -117,7 +116,6 @@ export async function deleteTransaction(id: string) {
 
     await tx.delete(transactions).where(eq(transactions.id, id));
     
-    revalidatePath('/', 'layout');
     return true;
   });
 }
@@ -185,7 +183,6 @@ export async function importTransactions(csvText: string) {
     return importedCount;
   });
 
-  revalidatePath('/', 'layout');
   return { success: true, count: results };
 }
 

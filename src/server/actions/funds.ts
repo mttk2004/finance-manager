@@ -3,7 +3,6 @@
 import { db } from '@/lib/db';
 import { funds } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
 
 export async function getFunds() {
   return await db.select({
@@ -24,7 +23,7 @@ export async function createFund(data: {
     isDefault: false,
   }).returning();
 
-  revalidatePath('/', 'layout');
+  
   return newFund;
 }
 
@@ -40,7 +39,6 @@ export async function updateFund(id: string, data: {
     .where(eq(funds.id, id))
     .returning();
   
-  revalidatePath('/', 'layout');
   return updatedFund;
 }
 
@@ -54,7 +52,6 @@ export async function deleteFund(id: string) {
   }
 
   const result = await db.delete(funds).where(eq(funds.id, id)).returning();
-  revalidatePath('/', 'layout');
   return result;
 }
 
@@ -62,7 +59,6 @@ export async function setDefaultFund(id: string) {
   return await db.transaction(async (tx) => {
     await tx.update(funds).set({ isDefault: false });
     const [updated] = await tx.update(funds).set({ isDefault: true }).where(eq(funds.id, id)).returning();
-    revalidatePath('/', 'layout');
     return updated;
   });
 }
