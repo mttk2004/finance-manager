@@ -4,20 +4,14 @@ import "./globals.css";
 import { BottomNav } from "@/components/bottom-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/components/theme-provider";
+import QueryProvider from "@/components/query-provider";
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin", "vietnamese"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin", "vietnamese"],
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" });
 
 export const metadata: Metadata = {
-  title: "Personal Finance Manager",
-  description: "Minimalist personal finance manager with multi-fund support and smart insights.",
+  title: "Tài chính cá nhân",
+  description: "Quản lý tài chính cá nhân thông minh",
 };
 
 export default function RootLayout({
@@ -27,22 +21,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi" suppressHydrationWarning>
-      <body
-        className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased bg-background text-foreground min-h-screen overflow-x-hidden transition-colors duration-300`}
-      >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <div className="w-full max-w-7xl mx-auto flex flex-col min-h-screen">
-            <BottomNav />
-            <div className="flex-1 pb-16 md:pb-0 md:pt-20 md:px-8 overflow-y-auto w-full">
-              {children}
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased selection:bg-emerald-500/30`}>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <QueryProvider>
+            <div className="flex flex-col min-h-screen bg-background">
+              <BottomNav />
+              <div className="flex-1 pb-20 md:pb-0 md:pt-20 md:px-8 overflow-y-auto w-full">
+                {children}
+              </div>
             </div>
-          </div>
-          <Toaster position="top-center" expand={false} richColors />
+            <Toaster position="top-center" expand={false} richColors />
+          </QueryProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -185,13 +185,14 @@ export async function getDashboardData() {
   const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
+  // 1. Optimized parallel queries
   const [
     allFunds,
     recentTransactions,
-    monthTransactions,
+    monthAggregates,
+    lastMonthAggregates,
     monthBudgets,
     expenseCategories,
-    lastMonthTransactions,
     hasTransactionsYesterday,
     allCategories,
     initialCashFlow,
@@ -200,71 +201,44 @@ export async function getDashboardData() {
   ] = await Promise.all([
     db.select({ id: funds.id, name: funds.name, balance: funds.balance, isDefault: funds.isDefault }).from(funds),
     db.query.transactions.findMany({
-      columns: {
-        id: true,
-        amount: true,
-        type: true,
-        date: true,
-        note: true,
-      },
+      columns: { id: true, amount: true, type: true, date: true, note: true },
       with: {
-        category: {
-          columns: {
-            id: true,
-            name: true,
-            icon: true,
-          }
-        },
-        fund: {
-          columns: {
-            name: true,
-          }
-        },
-        toFund: {
-          columns: {
-            name: true,
-          }
-        },
+        category: { columns: { id: true, name: true, icon: true } },
+        fund: { columns: { name: true } },
+        toFund: { columns: { name: true } },
       },
       orderBy: [desc(transactions.date)],
       limit: 5,
     }),
-    db.query.transactions.findMany({
-      where: and(
-        gte(transactions.date, startOfMonth),
-        lt(transactions.date, startOfNextMonth),
-        eq(transactions.type, 'EXPENSE')
-      ),
-      columns: {
-        amount: true,
-        categoryId: true,
-      }
-    }),
+    // Current month spent by category
+    db.select({ 
+      categoryId: transactions.categoryId, 
+      total: sql<number>`sum(${transactions.amount})::int` 
+    })
+    .from(transactions)
+    .where(and(
+      gte(transactions.date, startOfMonth),
+      lt(transactions.date, startOfNextMonth),
+      eq(transactions.type, 'EXPENSE')
+    ))
+    .groupBy(transactions.categoryId),
+    // Last month total spent
+    db.select({ 
+      total: sql<number>`sum(${transactions.amount})::int` 
+    })
+    .from(transactions)
+    .where(and(
+      gte(transactions.date, startOfLastMonth),
+      lt(transactions.date, new Date(endOfLastMonth.getTime() + 86400000)),
+      eq(transactions.type, 'EXPENSE')
+    )),
     db.query.budgets.findMany({
       where: eq(budgets.period, currentMonthPeriod),
-      columns: {
-        id: true,
-        amountLimit: true,
-        categoryId: true,
-      }
+      columns: { id: true, amountLimit: true, categoryId: true }
     }),
     db.query.categories.findMany({
       where: eq(categories.type, 'EXPENSE'),
-      columns: {
-        id: true,
-        name: true,
-        icon: true,
-      }
-    }),
-    db.query.transactions.findMany({
-      where: and(
-        gte(transactions.date, startOfLastMonth),
-        lt(transactions.date, new Date(endOfLastMonth.getTime() + 86400000)),
-        eq(transactions.type, 'EXPENSE')
-      ),
-      columns: {
-        amount: true,
-      }
+      columns: { id: true, name: true, icon: true }
     }),
     checkTransactionsYesterday(),
     getCachedCategories(),
@@ -273,30 +247,31 @@ export async function getDashboardData() {
     getCachedGlobalBudgets()
   ]);
 
+  const spendingByCategory = monthAggregates.reduce((acc, curr) => {
+    if (curr.categoryId) acc[curr.categoryId] = curr.total;
+    return acc;
+  }, {} as Record<string, number>);
+
   const budgetTracking = expenseCategories.map(cat => {
     const override = monthBudgets.find(b => b.categoryId === cat.id);
     const limit = override ? override.amountLimit : (globalBudgets[cat.id] || 0);
     
-    if (limit === 0 && !override) return null; // Skip categories with no budget set
-
-    const spent = monthTransactions
-      .filter(tx => tx.categoryId === cat.id)
-      .reduce((acc, tx) => acc + tx.amount, 0);
+    if (limit === 0 && !override) return null;
 
     return {
       id: override?.id || cat.id,
       categoryId: cat.id,
       amountLimit: limit,
       period: currentMonthPeriod,
-      spent,
+      spent: spendingByCategory[cat.id] || 0,
       category: cat,
       isOverride: !!override
     };
   }).filter((b): b is NonNullable<typeof b> => b !== null);
 
-  const totalSpentMonth = monthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
+  const totalSpentMonth = Object.values(spendingByCategory).reduce((acc, val) => acc + val, 0);
   const totalBudgetMonth = budgetTracking.reduce((acc, b) => acc + b.amountLimit, 0);
-  const totalSpentLastMonth = lastMonthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
+  const totalSpentLastMonth = lastMonthAggregates[0]?.total || 0;
   const totalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
   
   return {
