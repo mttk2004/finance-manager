@@ -76,65 +76,184 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const fundMutations = {
     create: useMutation({
       mutationFn: createFund,
-      onSuccess: () => { invalidateAll(); resetFundForm(); },
+      onMutate: () => resetFundForm(),
+      onSuccess: () => invalidateAll(),
       onError: () => toast.error("Lỗi khi thêm quỹ")
     }),
     update: useMutation({
       mutationFn: (vars: { id: string, data: any }) => updateFund(vars.id, vars.data),
-      onSuccess: () => { invalidateAll(); resetFundForm(); },
-      onError: () => toast.error("Lỗi khi cập nhật quỹ")
+      onMutate: async ({ id, data }) => {
+        resetFundForm();
+        await queryClient.cancelQueries({ queryKey: ['funds'] });
+        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+        if (previousFunds) {
+          queryClient.setQueryData(['funds'], previousFunds.map(f => 
+            f.id === id ? { ...f, ...data } : f
+          ));
+        }
+        return { previousFunds };
+      },
+      onSuccess: () => invalidateAll(),
+      onError: (err, newV, context) => {
+        if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
+        toast.error("Lỗi khi cập nhật quỹ");
+      },
+      onSettled: () => invalidateAll()
     }),
     delete: useMutation({
       mutationFn: deleteFund,
-      onSuccess: () => { invalidateAll(); setFundToDelete(null); },
-      onError: (err) => toast.error(err instanceof Error ? err.message : "Lỗi khi xóa quỹ")
+      onMutate: async (id) => {
+        setFundToDelete(null);
+        await queryClient.cancelQueries({ queryKey: ['funds'] });
+        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+        if (previousFunds) {
+          queryClient.setQueryData(['funds'], previousFunds.filter(f => f.id !== id));
+        }
+        return { previousFunds };
+      },
+      onSuccess: () => invalidateAll(),
+      onError: (err, newV, context) => {
+        if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
+        toast.error(err instanceof Error ? err.message : "Lỗi khi xóa quỹ");
+      },
+      onSettled: () => invalidateAll()
     }),
     setDefault: useMutation({
       mutationFn: setDefaultFund,
-      onSuccess: () => { invalidateAll(); toast.success("Đã thay đổi quỹ mặc định"); },
-      onError: () => toast.error("Lỗi khi thay đổi quỹ")
+      onMutate: async (id) => {
+        await queryClient.cancelQueries({ queryKey: ['funds'] });
+        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+        if (previousFunds) {
+          queryClient.setQueryData(['funds'], previousFunds.map(f => ({
+            ...f,
+            isDefault: f.id === id
+          })));
+        }
+        return { previousFunds };
+      },
+      onSuccess: () => { toast.success("Đã thay đổi quỹ mặc định"); },
+      onError: (err, newV, context) => {
+        if (context?.previousFunds) {
+          queryClient.setQueryData(['funds'], context.previousFunds);
+        }
+        toast.error("Lỗi khi thay đổi quỹ");
+      },
+      onSettled: () => {
+        invalidateAll();
+      }
     })
   };
 
   const categoryMutations = {
     create: useMutation({
       mutationFn: createCategory,
-      onSuccess: () => { invalidateAll(); resetCategoryForm(); },
+      onMutate: () => resetCategoryForm(),
+      onSuccess: () => invalidateAll(),
       onError: () => toast.error("Lỗi khi thêm danh mục")
     }),
     update: useMutation({
       mutationFn: (vars: { id: string, data: any }) => updateCategory(vars.id, vars.data),
-      onSuccess: () => { invalidateAll(); resetCategoryForm(); },
-      onError: () => toast.error("Lỗi khi cập nhật danh mục")
+      onMutate: async ({ id, data }) => {
+        resetCategoryForm();
+        await queryClient.cancelQueries({ queryKey: ['categories'] });
+        const previous = queryClient.getQueryData<Category[]>(['categories']);
+        if (previous) {
+          queryClient.setQueryData(['categories'], previous.map(c => 
+            c.id === id ? { ...c, ...data } : c
+          ));
+        }
+        return { previous };
+      },
+      onSuccess: () => invalidateAll(),
+      onError: (err, newV, context) => {
+        if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
+        toast.error("Lỗi khi cập nhật danh mục");
+      },
+      onSettled: () => invalidateAll()
     }),
     delete: useMutation({
       mutationFn: deleteCategory,
+      onMutate: async (id) => {
+        await queryClient.cancelQueries({ queryKey: ['categories'] });
+        const previous = queryClient.getQueryData<Category[]>(['categories']);
+        if (previous) {
+          queryClient.setQueryData(['categories'], previous.filter(c => c.id !== id));
+        }
+        return { previous };
+      },
       onSuccess: () => invalidateAll(),
-      onError: () => toast.error("Lỗi khi xóa danh mục")
+      onError: (err, newV, context) => {
+        if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
+        toast.error("Lỗi khi xóa danh mục");
+      },
+      onSettled: () => invalidateAll()
     })
   };
 
   const budgetMutation = useMutation({
     mutationFn: upsertBudget,
-    onSuccess: () => { invalidateAll(); resetBudgetForm(); },
-    onError: () => toast.error("Lỗi khi cập nhật ngân sách")
+    onMutate: async (data) => {
+      resetBudgetForm();
+      const queryKey = ['budgets', currentMonthPeriod];
+      await queryClient.cancelQueries({ queryKey });
+      const previous = queryClient.getQueryData<Budget[]>(queryKey);
+      if (previous) {
+        queryClient.setQueryData(queryKey, [...previous.filter(b => b.categoryId !== data.categoryId), data as any]);
+      }
+      return { previous, queryKey };
+    },
+    onSuccess: () => invalidateAll(),
+    onError: (err, newV, context) => {
+      if (context?.previous) queryClient.setQueryData(context.queryKey, context.previous);
+      toast.error("Lỗi khi cập nhật ngân sách");
+    },
+    onSettled: () => invalidateAll()
   });
 
   const templateMutations = {
     create: useMutation({
       mutationFn: createTemplate,
-      onSuccess: () => { invalidateAll(); resetTemplateForm(); toast.success("Đã thêm lối tắt mới"); },
+      onMutate: () => resetTemplateForm(),
+      onSuccess: () => { invalidateAll(); toast.success("Đã thêm lối tắt mới"); },
       onError: () => toast.error("Lỗi khi thêm lối tắt")
     }),
     update: useMutation({
       mutationFn: (vars: { id: string, data: any }) => updateTemplate(vars.id, vars.data),
-      onSuccess: () => { invalidateAll(); resetTemplateForm(); toast.success("Đã cập nhật lối tắt"); },
-      onError: () => toast.error("Lỗi khi cập nhật lối tắt")
+      onMutate: async ({ id, data }) => {
+        resetTemplateForm();
+        await queryClient.cancelQueries({ queryKey: ['templates'] });
+        const previous = queryClient.getQueryData<Template[]>(['templates']);
+        if (previous) {
+          queryClient.setQueryData(['templates'], previous.map(t => 
+            t.id === id ? { ...t, ...data } : t
+          ));
+        }
+        return { previous };
+      },
+      onSuccess: () => { invalidateAll(); toast.success("Đã cập nhật lối tắt"); },
+      onError: (err, newV, context) => {
+        if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
+        toast.error("Lỗi khi cập nhật lối tắt");
+      },
+      onSettled: () => invalidateAll()
     }),
     delete: useMutation({
       mutationFn: deleteTemplate,
-      onSuccess: () => { invalidateAll(); setTemplateToDelete(null); toast.success("Đã xóa lối tắt"); },
-      onError: () => toast.error("Lỗi khi xóa lối tắt")
+      onMutate: async (id) => {
+        setTemplateToDelete(null);
+        await queryClient.cancelQueries({ queryKey: ['templates'] });
+        const previous = queryClient.getQueryData<Template[]>(['templates']);
+        if (previous) {
+          queryClient.setQueryData(['templates'], previous.filter(t => t.id !== id));
+        }
+        return { previous };
+      },
+      onSuccess: () => { invalidateAll(); toast.success("Đã xóa lối tắt"); },
+      onError: (err, newV, context) => {
+        if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
+        toast.error("Lỗi khi xóa lối tắt");
+      },
+      onSettled: () => invalidateAll()
     })
   };
 
