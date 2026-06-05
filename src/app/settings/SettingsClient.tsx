@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { 
   createFund, updateFund, deleteFund, 
   createCategory, updateCategory, deleteCategory, 
@@ -9,7 +9,7 @@ import {
   resetData,
   setDefaultFund
 } from "@/lib/db/actions";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";
 
@@ -60,18 +60,14 @@ interface SettingsClientProps {
 
 export default function SettingsClient({ initialFunds, initialCategories, initialBudgets, initialTemplates, currentMonthPeriod }: SettingsClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [activeTab, setActiveTab] = useState("funds");
+  const searchParams = useSearchParams();
+  const [, startTransition] = useTransition();
+  
+  const activeTab = searchParams.get("tab") || "funds";
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      const tab = params.get("tab");
-      if (tab && ["funds", "categories", "shortcuts", "budget", "general"].includes(tab)) {
-        setActiveTab(tab);
-      }
-    }
-  }, []);
+  const setActiveTab = (tab: string) => {
+    router.push(`/settings?tab=${tab}`, { scroll: false });
+  };
   
   // --- Fund States ---
   const [isAddingFund, setIsAddingFund] = useState(false);

@@ -3,6 +3,8 @@ import { transactions } from '@/lib/db/schema';
 import { desc } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const allTransactions = await db.query.transactions.findMany({

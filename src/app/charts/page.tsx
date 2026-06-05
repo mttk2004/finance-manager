@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { getCashFlowData, getDashboardData, getBalanceHistory, getCategorySpendingData } from "@/lib/db/actions";
+import { getCashFlowData, getBalanceHistory, getCategorySpendingData } from "@/lib/db/actions";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { EmptyState } from "@/components/empty-state";
 import { TrendingUp } from "lucide-react";
+import { CashFlowItem, BalanceHistory, CategorySpending } from "@/types";
 
 const CashFlowChart = dynamic(() => import("@/components/cash-flow-chart").then(mod => mod.CashFlowChart), { ssr: false });
 const CategoryDonutChart = dynamic(() => import("@/components/category-donut-chart").then(mod => mod.CategoryDonutChart), { ssr: false });
@@ -21,14 +22,12 @@ export default function ChartsPage() {
   const [categoryRange, setCategoryRange] = useState<Range>('this-month');
   const [topRange, setTopRange] = useState<Range>('this-month');
   
-  const [balanceData, setBalanceData] = useState<any[]>([]);
-  const [trendData, setTrendData] = useState<any[]>([]);
-  const [barData, setBarData] = useState<any[]>([]);
-  const [categoryData, setCategoryData] = useState<any[]>([]);
-  const [topCategoryData, setTopCategoryData] = useState<any[]>([]);
+  const [balanceData, setBalanceData] = useState<BalanceHistory[]>([]);
+  const [trendData, setTrendData] = useState<CashFlowItem[]>([]);
+  const [barData, setBarData] = useState<CashFlowItem[]>([]);
+  const [categoryData, setCategoryData] = useState<CategorySpending[]>([]);
+  const [topCategoryData, setTopCategoryData] = useState<CategorySpending[]>([]);
   
-  const [isLoading, setIsLoading] = useState(true);
-
   useEffect(() => {
     const fetchInitial = async () => {
       try {
@@ -72,13 +71,13 @@ export default function ChartsPage() {
     getCategorySpendingData(topRange).then(setTopCategoryData);
   }, [topRange]);
 
-  const getTopCategories = (data: any[]) => {
+  const getTopCategories = (data: CategorySpending[]) => {
     const total = data.reduce((acc, curr) => acc + curr.spent, 0);
     return [...data]
       .sort((a, b) => b.spent - a.spent)
       .slice(0, 4)
       .map((cat, i) => ({
-        name: cat.category?.name || 'Khác',
+        name: cat.category?.name || cat.name || 'Khác',
         amount: cat.spent,
         percent: total > 0 ? Math.round((cat.spent / total) * 100) : 0,
         color: ['bg-blue-500', 'bg-orange-500', 'bg-purple-500', 'bg-emerald-500'][i % 4]
@@ -110,7 +109,7 @@ export default function ChartsPage() {
             <h3 className="text-sm font-medium text-foreground/80">Biến động số dư</h3>
             <CustomSelect 
               value={balanceRange}
-              onChange={(e) => setBalanceRange(e.target.value as any)}
+              onChange={(e) => setBalanceRange(e.target.value as Range)}
               options={rangeOptions}
             />
           </div>
@@ -124,7 +123,7 @@ export default function ChartsPage() {
             <h3 className="text-sm font-medium text-foreground/80">Xu hướng Thu - Chi</h3>
             <CustomSelect 
               value={trendRange}
-              onChange={(e) => setTrendRange(e.target.value as any)}
+              onChange={(e) => setTrendRange(e.target.value as Range)}
               options={rangeOptions}
             />
           </div>
@@ -138,7 +137,7 @@ export default function ChartsPage() {
             <h3 className="text-sm font-medium text-foreground/80">So sánh Thu - Chi (Cột)</h3>
             <CustomSelect 
               value={barRange}
-              onChange={(e) => setBarRange(e.target.value as any)}
+              onChange={(e) => setBarRange(e.target.value as Range)}
               options={rangeOptions}
             />
           </div>
@@ -152,7 +151,7 @@ export default function ChartsPage() {
             <h3 className="text-sm font-medium text-foreground/80">Phân bổ chi tiêu</h3>
             <CustomSelect 
               value={categoryRange}
-              onChange={(e) => setCategoryRange(e.target.value as any)}
+              onChange={(e) => setCategoryRange(e.target.value as Range)}
               options={rangeOptions}
             />
           </div>
@@ -166,7 +165,7 @@ export default function ChartsPage() {
             <h3 className="text-sm font-medium text-foreground/80">Top Chi tiêu</h3>
             <CustomSelect 
               value={topRange}
-              onChange={(e) => setTopRange(e.target.value as any)}
+              onChange={(e) => setTopRange(e.target.value as Range)}
               options={rangeOptions}
             />
           </div>

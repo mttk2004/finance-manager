@@ -7,12 +7,13 @@ import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
 import jsPDF from "jspdf";
 import { toPng } from "html-to-image";
+import { ReportData, Transaction, CategorySpending } from "@/types";
 
 export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [reportData, setReportData] = useState<any>(null);
+  const [reportData, setReportData] = useState<ReportData | null>(null);
   const reportRef = useRef<HTMLDivElement>(null);
 
   if (!isOpen) return null;
@@ -22,7 +23,7 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
     try {
       const data = await getReportData(new Date(startDate), new Date(endDate));
       setReportData(data);
-    } catch (err) {
+    } catch {
       toast.error("Lỗi khi tải dữ liệu báo cáo");
     } finally {
       setIsGenerating(false);
@@ -170,7 +171,7 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                     Chi tiêu theo Danh mục
                   </h3>
                   <div className="space-y-4">
-                    {reportData.categorySpending.slice(0, 5).map((cat: any, i: number) => (
+                    {reportData.categorySpending.slice(0, 5).map((cat: CategorySpending, i: number) => (
                       <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-border">
                         <div className="flex items-center gap-3">
                           <span className="text-xl">{cat.icon || "📊"}</span>
@@ -198,9 +199,9 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-white/[0.02]">
-                        {reportData.topTransactions.map((tx: any, i: number) => (
+                        {reportData.topTransactions.map((tx: Transaction, i: number) => (
                           <tr key={i} className="text-muted-foreground">
-                            <td className="px-4 py-3">{new Date(tx.date).toLocaleDateString('vi-VN')}</td>
+                            <td className="px-4 py-3">{new Date(tx.date!).toLocaleDateString('vi-VN')}</td>
                             <td className="px-4 py-3">{tx.category?.name || "Khác"}</td>
                             <td className="px-4 py-3 truncate max-w-[150px]">{tx.note || "-"}</td>
                             <td className={`px-4 py-3 text-right font-mono font-medium ${tx.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>

@@ -38,7 +38,7 @@ interface TransactionsClientProps {
 
 export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
   const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
   const [searchTerm, setSearchTerm] = useState("");
