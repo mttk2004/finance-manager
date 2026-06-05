@@ -71,24 +71,95 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     data.allFunds.find(f => f.isDefault) || data.allFunds[0]
   );
 
-  // 2. Mutations for instant feedback
+  // 2. Mutations with Optimistic Updates
   const createTxMutation = useMutation({
     mutationFn: createTransaction,
-    onSuccess: () => {
+    onMutate: async (newTxData) => {
+      await queryClient.cancelQueries({ queryKey: ['dashboard'] });
+      const previousData = queryClient.getQueryData<DashboardData>(['dashboard']);
+      
+      if (previousData) {
+        const amount = newTxData.amount;
+        const type = newTxData.type;
+        const isPlus = type === 'INCOME' || type === 'BORROW';
+        
+        queryClient.setQueryData(['dashboard'], {
+          ...previousData,
+          totalBalance: isPlus ? previousData.totalBalance + amount : previousData.totalBalance - amount,
+          totalSpentMonth: type === 'EXPENSE' ? previousData.totalSpentMonth + amount : previousData.totalSpentMonth,
+          recentTransactions: [
+            {
+              id: 'temp-' + Date.now(),
+              amount: amount,
+              type: type,
+              date: new Date(),
+              note: newTxData.note || null,
+              fund: { name: activeFund.name },
+              category: previousData.allCategories.find(c => c.id === newTxData.categoryId) || null
+            },
+            ...previousData.recentTransactions
+          ].slice(0, 5)
+        });
+      }
+      return { previousData };
+    },
+    onSuccess: (newTx, variables) => {
+      toast.success(
+        variables.type === 'INCOME' ? "Đã ghi nhận thu nhập" :
+        variables.type === 'EXPENSE' ? "Đã ghi nhận chi tiêu" : "Đã ghi nhận giao dịch",
+        {
+          description: `${variables.amount.toLocaleString('vi-VN')}đ từ ${activeFund.name}`,
+          duration: 5000,
+          action: {
+            label: "Hoàn tác",
+            onClick: () => deleteTxMutation.mutate(newTx.id)
+          }
+        }
+      );
+    },
+    onError: (err, variables, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['dashboard'], context.previousData);
+      }
+      toast.error("Lỗi khi thực hiện giao dịch");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      // Also trigger a router refresh to keep server components in sync if any
       startTransition(() => {
         router.refresh();
       });
-    },
-    onError: () => {
-      toast.error("Lỗi khi thực hiện giao dịch");
     }
   });
 
   const deleteTxMutation = useMutation({
     mutationFn: deleteTransaction,
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['dashboard'] });
+      const previousData = queryClient.getQueryData<DashboardData>(['dashboard']);
+      
+      if (previousData) {
+        const txToDelete = previousData.recentTransactions.find(t => t.id === id);
+        if (txToDelete) {
+          const isPlus = txToDelete.type === 'INCOME' || txToDelete.type === 'BORROW';
+          queryClient.setQueryData(['dashboard'], {
+            ...previousData,
+            totalBalance: isPlus ? previousData.totalBalance - txToDelete.amount : previousData.totalBalance + txToDelete.amount,
+            recentTransactions: previousData.recentTransactions.filter(t => t.id !== id)
+          });
+        }
+      }
+      return { previousData };
+    },
     onSuccess: () => {
+      toast.success("Đã hoàn tác giao dịch");
+    },
+    onError: (err, id, context) => {
+      if (context?.previousData) {
+        queryClient.setQueryData(['dashboard'], context.previousData);
+      }
+      toast.error("Không thể hoàn tác giao dịch");
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
       startTransition(() => {
         router.refresh();
@@ -104,21 +175,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       amount: parseInt(amount),
       type,
       note,
-    }, {
-      onSuccess: (newTx) => {
-        toast.success(
-          type === 'INCOME' ? "Đã ghi nhận thu nhập" :
-          type === 'EXPENSE' ? "Đã ghi nhận chi tiêu" : "Đã ghi nhận giao dịch",
-          {
-            description: `${parseInt(amount).toLocaleString('vi-VN')}đ từ ${activeFund.name}`,
-            duration: 5000,
-            action: {
-              label: "Hoàn tác",
-              onClick: () => deleteTxMutation.mutate(newTx.id)
-            }
-          }
-        );
-      }
     });
   };
 

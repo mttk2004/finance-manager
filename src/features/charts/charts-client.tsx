@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { getCashFlowData, getBalanceHistory, getCategorySpendingData } from "@/server/actions/charts";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { EmptyState } from "@/components/empty-state";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, Loader2 } from "lucide-react";
 import { CashFlowItem, BalanceHistory, CategorySpending } from "@/types";
+import { useQuery } from "@tanstack/react-query";
 
 const CashFlowChart = dynamic(() => import("@/components/cash-flow-chart").then(mod => mod.CashFlowChart), { ssr: false });
 const CategoryDonutChart = dynamic(() => import("@/components/category-donut-chart").then(mod => mod.CategoryDonutChart), { ssr: false });
@@ -21,6 +22,42 @@ interface ChartsClientProps {
   initialCategory: CategorySpending[];
 }
 
+const rangeOptions = [
+  { value: "this-month", label: "Tháng này" },
+  { value: "last-month", label: "Tháng trước" },
+  { value: "last-3-months", label: "3 tháng gần nhất" },
+  { value: "last-6-months", label: "6 tháng gần nhất" },
+  { value: "last-12-months", label: "12 tháng gần nhất" },
+  { value: "all-time", label: "Tất cả thời gian" },
+];
+
+interface ChartWrapperProps {
+  title: string;
+  children: React.ReactNode;
+  range: Range;
+  setRange: (range: Range) => void;
+  isFetching: boolean;
+}
+
+const ChartWrapper = ({ title, children, range, setRange, isFetching }: ChartWrapperProps) => (
+  <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden group">
+    <div className="flex justify-between items-center mb-6">
+      <div className="flex items-center gap-2">
+        <h3 className="text-sm font-medium text-foreground/80">{title}</h3>
+        {isFetching && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+      </div>
+      <CustomSelect 
+        value={range}
+        onChange={(e) => setRange(e.target.value as Range)}
+        options={rangeOptions}
+      />
+    </div>
+    <div className={`transition-opacity duration-300 ${isFetching ? 'opacity-40' : 'opacity-100'}`}>
+      {children}
+    </div>
+  </div>
+);
+
 export default function ChartsClient({ initialBalance, initialTrend, initialCategory }: ChartsClientProps) {
   const [balanceRange, setBalanceRange] = useState<Range>('this-month');
   const [trendRange, setTrendRange] = useState<Range>('this-month');
@@ -28,42 +65,36 @@ export default function ChartsClient({ initialBalance, initialTrend, initialCate
   const [categoryRange, setCategoryRange] = useState<Range>('this-month');
   const [topRange, setTopRange] = useState<Range>('this-month');
   
-  const [balanceData, setBalanceData] = useState<BalanceHistory[]>(initialBalance);
-  const [trendData, setTrendData] = useState<CashFlowItem[]>(initialTrend);
-  const [barData, setBarData] = useState<CashFlowItem[]>(initialTrend);
-  const [categoryData, setCategoryData] = useState<CategorySpending[]>(initialCategory);
-  const [topCategoryData, setTopCategoryData] = useState<CategorySpending[]>(initialCategory);
+  // React Query for fine-grained loading states
+  const balanceQuery = useQuery({
+    queryKey: ['balanceHistory', balanceRange],
+    queryFn: () => getBalanceHistory(balanceRange),
+    initialData: balanceRange === 'this-month' ? initialBalance : undefined,
+  });
 
-  // Individual range handlers
-  useEffect(() => {
-    if (balanceRange !== 'this-month') {
-      getBalanceHistory(balanceRange).then(setBalanceData);
-    }
-  }, [balanceRange]);
+  const trendQuery = useQuery({
+    queryKey: ['cashFlowTrend', trendRange],
+    queryFn: () => getCashFlowData(trendRange),
+    initialData: trendRange === 'this-month' ? initialTrend : undefined,
+  });
 
-  useEffect(() => {
-    if (trendRange !== 'this-month') {
-      getCashFlowData(trendRange).then(setTrendData);
-    }
-  }, [trendRange]);
+  const barQuery = useQuery({
+    queryKey: ['cashFlowBar', barRange],
+    queryFn: () => getCashFlowData(barRange),
+    initialData: barRange === 'this-month' ? initialTrend : undefined,
+  });
 
-  useEffect(() => {
-    if (barRange !== 'this-month') {
-      getCashFlowData(barRange).then(setBarData);
-    }
-  }, [barRange]);
+  const categoryQuery = useQuery({
+    queryKey: ['categorySpending', categoryRange],
+    queryFn: () => getCategorySpendingData(categoryRange),
+    initialData: categoryRange === 'this-month' ? initialCategory : undefined,
+  });
 
-  useEffect(() => {
-    if (categoryRange !== 'this-month') {
-      getCategorySpendingData(categoryRange).then(setCategoryData);
-    }
-  }, [categoryRange]);
-
-  useEffect(() => {
-    if (topRange !== 'this-month') {
-      getCategorySpendingData(topRange).then(setTopCategoryData);
-    }
-  }, [topRange]);
+  const topQuery = useQuery({
+    queryKey: ['topSpending', topRange],
+    queryFn: () => getCategorySpendingData(topRange),
+    initialData: topRange === 'this-month' ? initialCategory : undefined,
+  });
 
   const getTopCategories = (data: CategorySpending[]) => {
     const total = data.reduce((acc, curr) => acc + curr.spent, 0);
@@ -78,16 +109,7 @@ export default function ChartsClient({ initialBalance, initialTrend, initialCate
       }));
   };
 
-  const topCategories = getTopCategories(topCategoryData);
-
-  const rangeOptions = [
-    { value: "this-month", label: "Tháng này" },
-    { value: "last-month", label: "Tháng trước" },
-    { value: "last-3-months", label: "3 tháng gần nhất" },
-    { value: "last-6-months", label: "6 tháng gần nhất" },
-    { value: "last-12-months", label: "12 tháng gần nhất" },
-    { value: "all-time", label: "Tất cả thời gian" },
-  ];
+  const topCategories = getTopCategories(topQuery.data || []);
 
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8 px-4 md:px-0">
@@ -96,74 +118,44 @@ export default function ChartsClient({ initialBalance, initialTrend, initialCate
         <p className="text-muted-foreground">Xem chi tiết dòng tiền và phân bổ chi tiêu của bạn theo thời gian.</p>
       </div>
 
-      {/* Analytics Layout */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-medium text-foreground/80">Biến động số dư</h3>
-            <CustomSelect 
-              value={balanceRange}
-              onChange={(e) => setBalanceRange(e.target.value as Range)}
-              options={rangeOptions}
-            />
-          </div>
+        <ChartWrapper title="Biến động số dư" range={balanceRange} setRange={setBalanceRange} isFetching={balanceQuery.isFetching}>
           <div className="h-80 w-full relative -ml-4">
-             <TimeSeriesChart data={balanceData} />
+             <TimeSeriesChart data={balanceQuery.data || []} />
           </div>
-        </div>
+        </ChartWrapper>
 
-        <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-medium text-foreground/80">Xu hướng Thu - Chi</h3>
-            <CustomSelect 
-              value={trendRange}
-              onChange={(e) => setTrendRange(e.target.value as Range)}
-              options={rangeOptions}
-            />
-          </div>
+        <ChartWrapper title="Xu hướng Thu - Chi" range={trendRange} setRange={setTrendRange} isFetching={trendQuery.isFetching}>
           <div className="h-80 w-full relative -ml-4">
-             <MomLineChart data={trendData} />
+             <MomLineChart data={trendQuery.data || []} />
           </div>
-        </div>
+        </ChartWrapper>
 
-        <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-medium text-foreground/80">So sánh Thu - Chi (Cột)</h3>
-            <CustomSelect 
-              value={barRange}
-              onChange={(e) => setBarRange(e.target.value as Range)}
-              options={rangeOptions}
-            />
-          </div>
+        <ChartWrapper title="So sánh Thu - Chi (Cột)" range={barRange} setRange={setBarRange} isFetching={barQuery.isFetching}>
           <div className="h-80 w-full relative -ml-4">
-             <CashFlowChart data={barData} />
+             <CashFlowChart data={barQuery.data || []} />
           </div>
-        </div>
+        </ChartWrapper>
 
-        <div className="bg-card border border-border p-6 rounded-3xl flex flex-col h-auto min-h-96 relative overflow-hidden">
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-medium text-foreground/80">Phân bổ chi tiêu</h3>
-            <CustomSelect 
-              value={categoryRange}
-              onChange={(e) => setCategoryRange(e.target.value as Range)}
-              options={rangeOptions}
-            />
-          </div>
+        <ChartWrapper title="Phân bổ chi tiêu" range={categoryRange} setRange={setCategoryRange} isFetching={categoryQuery.isFetching}>
           <div className="flex-1 w-full relative min-h-[250px]">
-             <CategoryDonutChart data={categoryData} />
+             <CategoryDonutChart data={categoryQuery.data || []} />
           </div>
-        </div>
+        </ChartWrapper>
 
-        <div className="bg-card border border-border p-6 rounded-3xl flex flex-col min-h-96 md:col-span-2 lg:col-span-1 relative overflow-hidden">
+        <div className="bg-card border border-border p-6 rounded-3xl flex flex-col min-h-96 md:col-span-2 lg:col-span-1 relative overflow-hidden group">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-sm font-medium text-foreground/80">Top Chi tiêu</h3>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-medium text-foreground/80">Top Chi tiêu</h3>
+              {topQuery.isFetching && <Loader2 className="w-3 h-3 animate-spin text-muted-foreground" />}
+            </div>
             <CustomSelect 
               value={topRange}
               onChange={(e) => setTopRange(e.target.value as Range)}
               options={rangeOptions}
             />
           </div>
-          <div className="space-y-4 flex-1">
+          <div className={`space-y-4 flex-1 transition-opacity duration-300 ${topQuery.isFetching ? 'opacity-40' : 'opacity-100'}`}>
              {topCategories.length === 0 ? (
                <EmptyState 
                  icon={TrendingUp}
@@ -173,10 +165,10 @@ export default function ChartsClient({ initialBalance, initialTrend, initialCate
                />
              ) : (
                topCategories.map(cat => (
-                 <div key={cat.name} className="flex flex-col gap-2 cursor-pointer group">
+                 <div key={cat.name} className="flex flex-col gap-2 cursor-pointer group/item">
                    <div className="flex justify-between text-sm">
-                     <span className="text-muted-foreground group-hover:text-foreground transition-colors">{cat.name}</span>
-                     <span className="font-mono text-foreground group-hover:text-muted-foreground transition-colors">{cat.amount.toLocaleString('vi-VN')}đ</span>
+                     <span className="text-muted-foreground group-hover/item:text-foreground transition-colors">{cat.name}</span>
+                     <span className="font-mono text-foreground group-hover/item:text-muted-foreground transition-colors">{cat.amount.toLocaleString('vi-VN')}đ</span>
                    </div>
                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
                      <div className={`h-full ${cat.color}`} style={{ width: `${cat.percent}%` }}></div>
