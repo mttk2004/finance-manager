@@ -1,11 +1,7 @@
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
-import { CashFlowChart } from "@/components/cash-flow-chart";
-import { MomLineChart } from "@/components/mom-line-chart";
-import { CategoryDonutChart } from "@/components/category-donut-chart";
-import { DailyReminderModal } from "@/components/daily-reminder-modal";
-import { IncomeDistributionModal } from "@/components/income-distribution-modal";
+import dynamic from "next/dynamic";
 import { AmountInput } from "@/components/amount-input";
 import { FundSelectorModal, type Fund } from "@/components/fund-selector-modal";
 import { createTransaction, deleteTransaction, getCashFlowData, getCategorySpendingData } from "@/lib/db/actions";
@@ -13,6 +9,9 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/empty-state";
 import { ReceiptText, PieChart } from "lucide-react";
+
+const DailyReminderModal = dynamic(() => import("@/components/daily-reminder-modal").then(mod => mod.DailyReminderModal), { ssr: false });
+const IncomeDistributionModal = dynamic(() => import("@/components/income-distribution-modal").then(mod => mod.IncomeDistributionModal), { ssr: false });
 
 interface DashboardFund extends Fund {
   isDefault: boolean | null;
@@ -120,45 +119,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     if (template.notePreset) setNote(template.notePreset);
     toast.info(`Đã áp dụng lối tắt: ${template.title}`);
   };
-
-  // Chart Range State
-  const [chartRange, setChartRange] = useState<'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time'>('this-month');
-  const [cashFlowData, setCashFlowData] = useState<CashFlowItem[]>(initialData.initialCashFlow);
-  const [isLoadingChart, setIsLoadingChart] = useState(false);
-
-  const [categoryRange, setCategoryRange] = useState<'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time'>('this-month');
-  const [categoryData, setCategoryData] = useState<any[]>(initialData.budgetTracking);
-  const [isLoadingCategory, setIsLoadingCategory] = useState(false);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoadingChart(true);
-      try {
-        const data = await getCashFlowData(chartRange);
-        setCashFlowData(data);
-      } catch (err) {
-        console.error("Failed to fetch chart data:", err);
-      } finally {
-        setIsLoadingChart(false);
-      }
-    };
-    fetchData();
-  }, [chartRange]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoadingCategory(true);
-      try {
-        const data = await getCategorySpendingData(categoryRange);
-        setCategoryData(data);
-      } catch (err) {
-        console.error("Failed to fetch category data:", err);
-      } finally {
-        setIsLoadingCategory(false);
-      }
-    };
-    fetchData();
-  }, [categoryRange, initialData]);
 
   // Logic to disable buttons based on hashtag
   const detectedCategory = (() => {

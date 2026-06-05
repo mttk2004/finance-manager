@@ -4,9 +4,13 @@ import { useState, useRef, useTransition } from "react";
 import { importTransactions } from "@/lib/db/actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import ExportReportModal from "@/components/export-report-modal";
+import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/empty-state";
 import { ReceiptText } from "lucide-react";
+
+const ExportReportModal = dynamic(() => import("@/components/export-report-modal"), {
+  ssr: false,
+});
 
 interface Transaction {
   id: string;

@@ -152,52 +152,72 @@ export async function importTransactions(csvText: string) {
 }
 
 export async function getDashboardData() {
-  const allFunds = await db.select().from(funds);
-  
   const now = new Date();
   const currentMonthPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-  const recentTransactions = await db.query.transactions.findMany({
-    with: {
-      category: true,
-      fund: true,
-      toFund: true,
-    },
-    orderBy: [desc(transactions.date)],
-    limit: 5,
-  });
+  const [
+    allFunds,
+    recentTransactions,
+    monthTransactions,
+    monthBudgets,
+    globalBudgetsSetting,
+    expenseCategories,
+    lastMonthTransactions,
+    hasTransactionsYesterday,
+    allCategories,
+    initialCashFlow,
+    allTemplates
+  ] = await Promise.all([
+    db.select().from(funds),
+    db.query.transactions.findMany({
+      with: {
+        category: true,
+        fund: true,
+        toFund: true,
+      },
+      orderBy: [desc(transactions.date)],
+      limit: 5,
+    }),
+    db.query.transactions.findMany({
+      where: and(
+        gte(transactions.date, startOfMonth),
+        lt(transactions.date, startOfNextMonth),
+        eq(transactions.type, 'EXPENSE')
+      ),
+      with: {
+        category: true,
+      }
+    }),
+    db.query.budgets.findMany({
+      where: eq(budgets.period, currentMonthPeriod),
+      with: {
+        category: true,
+      }
+    }),
+    db.query.globalSettings.findFirst({
+      where: eq(globalSettings.key, 'global_budgets'),
+    }),
+    db.query.categories.findMany({
+      where: eq(categories.type, 'EXPENSE'),
+    }),
+    db.query.transactions.findMany({
+      where: and(
+        gte(transactions.date, startOfLastMonth),
+        lt(transactions.date, new Date(endOfLastMonth.getTime() + 86400000)),
+        eq(transactions.type, 'EXPENSE')
+      ),
+    }),
+    checkTransactionsYesterday(),
+    db.query.categories.findMany(),
+    getCashFlowData('this-month'),
+    getTemplates()
+  ]);
 
-  const monthTransactions = await db.query.transactions.findMany({
-    where: and(
-      gte(transactions.date, startOfMonth),
-      lt(transactions.date, startOfNextMonth),
-      eq(transactions.type, 'EXPENSE')
-    ),
-    with: {
-      category: true,
-    }
-  });
-
-  // Get month-specific budgets
-  const monthBudgets = await db.query.budgets.findMany({
-    where: eq(budgets.period, currentMonthPeriod),
-    with: {
-      category: true,
-    }
-  });
-
-  // Get global budgets from settings
-  const globalBudgetsSetting = await db.query.globalSettings.findFirst({
-    where: eq(globalSettings.key, 'global_budgets'),
-  });
   const globalBudgets = (globalBudgetsSetting?.value as Record<string, number>) || {};
-
-  // Combine global budgets with overrides
-  const expenseCategories = await db.query.categories.findMany({
-    where: eq(categories.type, 'EXPENSE'),
-  });
 
   const budgetTracking = expenseCategories.map(cat => {
     const override = monthBudgets.find(b => b.categoryId === cat.id);
@@ -222,24 +242,8 @@ export async function getDashboardData() {
 
   const totalSpentMonth = monthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
   const totalBudgetMonth = budgetTracking.reduce((acc, b) => acc + b.amountLimit, 0);
-
-  // Statistics for insights
-  const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-  const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-  const lastMonthTransactions = await db.query.transactions.findMany({
-    where: and(
-      gte(transactions.date, startOfLastMonth),
-      lt(transactions.date, new Date(endOfLastMonth.getTime() + 86400000)),
-      eq(transactions.type, 'EXPENSE')
-    ),
-  });
   const totalSpentLastMonth = lastMonthTransactions.reduce((acc, tx) => acc + tx.amount, 0);
-
   const totalBalance = allFunds.reduce((acc, fund) => acc + (fund.balance || 0), 0);
-  const hasTransactionsYesterday = await checkTransactionsYesterday();
-  const allCategories = await db.query.categories.findMany();
-  const initialCashFlow = await getCashFlowData('this-month');
-  const allTemplates = await getTemplates();
   
   return {
     allFunds,
@@ -507,18 +511,19 @@ export async function getAllTransactions() {
 }
 
 export async function getBudgets(period: string) {
-  const monthBudgets = await db.query.budgets.findMany({
-    where: eq(budgets.period, period),
-    with: {
-      category: true,
-    }
-  });
-
-  const globalBudgets = await getGlobalBudgets();
-  const allCategories = await db.query.categories.findMany({
-    where: eq(categories.type, 'EXPENSE'),
-    orderBy: [categories.name],
-  });
+  const [monthBudgets, globalBudgets, allCategories] = await Promise.all([
+    db.query.budgets.findMany({
+      where: eq(budgets.period, period),
+      with: {
+        category: true,
+      }
+    }),
+    getGlobalBudgets(),
+    db.query.categories.findMany({
+      where: eq(categories.type, 'EXPENSE'),
+      orderBy: [categories.name],
+    })
+  ]);
   
   // Return combined view for settings
   return allCategories.map(cat => {

@@ -1,14 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { CashFlowChart } from "@/components/cash-flow-chart";
-import { CategoryDonutChart } from "@/components/category-donut-chart";
-import { TimeSeriesChart } from "@/components/time-series-chart";
-import { MomLineChart } from "@/components/mom-line-chart";
+import dynamic from "next/dynamic";
 import { getCashFlowData, getDashboardData, getBalanceHistory, getCategorySpendingData } from "@/lib/db/actions";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { EmptyState } from "@/components/empty-state";
 import { TrendingUp } from "lucide-react";
+
+const CashFlowChart = dynamic(() => import("@/components/cash-flow-chart").then(mod => mod.CashFlowChart), { ssr: false });
+const CategoryDonutChart = dynamic(() => import("@/components/category-donut-chart").then(mod => mod.CategoryDonutChart), { ssr: false });
+const TimeSeriesChart = dynamic(() => import("@/components/time-series-chart").then(mod => mod.TimeSeriesChart), { ssr: false });
+const MomLineChart = dynamic(() => import("@/components/mom-line-chart").then(mod => mod.MomLineChart), { ssr: false });
 
 type Range = 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time';
 
