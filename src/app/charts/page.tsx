@@ -1,5 +1,5 @@
-import { getBalanceHistory, getCashFlowData, getCategorySpendingData } from "@/lib/db/actions";
-import ChartsClient from "./ChartsClient";
+import { getBalanceHistory, getCashFlowData, getCategorySpendingData } from "@/server/actions/charts";
+import ChartsClient from "@/features/charts/charts-client";
 
 export default async function ChartsPage() {
   const [balance, trend, category] = await Promise.all([

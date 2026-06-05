@@ -1,14 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { 
-  createFund, updateFund, deleteFund, 
-  createCategory, updateCategory, deleteCategory, 
-  upsertBudget,
-  createTemplate, updateTemplate, deleteTemplate,
-  resetData,
-  setDefaultFund
-} from "@/lib/db/actions";
+import { createFund, updateFund, deleteFund, setDefaultFund } from "@/server/actions/funds";
+import { createCategory, updateCategory, deleteCategory } from "@/server/actions/categories";
+import { upsertBudget } from "@/server/actions/budgets";
+import { createTemplate, updateTemplate, deleteTemplate } from "@/server/actions/templates";
+import { resetData } from "@/server/actions/dashboard";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { getCashFlowData, getBalanceHistory, getCategorySpendingData } from "@/lib/db/actions";
+import { getCashFlowData, getBalanceHistory, getCategorySpendingData } from "@/server/actions/charts";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { EmptyState } from "@/components/empty-state";
 import { TrendingUp } from "lucide-react";

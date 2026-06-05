@@ -1,5 +1,8 @@
-import { getFunds, getCategories, getBudgets, getTemplates } from "@/lib/db/actions";
-import SettingsClient from "./SettingsClient";
+import { getFunds } from "@/server/actions/funds";
+import { getCategories } from "@/server/actions/categories";
+import { getBudgets } from "@/server/actions/budgets";
+import { getTemplates } from "@/server/actions/templates";
+import SettingsClient from "@/features/settings/settings-client";
 
 export default async function SettingsPage() {
   const funds = await getFunds();

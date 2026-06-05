@@ -1,16 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createTransaction, deleteTransaction, getDashboardData } from "@/lib/db/actions";
+import { getDashboardData } from "@/server/actions/dashboard";
+import { createTransaction, deleteTransaction } from "@/server/actions/transactions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Transaction, TransactionType, Fund, Category, CashFlowItem } from "@/types";
-import { DashboardHeader } from "@/features/dashboard/DashboardHeader";
-import { TransactionForm } from "@/features/dashboard/TransactionForm";
-import { FinancialInsights } from "@/features/dashboard/FinancialInsights";
-import { CategoryBudgets } from "@/features/dashboard/CategoryBudgets";
-import { RecentTransactions } from "@/features/dashboard/RecentTransactions";
-import { DashboardModals } from "@/features/dashboard/DashboardModals";
+import { DashboardHeader } from "./dashboard-header";
+import { TransactionForm } from "./transaction-form";
+import { FinancialInsights } from "./financial-insights";
+import { CategoryBudgets } from "./category-budgets";
+import { RecentTransactions } from "./recent-transactions";
+import { DashboardModals } from "./dashboard-modals";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface DashboardData {

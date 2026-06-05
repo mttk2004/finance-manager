@@ -1,5 +1,5 @@
-import { getAllTransactions } from "@/lib/db/actions";
-import TransactionsClient from "./TransactionsClient";
+import { getAllTransactions } from "@/server/actions/transactions";
+import TransactionsClient from "@/features/transactions/transactions-client";
 
 export default async function TransactionsPage() {
   const transactions = await getAllTransactions();

@@ -1,5 +1,5 @@
-import { getDashboardData } from "@/lib/db/actions";
-import DashboardClient from "./DashboardClient";
+import { getDashboardData } from "@/server/actions/dashboard";
+import DashboardClient from "@/features/dashboard/dashboard-client";
 
 export default async function DashboardPage() {
   const initialData = await getDashboardData();

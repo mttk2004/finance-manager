@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { getReportData } from "@/lib/db/actions";
+import { getReportData } from "@/server/actions/charts";
 import { toast } from "sonner";
 import { CashFlowChart } from "@/components/cash-flow-chart";
 import { CategoryDonutChart } from "@/components/category-donut-chart";
