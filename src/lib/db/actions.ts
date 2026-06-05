@@ -3,7 +3,7 @@
 import { db } from './index';
 import { funds, transactions, categories, budgets, globalSettings, templates } from './schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
-import { revalidatePath, unstable_cache, revalidateTag } from 'next/cache';
+import { revalidatePath, unstable_cache } from 'next/cache';
 
 export const getCachedCategories = unstable_cache(
   async () => {
@@ -538,7 +538,6 @@ export async function createCategory(data: {
     hashtags: data.hashtags || [],
   }).returning();
 
-  revalidateTag('categories');
   revalidatePath('/', 'layout');
   return newCat;
 }
@@ -557,14 +556,12 @@ export async function updateCategory(id: string, data: {
     .where(eq(categories.id, id))
     .returning();
 
-  revalidateTag('categories');
   revalidatePath('/', 'layout');
   return updatedCat;
 }
 
 export async function deleteCategory(id: string) {
   const result = await db.delete(categories).where(eq(categories.id, id)).returning();
-  revalidateTag('categories');
   revalidatePath('/', 'layout');
   return result;
 }
@@ -666,7 +663,6 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
       .set({ value: newValues, updatedAt: new Date() })
       .where(eq(globalSettings.id, existing.id))
       .returning();
-    revalidateTag('global_budgets');
     revalidatePath('/', 'layout');
     return result;
   } else {
@@ -676,7 +672,6 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
         value: newValues,
       })
       .returning();
-    revalidateTag('global_budgets');
     revalidatePath('/', 'layout');
     return result;
   }
@@ -752,14 +747,17 @@ async function calculateCategorySpending(startDate: Date, endDate: Date) {
     }
   });
 
-  const spendingMap: Record<string, { category: { name: string }, spent: number }> = {};
+  const spendingMap: Record<string, { id: string, name: string, icon: string | null, spent: number, category: Category | null | undefined }> = {};
 
   txs.forEach(tx => {
     const catId = tx.categoryId || 'other';
     if (!spendingMap[catId]) {
       spendingMap[catId] = {
-        category: { name: tx.category?.name || 'Khác' },
-        spent: 0
+        id: catId,
+        name: tx.category?.name || 'Khác',
+        icon: tx.category?.icon || null,
+        spent: 0,
+        category: tx.category
       };
     }
     spendingMap[catId].spent += tx.amount;
@@ -831,12 +829,12 @@ export async function getReportData(startDate: Date, endDate: Date) {
   const expense = txs.filter(t => t.type === 'EXPENSE').reduce((acc, t) => acc + t.amount, 0);
   
   // Aggregate by category
-  const categoryMap: Record<string, { name: string, icon: string | null, spent: number }> = {};
+  const categoryMap: Record<string, { id: string, name: string, icon: string | null, spent: number }> = {};
   txs.filter(t => t.type === 'EXPENSE').forEach(t => {
     const catId = t.categoryId || 'other';
     const catName = t.category?.name || 'Khác';
     if (!categoryMap[catId]) {
-      categoryMap[catId] = { name: catName, icon: t.category?.icon || null, spent: 0 };
+      categoryMap[catId] = { id: catId, name: catName, icon: t.category?.icon || null, spent: 0 };
     }
     categoryMap[catId].spent += t.amount;
   });

@@ -1,3 +1,9 @@
+interface DashboardHeaderProps {
+  totalBalance: number;
+  totalSpentMonth: number;
+  totalBudgetMonth: number;
+}
+
 export function DashboardHeader({ totalBalance, totalSpentMonth, totalBudgetMonth }: DashboardHeaderProps) {
   const formatMoney = (amount: number) => amount.toLocaleString('vi-VN') + "đ";
   

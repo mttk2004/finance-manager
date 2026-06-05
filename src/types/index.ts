@@ -4,9 +4,9 @@ export type TransactionType = 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORR
 export interface Category {
   id: string;
   name: string;
-  type: CategoryType;
-  icon: string | null;
-  hashtags: string[] | null;
+  type?: CategoryType;
+  icon?: string | null;
+  hashtags?: string[] | null;
 }
 
 export interface Fund {
@@ -14,24 +14,24 @@ export interface Fund {
   name: string;
   balance: number | null;
   isDefault: boolean | null;
-  attributes: Record<string, unknown> | null;
-  createdAt: Date | null;
-  updatedAt: Date | null;
+  attributes?: Record<string, unknown> | null;
+  createdAt?: Date | null;
+  updatedAt?: Date | null;
 }
 
 export interface Transaction {
   id: string;
-  fundId: string;
-  toFundId: string | null;
-  categoryId: string | null;
+  fundId?: string;
+  toFundId?: string | null;
+  categoryId?: string | null;
   amount: number;
   type: TransactionType;
   date: Date | null;
   note: string | null;
-  createdAt: Date | null;
+  createdAt?: Date | null;
   category?: Category | null;
-  fund?: { id: string, name: string } | null;
-  toFund?: { id: string, name: string } | null;
+  fund?: { id?: string, name: string } | null;
+  toFund?: { id?: string, name: string } | null;
 }
 
 export interface Budget {
@@ -40,6 +40,16 @@ export interface Budget {
   amountLimit: number;
   period: string;
   isOverride: boolean;
+  category?: Category | null;
+}
+
+export interface Template {
+  id: string;
+  title: string;
+  type: TransactionType;
+  categoryId: string | null;
+  amount: number | null;
+  notePreset: string | null;
   category?: Category | null;
 }
 

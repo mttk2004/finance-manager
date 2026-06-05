@@ -12,43 +12,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";
-
-interface Fund {
-  id: string;
-  name: string;
-  balance: number | null;
-  isDefault: boolean | null;
-  attributes: unknown;
-  createdAt: Date | null;
-  updatedAt: Date | null;
-}
-
-interface Category {
-  id: string;
-  name: string;
-  type: 'INCOME' | 'EXPENSE';
-  icon: string | null;
-  hashtags: string[] | null;
-}
-
-interface Budget {
-  id: string;
-  categoryId: string;
-  amountLimit: number;
-  period: string;
-  isOverride: boolean;
-  category?: Category | null;
-}
-
-interface Template {
-  id: string;
-  title: string;
-  type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
-  categoryId: string | null;
-  amount: number | null;
-  notePreset: string | null;
-  category?: Category | null;
-}
+import { Fund, Category, Budget, Template } from "@/types";
 
 interface SettingsClientProps {
   initialFunds: Fund[];
@@ -103,7 +67,6 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const [templateNote, setTemplateNote] = useState("");
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // --- Reset Handler ---
@@ -268,7 +231,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const startEditCategory = (cat: Category) => {
     setEditingCategoryId(cat.id);
     setCatName(cat.name);
-    setCatType(cat.type);
+    setCatType(cat.type || "EXPENSE");
     setCatIcon(cat.icon || "");
     setCatHashtags(cat.hashtags?.join(", ") || "");
     setIsAddingCategory(false);
