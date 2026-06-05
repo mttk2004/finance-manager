@@ -4,6 +4,7 @@ import { db } from './index';
 import { funds, transactions, categories, budgets, globalSettings, templates } from './schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
 import { revalidatePath, unstable_cache } from 'next/cache';
+import { Category } from '@/types';
 
 export const getCachedCategories = unstable_cache(
   async () => {
