@@ -787,23 +787,29 @@ export async function getBalanceHistory(range: 'this-month' | 'last-month' | 'la
   
   const now = new Date();
   let startDate = new Date();
+  let by: 'day' | 'month' = 'month';
 
   if (range === 'this-month') {
     startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    by = 'day';
   } else if (range === 'last-month') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    by = 'day';
   } else if (range === 'last-3-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+    by = 'day';
   } else if (range === 'last-6-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    by = 'month';
   } else if (range === 'last-12-months') {
     startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+    by = 'month';
   } else {
-    // all-time: find oldest transaction
     const firstTx = await db.query.transactions.findFirst({
       orderBy: [transactions.date],
     });
     startDate = firstTx?.date ? new Date(firstTx.date) : new Date(now.getFullYear(), 0, 1);
+    by = 'month';
   }
 
   // Get all transactions from startDate to now to calculate history backwards
@@ -815,33 +821,57 @@ export async function getBalanceHistory(range: 'this-month' | 'last-month' | 'la
   const history: { name: string, balance: number }[] = [];
   let runningBalance = currentTotalBalance;
 
-  // We'll iterate backwards through months
-  let current = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+  if (by === 'day') {
+    const current = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const end = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
 
-  while (current >= end) {
-    const key = `T${current.getMonth() + 1}`;
-    
-    // Add current month's end-of-month balance
-    history.unshift({ name: key, balance: runningBalance });
+    while (current >= end) {
+      const key = current.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
+      history.unshift({ name: key, balance: runningBalance });
 
-    // Subtract transactions that happened in this month to get balance at the start of this month
-    const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
-    const monthTxs = txs.filter(tx => tx.date && tx.date >= current && tx.date < nextMonth);
-    
-    monthTxs.forEach(tx => {
-      if (tx.type === 'INCOME' || tx.type === 'BORROW') runningBalance -= tx.amount;
-      else if (tx.type === 'EXPENSE' || tx.type === 'LEND' || tx.type === 'TRANSFER') {
-        // TRANSFER doesn't change total balance, but our createTransaction logic updates fund balances.
-        // Actually, internal TRANSFER shouldn't change the TOTAL balance.
-        if (tx.type !== 'TRANSFER') runningBalance += tx.amount;
-      }
-    });
+      const nextDay = new Date(current);
+      nextDay.setDate(nextDay.getDate() + 1);
+      
+      const dayTxs = txs.filter(tx => tx.date && tx.date >= current && tx.date < nextDay);
+      dayTxs.forEach(tx => {
+        if (tx.type === 'INCOME' || tx.type === 'BORROW') runningBalance -= tx.amount;
+        else if (tx.type === 'EXPENSE' || tx.type === 'LEND' || tx.type === 'TRANSFER') {
+          if (tx.type !== 'TRANSFER') runningBalance += tx.amount;
+        }
+      });
+      current.setDate(current.getDate() - 1);
+    }
+  } else {
+    const current = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
 
-    current.setMonth(current.getMonth() - 1);
+    while (current >= end) {
+      const key = `T${current.getMonth() + 1}`;
+      history.unshift({ name: key, balance: runningBalance });
+
+      const nextMonth = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+      const monthTxs = txs.filter(tx => tx.date && tx.date >= current && tx.date < nextMonth);
+      
+      monthTxs.forEach(tx => {
+        if (tx.type === 'INCOME' || tx.type === 'BORROW') runningBalance -= tx.amount;
+        else if (tx.type === 'EXPENSE' || tx.type === 'LEND' || tx.type === 'TRANSFER') {
+          if (tx.type !== 'TRANSFER') runningBalance += tx.amount;
+        }
+      });
+      current.setMonth(current.getMonth() - 1);
+    }
   }
 
   return history;
+}
+
+export async function setDefaultFund(id: string) {
+  return await db.transaction(async (tx) => {
+    await tx.update(funds).set({ isDefault: false });
+    const [updated] = await tx.update(funds).set({ isDefault: true }).where(eq(funds.id, id)).returning();
+    revalidatePath('/', 'layout');
+    return updated;
+  });
 }
 
 export async function checkTransactionsYesterday() {

@@ -6,7 +6,8 @@ import {
   createCategory, updateCategory, deleteCategory, 
   upsertBudget,
   createTemplate, updateTemplate, deleteTemplate,
-  resetData
+  resetData,
+  setDefaultFund
 } from "@/lib/db/actions";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -169,6 +170,23 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     } catch (error) {
       console.error("Failed to delete fund:", error);
       alert(error instanceof Error ? error.message : "Không thể xóa quỹ");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSetDefaultFund = async (id: string) => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await setDefaultFund(id);
+      toast.success("Đã thay đổi quỹ mặc định");
+      startTransition(() => {
+        router.refresh();
+      });
+    } catch (error) {
+      console.error("Failed to set default fund:", error);
+      toast.error("Lỗi khi thay đổi quỹ mặc định");
     } finally {
       setIsSubmitting(false);
     }
@@ -493,12 +511,21 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                           </div>
                           <div className="flex gap-2">
                             {!fund.isDefault && (
-                              <button 
-                                onClick={() => setFundToDelete(fund)}
-                                className={`p-2 rounded-full transition-colors cursor-pointer bg-white/5 text-white/40 hover:bg-rose-500/20 hover:text-rose-400`}
-                              >
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
-                              </button>
+                              <>
+                                <button 
+                                  onClick={() => handleSetDefaultFund(fund.id)}
+                                  className="p-2 rounded-full transition-colors cursor-pointer bg-white/5 text-white/40 hover:bg-emerald-500/20 hover:text-emerald-400"
+                                  title="Đặt làm mặc định"
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+                                </button>
+                                <button 
+                                  onClick={() => setFundToDelete(fund)}
+                                  className={`p-2 rounded-full transition-colors cursor-pointer bg-white/5 text-white/40 hover:bg-rose-500/20 hover:text-rose-400`}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                                </button>
+                              </>
                             )}
                             <button 
                               onClick={() => startEditFund(fund)}
@@ -754,7 +781,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                     <label className="text-xs text-muted-foreground font-medium ml-1">Loại giao dịch</label>
                     <CustomSelect 
                       value={templateType} 
-                      onChange={(e) => setTemplateType(e.target.value as any)}
+                      onChange={(e) => setTemplateType(e.target.value as 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW')}
                       options={[
                         { value: "EXPENSE", label: "Chi tiêu" },
                         { value: "INCOME", label: "Thu nhập" },

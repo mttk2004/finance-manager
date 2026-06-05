@@ -41,6 +41,18 @@ export default function TransactionsClient({ initialTransactions }: Transactions
   const [currentPage, setCurrentPage] = useState(1);
   const [isImporting, setIsImporting] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
+  
+  // Advanced Filter States
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [minAmount, setMinAmount] = useState("");
+  const [maxAmount, setMaxAmount] = useState("");
+  
+  // Sorting States
+  const [sortField, setSortField] = useState<keyof Transaction | 'category' | 'fund'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   const itemsPerPage = 15;
 
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,15 +93,64 @@ export default function TransactionsClient({ initialTransactions }: Transactions
     }
     
     // Type filter
-    if (filter === 'ALL') return true;
-    return tx.type === filter;
+    if (filter !== 'ALL' && tx.type !== filter) return false;
+
+    // Date range filter
+    if (startDate && tx.date && new Date(tx.date) < new Date(startDate)) return false;
+    if (endDate && tx.date && new Date(tx.date) > new Date(new Date(endDate).setHours(23, 59, 59, 999))) return false;
+
+    // Amount range filter
+    if (minAmount && tx.amount < parseInt(minAmount)) return false;
+    if (maxAmount && tx.amount > parseInt(maxAmount)) return false;
+
+    return true;
   });
 
-  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
-  const paginatedTransactions = filteredTransactions.slice(
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+    let valA: string | number | Date = a[sortField as keyof Transaction] as string | number | Date;
+    let valB: string | number | Date = b[sortField as keyof Transaction] as string | number | Date;
+
+    if (sortField === 'category') {
+      valA = a.category?.name || "";
+      valB = b.category?.name || "";
+    } else if (sortField === 'fund') {
+      valA = a.fund?.name || "";
+      valB = b.fund?.name || "";
+    }
+
+    if (valA === null || valA === undefined) valA = "";
+    if (valB === null || valB === undefined) valB = "";
+
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+  const paginatedTransactions = sortedTransactions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const toggleSort = (field: keyof Transaction | 'category' | 'fund') => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('desc');
+    }
+    setCurrentPage(1);
+  };
+
+  const resetFilters = () => {
+    setFilter('ALL');
+    setSearchTerm("");
+    setStartDate("");
+    setEndDate("");
+    setMinAmount("");
+    setMaxAmount("");
+    setCurrentPage(1);
+  };
 
   const handleFilterChange = (newFilter: 'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER') => {
     setFilter(newFilter);
@@ -155,6 +216,15 @@ export default function TransactionsClient({ initialTransactions }: Transactions
               {type === 'ALL' ? 'Tất cả' : type === 'INCOME' ? 'Thu nhập' : type === 'EXPENSE' ? 'Chi tiêu' : 'Chuyển tiền'}
             </button>
           ))}
+          <button 
+            onClick={() => setIsAdvancedFilterOpen(!isAdvancedFilterOpen)}
+            className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border cursor-pointer flex items-center gap-2 ${
+              isAdvancedFilterOpen ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-secondary border-border hover:border-white/20'
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+            Bộ lọc nâng cao
+          </button>
         </div>
         
         <div className="w-full md:w-64">
@@ -174,6 +244,58 @@ export default function TransactionsClient({ initialTransactions }: Transactions
         </div>
       </div>
 
+      {isAdvancedFilterOpen && (
+        <div className="bg-secondary border border-border rounded-3xl p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Từ ngày</label>
+            <input 
+              type="date" 
+              value={startDate}
+              onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến ngày</label>
+            <input 
+              type="date" 
+              value={endDate}
+              onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Số tiền từ</label>
+            <input 
+              type="number" 
+              placeholder="VD: 50000"
+              value={minAmount}
+              onChange={(e) => { setMinAmount(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến số tiền</label>
+            <div className="flex gap-2">
+              <input 
+                type="number" 
+                placeholder="VD: 1000000"
+                value={maxAmount}
+                onChange={(e) => { setMaxAmount(e.target.value); setCurrentPage(1); }}
+                className="flex-1 bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+              />
+              <button 
+                onClick={resetFilters}
+                className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-colors border border-border"
+                title="Xóa bộ lọc"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-card border border-border rounded-3xl p-4 md:p-6 overflow-hidden">
         {paginatedTransactions.length === 0 ? (
           <EmptyState 
@@ -188,11 +310,51 @@ export default function TransactionsClient({ initialTransactions }: Transactions
               <table className="w-full text-sm text-left">
                 <thead>
                   <tr className="text-muted-foreground border-b border-border">
-                    <th className="font-medium px-4 py-3 whitespace-nowrap">Thời gian</th>
-                    <th className="font-medium px-4 py-3 whitespace-nowrap">Danh mục</th>
-                    <th className="font-medium px-4 py-3 whitespace-nowrap">Quỹ</th>
+                    <th 
+                      className="font-medium px-4 py-3 whitespace-nowrap cursor-pointer hover:text-white transition-colors group"
+                      onClick={() => toggleSort('date')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Thời gian
+                        <span className={`transition-opacity ${sortField === 'date' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
+                          {sortField === 'date' && sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      </div>
+                    </th>
+                    <th 
+                      className="font-medium px-4 py-3 whitespace-nowrap cursor-pointer hover:text-white transition-colors group"
+                      onClick={() => toggleSort('category')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Danh mục
+                        <span className={`transition-opacity ${sortField === 'category' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
+                          {sortField === 'category' && sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      </div>
+                    </th>
+                    <th 
+                      className="font-medium px-4 py-3 whitespace-nowrap cursor-pointer hover:text-white transition-colors group"
+                      onClick={() => toggleSort('fund')}
+                    >
+                      <div className="flex items-center gap-1">
+                        Quỹ
+                        <span className={`transition-opacity ${sortField === 'fund' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
+                          {sortField === 'fund' && sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      </div>
+                    </th>
                     <th className="font-medium px-4 py-3 whitespace-nowrap">Ghi chú</th>
-                    <th className="font-medium px-4 py-3 text-right whitespace-nowrap">Số tiền</th>
+                    <th 
+                      className="font-medium px-4 py-3 text-right whitespace-nowrap cursor-pointer hover:text-white transition-colors group"
+                      onClick={() => toggleSort('amount')}
+                    >
+                      <div className="flex items-center justify-end gap-1">
+                        Số tiền
+                        <span className={`transition-opacity ${sortField === 'amount' ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'}`}>
+                          {sortField === 'amount' && sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
