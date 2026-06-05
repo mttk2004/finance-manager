@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { categories } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
+import { unstable_cache, revalidateTag, revalidatePath } from 'next/cache';
 
 export const getCachedCategories = unstable_cache(
   async () => {
@@ -34,6 +34,9 @@ export async function createCategory(data: {
     hashtags: data.hashtags || [],
   }).returning();
 
+  revalidateTag('categories', 'max');
+  revalidatePath('/', 'layout');
+  revalidatePath('/settings', 'page');
   
   return newCat;
 }
@@ -52,10 +55,19 @@ export async function updateCategory(id: string, data: {
     .where(eq(categories.id, id))
     .returning();
 
+  revalidateTag('categories', 'max');
+  revalidatePath('/', 'layout');
+  revalidatePath('/settings', 'page');
+
   return updatedCat;
 }
 
 export async function deleteCategory(id: string) {
   const result = await db.delete(categories).where(eq(categories.id, id)).returning();
+  
+  revalidateTag('categories', 'max');
+  revalidatePath('/', 'layout');
+  revalidatePath('/settings', 'page');
+
   return result;
 }

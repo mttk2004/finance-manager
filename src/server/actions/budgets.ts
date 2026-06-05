@@ -3,7 +3,7 @@
 import { db } from '@/lib/db';
 import { budgets, categories, globalSettings } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { unstable_cache } from 'next/cache';
+import { unstable_cache, revalidateTag, revalidatePath } from 'next/cache';
 
 export const getCachedGlobalBudgets = unstable_cache(
   async () => {
@@ -59,13 +59,13 @@ export async function upsertBudget(data: {
     where: and(eq(budgets.categoryId, data.categoryId), eq(budgets.period, data.period)),
   });
 
+  let result;
   if (existing) {
     const [updated] = await db.update(budgets)
       .set({ amountLimit: data.amountLimit, isOverride: data.isOverride ?? true })
       .where(eq(budgets.id, existing.id))
       .returning();
-    
-    return updated;
+    result = updated;
   } else {
     const [created] = await db.insert(budgets)
       .values({
@@ -75,8 +75,12 @@ export async function upsertBudget(data: {
         isOverride: data.isOverride ?? true
       })
       .returning();
-    return created;
+    result = created;
   }
+
+  revalidatePath('/', 'layout');
+  revalidatePath('/settings', 'page');
+  return result;
 }
 
 export async function setGlobalBudget(categoryId: string, amountLimit: number) {
@@ -87,16 +91,22 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
   const currentValues = (existing?.value as Record<string, number>) || {};
   const newValues = { ...currentValues, [categoryId]: amountLimit };
 
+  let result;
   if (existing) {
-    const result = await db.update(globalSettings)
+    const [updated] = await db.update(globalSettings)
       .set({ value: newValues, updatedAt: new Date() })
       .where(eq(globalSettings.id, existing.id))
       .returning();
-    return result;
+    result = updated;
   } else {
-    const result = await db.insert(globalSettings)
+    const [created] = await db.insert(globalSettings)
       .values({ key: 'global_budgets', value: newValues })
       .returning();
-    return result;
+    result = created;
   }
+
+  revalidateTag('global_budgets', 'max');
+  revalidatePath('/', 'layout');
+  revalidatePath('/settings', 'page');
+  return result;
 }

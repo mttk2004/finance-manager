@@ -3,6 +3,7 @@
 import { db } from '@/lib/db';
 import { transactions, funds, categories, budgets, globalSettings, templates } from '@/lib/db/schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { getCachedCategories } from './categories';
 import { getCachedGlobalBudgets } from './budgets';
 import { getCashFlowData } from './charts';
@@ -105,7 +106,7 @@ export async function getDashboardData() {
 }
 
 export async function resetData() {
-  return await db.transaction(async (tx) => {
+  await db.transaction(async (tx) => {
     await tx.delete(transactions);
     await tx.delete(budgets);
     await tx.delete(templates);
@@ -129,7 +130,14 @@ export async function resetData() {
       { name: 'Tiền thưởng', type: 'INCOME' as const, icon: '🧧', hashtags: ['#thuong', '#bonus'] },
       { name: 'Kinh doanh', type: 'INCOME' as const, icon: '📈', hashtags: ['#kinh_doanh', '#business'] },
     ]);
-
-    return { success: true };
   });
+
+  revalidatePath('/', 'layout');
+  revalidatePath('/transactions', 'page');
+  revalidatePath('/charts', 'page');
+  revalidatePath('/settings', 'page');
+  revalidateTag('categories', 'max');
+  revalidateTag('global_budgets', 'max');
+
+  return { success: true };
 }

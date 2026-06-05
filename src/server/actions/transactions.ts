@@ -3,6 +3,7 @@
 import { db } from '@/lib/db';
 import { transactions, funds, categories } from '@/lib/db/schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 
 export async function createTransaction(data: {
   fundId: string;
@@ -12,7 +13,7 @@ export async function createTransaction(data: {
   type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
   note?: string;
 }) {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     let finalCategoryId = data.categoryId;
 
     // Automatic category detection from hashtag if not explicitly provided
@@ -72,13 +73,17 @@ export async function createTransaction(data: {
       }
     }
 
-    
     return newTx;
   });
+
+  revalidatePath('/', 'layout');
+  revalidatePath('/transactions', 'page');
+  revalidatePath('/charts', 'page');
+  return result;
 }
 
 export async function deleteTransaction(id: string) {
-  return await db.transaction(async (tx) => {
+  const result = await db.transaction(async (tx) => {
     const transaction = await tx.query.transactions.findFirst({
       where: eq(transactions.id, id),
     });
@@ -118,6 +123,11 @@ export async function deleteTransaction(id: string) {
     
     return true;
   });
+
+  revalidatePath('/', 'layout');
+  revalidatePath('/transactions', 'page');
+  revalidatePath('/charts', 'page');
+  return result;
 }
 
 export async function getAllTransactions() {
@@ -182,6 +192,10 @@ export async function importTransactions(csvText: string) {
     }
     return importedCount;
   });
+
+  revalidatePath('/', 'layout');
+  revalidatePath('/transactions', 'page');
+  revalidatePath('/charts', 'page');
 
   return { success: true, count: results };
 }
