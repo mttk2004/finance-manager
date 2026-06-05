@@ -121,7 +121,7 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
       startTransition(() => {
         router.refresh();
       });
-    } catch (error) {
+    } catch {
       toast.error("Lỗi khi chuyển tiền");
     } finally {
       setIsSubmitting(false);

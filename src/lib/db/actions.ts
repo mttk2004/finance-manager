@@ -3,7 +3,32 @@
 import { db } from './index';
 import { funds, transactions, categories, budgets, globalSettings, templates } from './schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, unstable_cache, revalidateTag } from 'next/cache';
+
+export const getCachedCategories = unstable_cache(
+  async () => {
+    return await db.select({
+      id: categories.id,
+      name: categories.name,
+      type: categories.type,
+      icon: categories.icon,
+      hashtags: categories.hashtags
+    }).from(categories).orderBy(categories.name);
+  },
+  ['categories'],
+  { tags: ['categories'], revalidate: 3600 }
+);
+
+export const getCachedGlobalBudgets = unstable_cache(
+  async () => {
+    const setting = await db.query.globalSettings.findFirst({
+      where: eq(globalSettings.key, 'global_budgets'),
+    });
+    return (setting?.value as Record<string, number>) || {};
+  },
+  ['global_budgets'],
+  { tags: ['global_budgets'], revalidate: 3600 }
+);
 
 export async function getTemplates() {
   return await db.query.templates.findMany({
@@ -117,14 +142,14 @@ export async function importTransactions(csvText: string) {
       const type = typeMap[typeStr] || 'EXPENSE';
 
       // Insert transaction
-      const [newTx] = await tx.insert(transactions).values({
+      await tx.insert(transactions).values({
         fundId: fund.id,
         categoryId: category?.id,
         amount,
         type,
         note,
         date: dateStr ? new Date(dateStr) : new Date(),
-      }).returning();
+      });
 
       // Update fund balance
       let newBalance = fund.balance || 0;
@@ -164,20 +189,41 @@ export async function getDashboardData() {
     recentTransactions,
     monthTransactions,
     monthBudgets,
-    globalBudgetsSetting,
     expenseCategories,
     lastMonthTransactions,
     hasTransactionsYesterday,
     allCategories,
     initialCashFlow,
-    allTemplates
+    allTemplates,
+    globalBudgets
   ] = await Promise.all([
-    db.select().from(funds),
+    db.select({ id: funds.id, name: funds.name, balance: funds.balance, isDefault: funds.isDefault }).from(funds),
     db.query.transactions.findMany({
+      columns: {
+        id: true,
+        amount: true,
+        type: true,
+        date: true,
+        note: true,
+      },
       with: {
-        category: true,
-        fund: true,
-        toFund: true,
+        category: {
+          columns: {
+            id: true,
+            name: true,
+            icon: true,
+          }
+        },
+        fund: {
+          columns: {
+            name: true,
+          }
+        },
+        toFund: {
+          columns: {
+            name: true,
+          }
+        },
       },
       orderBy: [desc(transactions.date)],
       limit: 5,
@@ -188,21 +234,26 @@ export async function getDashboardData() {
         lt(transactions.date, startOfNextMonth),
         eq(transactions.type, 'EXPENSE')
       ),
-      with: {
-        category: true,
+      columns: {
+        amount: true,
+        categoryId: true,
       }
     }),
     db.query.budgets.findMany({
       where: eq(budgets.period, currentMonthPeriod),
-      with: {
-        category: true,
+      columns: {
+        id: true,
+        amountLimit: true,
+        categoryId: true,
       }
-    }),
-    db.query.globalSettings.findFirst({
-      where: eq(globalSettings.key, 'global_budgets'),
     }),
     db.query.categories.findMany({
       where: eq(categories.type, 'EXPENSE'),
+      columns: {
+        id: true,
+        name: true,
+        icon: true,
+      }
     }),
     db.query.transactions.findMany({
       where: and(
@@ -210,14 +261,16 @@ export async function getDashboardData() {
         lt(transactions.date, new Date(endOfLastMonth.getTime() + 86400000)),
         eq(transactions.type, 'EXPENSE')
       ),
+      columns: {
+        amount: true,
+      }
     }),
     checkTransactionsYesterday(),
-    db.query.categories.findMany(),
+    getCachedCategories(),
     getCashFlowData('this-month'),
-    getTemplates()
+    getTemplates(),
+    getCachedGlobalBudgets()
   ]);
-
-  const globalBudgets = (globalBudgetsSetting?.value as Record<string, number>) || {};
 
   const budgetTracking = expenseCategories.map(cat => {
     const override = monthBudgets.find(b => b.categoryId === cat.id);
@@ -278,16 +331,15 @@ export async function createTransaction(data: {
       if (foundHashtags) {
         const lowerHashtags = foundHashtags.map(t => t.toLowerCase());
         
-        // 1. Check database for categories with these hashtags
-        const allCategories = await tx.query.categories.findMany();
-        const matchedCategory = allCategories.find(cat => 
-          cat.hashtags?.some(h => lowerHashtags.includes(h.toLowerCase()))
-        );
+        // Use SQL to find matching categories efficiently
+        const matchedCategories = await tx.select({ id: categories.id, name: categories.name, hashtags: categories.hashtags })
+          .from(categories)
+          .where(sql`${categories.hashtags} && ${lowerHashtags}::text[]`);
 
-        if (matchedCategory) {
-          finalCategoryId = matchedCategory.id;
+        if (matchedCategories.length > 0) {
+          finalCategoryId = matchedCategories[0].id;
         } else {
-          // 2. Fallback to hardcoded priority mapping
+          // Fallback to hardcoded priority mapping if needed, but fetch only relevant category
           const tagMap: Record<string, string> = {
             '#mua_sam': 'Mua sắm',
             '#an_sang': 'Ăn uống',
@@ -304,9 +356,12 @@ export async function createTransaction(data: {
           for (const tag of lowerHashtags) {
             const categoryName = tagMap[tag];
             if (categoryName) {
-              const matchedByLocal = allCategories.find(c => c.name === categoryName);
-              if (matchedByLocal) {
-                finalCategoryId = matchedByLocal.id;
+              const matched = await tx.query.categories.findFirst({
+                where: eq(categories.name, categoryName),
+                columns: { id: true }
+              });
+              if (matched) {
+                finalCategoryId = matched.id;
                 break;
               }
             }
@@ -454,11 +509,22 @@ export async function deleteFund(id: string) {
 }
 
 export async function getFunds() {
-  return await db.select().from(funds).orderBy(funds.name);
+  return await db.select({
+    id: funds.id,
+    name: funds.name,
+    balance: funds.balance,
+    isDefault: funds.isDefault
+  }).from(funds).orderBy(funds.name);
 }
 
 export async function getCategories() {
-  return await db.select().from(categories).orderBy(categories.name);
+  return await db.select({
+    id: categories.id,
+    name: categories.name,
+    type: categories.type,
+    icon: categories.icon,
+    hashtags: categories.hashtags
+  }).from(categories).orderBy(categories.name);
 }
 
 export async function createCategory(data: {
@@ -472,6 +538,7 @@ export async function createCategory(data: {
     hashtags: data.hashtags || [],
   }).returning();
 
+  revalidateTag('categories');
   revalidatePath('/', 'layout');
   return newCat;
 }
@@ -490,12 +557,14 @@ export async function updateCategory(id: string, data: {
     .where(eq(categories.id, id))
     .returning();
 
+  revalidateTag('categories');
   revalidatePath('/', 'layout');
   return updatedCat;
 }
 
 export async function deleteCategory(id: string) {
   const result = await db.delete(categories).where(eq(categories.id, id)).returning();
+  revalidateTag('categories');
   revalidatePath('/', 'layout');
   return result;
 }
@@ -597,6 +666,7 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
       .set({ value: newValues, updatedAt: new Date() })
       .where(eq(globalSettings.id, existing.id))
       .returning();
+    revalidateTag('global_budgets');
     revalidatePath('/', 'layout');
     return result;
   } else {
@@ -606,6 +676,7 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
         value: newValues,
       })
       .returning();
+    revalidateTag('global_budgets');
     revalidatePath('/', 'layout');
     return result;
   }
