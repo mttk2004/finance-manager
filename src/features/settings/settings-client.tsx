@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { createFund, updateFund, deleteFund, setDefaultFund } from "@/server/actions/funds";
-import { createCategory, updateCategory, deleteCategory } from "@/server/actions/categories";
-import { upsertBudget } from "@/server/actions/budgets";
-import { createTemplate, updateTemplate, deleteTemplate } from "@/server/actions/templates";
+import { useState } from "react";
+import { createFund, updateFund, deleteFund, setDefaultFund, getFunds } from "@/server/actions/funds";
+import { createCategory, updateCategory, deleteCategory, getCategories } from "@/server/actions/categories";
+import { upsertBudget, getBudgets } from "@/server/actions/budgets";
+import { createTemplate, updateTemplate, deleteTemplate, getTemplates } from "@/server/actions/templates";
 import { resetData } from "@/server/actions/dashboard";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Fund, Category, Budget, Template } from "@/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface SettingsClientProps {
   initialFunds: Fund[];
@@ -22,7 +23,7 @@ interface SettingsClientProps {
 export default function SettingsClient({ initialFunds, initialCategories, initialBudgets, initialTemplates, currentMonthPeriod }: SettingsClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
   
   const activeTab = searchParams.get("tab") || "funds";
 
@@ -30,15 +31,122 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     router.push(`/settings?tab=${tab}`, { scroll: false });
   };
   
+  // --- Queries ---
+  const { data: funds = initialFunds } = useQuery({
+    queryKey: ['funds'],
+    queryFn: () => getFunds(),
+    initialData: initialFunds,
+  });
+
+  const { data: categories = initialCategories } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => getCategories(),
+    initialData: initialCategories,
+  });
+
+  const { data: budgets = initialBudgets } = useQuery({
+    queryKey: ['budgets', currentMonthPeriod],
+    queryFn: () => getBudgets(currentMonthPeriod),
+    initialData: initialBudgets,
+  });
+
+  const { data: templates = initialTemplates } = useQuery({
+    queryKey: ['templates'],
+    queryFn: () => getTemplates(),
+    initialData: initialTemplates,
+  });
+
   // --- Fund States ---
   const [isAddingFund, setIsAddingFund] = useState(false);
   const [editingFundId, setEditingFundId] = useState<string | null>(null);
   const [fundToDelete, setFundToDelete] = useState<Fund | null>(null);
   const [fundName, setFundName] = useState("");
   const [fundBalance, setFundBalance] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isLoading = isSubmitting || isPending;
+  // --- Mutations ---
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['funds'] });
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+    queryClient.invalidateQueries({ queryKey: ['budgets'] });
+    queryClient.invalidateQueries({ queryKey: ['templates'] });
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+  };
+
+  const fundMutations = {
+    create: useMutation({
+      mutationFn: createFund,
+      onSuccess: () => { invalidateAll(); resetFundForm(); },
+      onError: () => toast.error("Lỗi khi thêm quỹ")
+    }),
+    update: useMutation({
+      mutationFn: (vars: { id: string, data: any }) => updateFund(vars.id, vars.data),
+      onSuccess: () => { invalidateAll(); resetFundForm(); },
+      onError: () => toast.error("Lỗi khi cập nhật quỹ")
+    }),
+    delete: useMutation({
+      mutationFn: deleteFund,
+      onSuccess: () => { invalidateAll(); setFundToDelete(null); },
+      onError: (err) => toast.error(err instanceof Error ? err.message : "Lỗi khi xóa quỹ")
+    }),
+    setDefault: useMutation({
+      mutationFn: setDefaultFund,
+      onSuccess: () => { invalidateAll(); toast.success("Đã thay đổi quỹ mặc định"); },
+      onError: () => toast.error("Lỗi khi thay đổi quỹ")
+    })
+  };
+
+  const categoryMutations = {
+    create: useMutation({
+      mutationFn: createCategory,
+      onSuccess: () => { invalidateAll(); resetCategoryForm(); },
+      onError: () => toast.error("Lỗi khi thêm danh mục")
+    }),
+    update: useMutation({
+      mutationFn: (vars: { id: string, data: any }) => updateCategory(vars.id, vars.data),
+      onSuccess: () => { invalidateAll(); resetCategoryForm(); },
+      onError: () => toast.error("Lỗi khi cập nhật danh mục")
+    }),
+    delete: useMutation({
+      mutationFn: deleteCategory,
+      onSuccess: () => invalidateAll(),
+      onError: () => toast.error("Lỗi khi xóa danh mục")
+    })
+  };
+
+  const budgetMutation = useMutation({
+    mutationFn: upsertBudget,
+    onSuccess: () => { invalidateAll(); resetBudgetForm(); },
+    onError: () => toast.error("Lỗi khi cập nhật ngân sách")
+  });
+
+  const templateMutations = {
+    create: useMutation({
+      mutationFn: createTemplate,
+      onSuccess: () => { invalidateAll(); resetTemplateForm(); toast.success("Đã thêm lối tắt mới"); },
+      onError: () => toast.error("Lỗi khi thêm lối tắt")
+    }),
+    update: useMutation({
+      mutationFn: (vars: { id: string, data: any }) => updateTemplate(vars.id, vars.data),
+      onSuccess: () => { invalidateAll(); resetTemplateForm(); toast.success("Đã cập nhật lối tắt"); },
+      onError: () => toast.error("Lỗi khi cập nhật lối tắt")
+    }),
+    delete: useMutation({
+      mutationFn: deleteTemplate,
+      onSuccess: () => { invalidateAll(); setTemplateToDelete(null); toast.success("Đã xóa lối tắt"); },
+      onError: () => toast.error("Lỗi khi xóa lối tắt")
+    })
+  };
+
+  const resetMutation = useMutation({
+    mutationFn: resetData,
+    onSuccess: () => {
+      invalidateAll();
+      setIsResetConfirmOpen(false);
+      toast.success("Đã xóa toàn bộ dữ liệu và thiết lập lại mặc định!");
+    },
+    onError: () => toast.error("Không thể xóa dữ liệu")
+  });
 
   // --- Category States ---
   const [isAddingCategory, setIsAddingCategory] = useState(false);
@@ -67,88 +175,32 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
   // --- Reset Handler ---
-  const handleResetData = async () => {
-    setIsSubmitting(true);
-    try {
-      await resetData();
-      toast.success("Đã xóa toàn bộ dữ liệu và thiết lập lại mặc định!");
-      setIsResetConfirmOpen(false);
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to reset data:", error);
-      toast.error("Không thể xóa dữ liệu");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleResetData = () => {
+    resetMutation.mutate();
   };
 
   // --- Fund Handlers ---
-  const handleAddFund = async () => {
-    if (!fundName || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await createFund({ name: fundName, balance: parseInt(fundBalance) || 0 });
-      resetFundForm();
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to create fund:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleAddFund = () => {
+    if (!fundName || fundMutations.create.isPending) return;
+    fundMutations.create.mutate({ name: fundName, balance: parseInt(fundBalance) || 0 });
   };
 
-  const handleUpdateFund = async () => {
-    if (!fundName || !editingFundId || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await updateFund(editingFundId, { name: fundName, balance: parseInt(fundBalance) || 0 });
-      resetFundForm();
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to update fund:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleUpdateFund = () => {
+    if (!fundName || !editingFundId || fundMutations.update.isPending) return;
+    fundMutations.update.mutate({ 
+      id: editingFundId, 
+      data: { name: fundName, balance: parseInt(fundBalance) || 0 } 
+    });
   };
 
-  const handleDeleteFund = async () => {
-    if (!fundToDelete || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await deleteFund(fundToDelete.id);
-      setFundToDelete(null);
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to delete fund:", error);
-      alert(error instanceof Error ? error.message : "Không thể xóa quỹ");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleDeleteFund = () => {
+    if (!fundToDelete || fundMutations.delete.isPending) return;
+    fundMutations.delete.mutate(fundToDelete.id);
   };
 
-  const handleSetDefaultFund = async (id: string) => {
-    if (isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await setDefaultFund(id);
-      toast.success("Đã thay đổi quỹ mặc định");
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to set default fund:", error);
-      toast.error("Lỗi khi thay đổi quỹ mặc định");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleSetDefaultFund = (id: string) => {
+    if (fundMutations.setDefault.isPending) return;
+    fundMutations.setDefault.mutate(id);
   };
 
   const resetFundForm = () => {
@@ -166,53 +218,21 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   };
 
   // --- Category Handlers ---
-  const handleAddCategory = async () => {
-    if (!catName || !catIcon || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
-      await createCategory({ name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray });
-      resetCategoryForm();
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to create category:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleAddCategory = () => {
+    if (!catName || !catIcon || categoryMutations.create.isPending) return;
+    const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    categoryMutations.create.mutate({ name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray });
   };
 
-  const handleUpdateCategory = async () => {
-    if (!catName || !editingCategoryId || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
-      await updateCategory(editingCategoryId, { name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray });
-      resetCategoryForm();
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to update category:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleUpdateCategory = () => {
+    if (!catName || !editingCategoryId || categoryMutations.update.isPending) return;
+    const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    categoryMutations.update.mutate({ id: editingCategoryId, data: { name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray } });
   };
 
-  const handleDeleteCategory = async (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa danh mục này?") && !isSubmitting) {
-      setIsSubmitting(true);
-      try {
-        await deleteCategory(id);
-        startTransition(() => {
-        router.refresh();
-      });
-      } catch (error) {
-        console.error("Failed to delete category:", error);
-      } finally {
-        setIsSubmitting(false);
-      }
+  const handleDeleteCategory = (id: string) => {
+    if (confirm("Bạn có chắc chắn muốn xóa danh mục này?") && !categoryMutations.delete.isPending) {
+      categoryMutations.delete.mutate(id);
     }
   };
 
@@ -235,24 +255,13 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   };
 
   // --- Budget Handlers ---
-  const handleUpsertBudget = async () => {
-    if (!budgetCategoryId || !budgetAmount || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await upsertBudget({
-        categoryId: budgetCategoryId,
-        amountLimit: parseInt(budgetAmount) || 0,
-        period: currentMonthPeriod,
-      });
-      resetBudgetForm();
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to save budget:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleUpsertBudget = () => {
+    if (!budgetCategoryId || !budgetAmount || budgetMutation.isPending) return;
+    budgetMutation.mutate({
+      categoryId: budgetCategoryId,
+      amountLimit: parseInt(budgetAmount) || 0,
+      period: currentMonthPeriod,
+    });
   };
 
   const resetBudgetForm = () => {
@@ -270,70 +279,34 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
   };
 
   // --- Shortcut (Template) Handlers ---
-  const handleAddTemplate = async () => {
-    if (!templateTitle || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await createTemplate({
+  const handleAddTemplate = () => {
+    if (!templateTitle || templateMutations.create.isPending) return;
+    templateMutations.create.mutate({
+      title: templateTitle,
+      type: templateType,
+      categoryId: templateCategoryId || undefined,
+      amount: parseInt(templateAmount) || undefined,
+      notePreset: templateNote || undefined,
+    });
+  };
+
+  const handleUpdateTemplate = () => {
+    if (!editingTemplateId || !templateTitle || templateMutations.update.isPending) return;
+    templateMutations.update.mutate({
+      id: editingTemplateId,
+      data: {
         title: templateTitle,
         type: templateType,
         categoryId: templateCategoryId || undefined,
         amount: parseInt(templateAmount) || undefined,
         notePreset: templateNote || undefined,
-      });
-      resetTemplateForm();
-      toast.success("Đã thêm lối tắt mới");
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to add template:", error);
-      toast.error("Lỗi khi thêm lối tắt");
-    } finally {
-      setIsSubmitting(false);
-    }
+      }
+    });
   };
 
-  const handleUpdateTemplate = async () => {
-    if (!editingTemplateId || !templateTitle || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await updateTemplate(editingTemplateId, {
-        title: templateTitle,
-        type: templateType,
-        categoryId: templateCategoryId || undefined,
-        amount: parseInt(templateAmount) || undefined,
-        notePreset: templateNote || undefined,
-      });
-      resetTemplateForm();
-      toast.success("Đã cập nhật lối tắt");
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to update template:", error);
-      toast.error("Lỗi khi cập nhật lối tắt");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleDeleteTemplate = async () => {
-    if (!templateToDelete || isSubmitting) return;
-    setIsSubmitting(true);
-    try {
-      await deleteTemplate(templateToDelete.id);
-      setTemplateToDelete(null);
-      toast.success("Đã xóa lối tắt");
-      startTransition(() => {
-        router.refresh();
-      });
-    } catch (error) {
-      console.error("Failed to delete template:", error);
-      toast.error("Lỗi khi xóa lối tắt");
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleDeleteTemplate = () => {
+    if (!templateToDelete || templateMutations.delete.isPending) return;
+    templateMutations.delete.mutate(templateToDelete.id);
   };
 
   const resetTemplateForm = () => {
@@ -355,6 +328,14 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     setTemplateNote(template.notePreset || "");
     setIsAddingTemplate(false);
   };
+
+  const isLoading = Object.values(fundMutations).some(m => m.isPending) ||
+                    Object.values(categoryMutations).some(m => m.isPending) ||
+                    budgetMutation.isPending ||
+                    Object.values(templateMutations).some(m => m.isPending) ||
+                    resetMutation.isPending;
+
+  const isSubmitting = isLoading;
 
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 max-w-3xl mx-auto mt-4 md:mt-8 px-4 md:px-0">

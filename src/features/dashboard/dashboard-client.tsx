@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { getDashboardData } from "@/server/actions/dashboard";
 import { createTransaction, deleteTransaction } from "@/server/actions/transactions";
 import { useRouter } from "next/navigation";
@@ -50,7 +50,6 @@ interface DashboardClientProps {
 export default function DashboardClient({ initialData }: DashboardClientProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const [isPending, startTransition] = useTransition();
   const [isDistributionModalOpen, setDistributionModalOpen] = useState(false);
   const [isFundSelectorOpen, setFundSelectorOpen] = useState(false);
   const [isTransferModalOpen, setTransferModalOpen] = useState(false);
@@ -125,9 +124,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      startTransition(() => {
-        router.refresh();
-      });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['balanceHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowTrend'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowBar'] });
+      queryClient.invalidateQueries({ queryKey: ['categorySpending'] });
+      queryClient.invalidateQueries({ queryKey: ['topSpending'] });
     }
   });
 
@@ -161,9 +163,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      startTransition(() => {
-        router.refresh();
-      });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['balanceHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowTrend'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowBar'] });
+      queryClient.invalidateQueries({ queryKey: ['categorySpending'] });
+      queryClient.invalidateQueries({ queryKey: ['topSpending'] });
     }
   });
 
@@ -229,7 +234,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
         amount={transferAmount}
         handleTransfer={handleTransfer}
         isSubmitting={createTxMutation.isPending}
-        isPending={isPending}
       />
 
       <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
@@ -249,7 +253,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               onOpenTransferModal={() => setTransferModalOpen(true)}
               handleTransaction={handleTransaction}
               isSubmitting={createTxMutation.isPending}
-              isPending={isPending}
             />
 
             <FinancialInsights 
@@ -266,7 +269,6 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
           <RecentTransactions 
             groupedTransactions={groupedTransactions}
             isSubmitting={createTxMutation.isPending}
-            isPending={isPending}
           />
         </div>
       </div>

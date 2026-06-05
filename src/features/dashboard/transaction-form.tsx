@@ -18,7 +18,6 @@ interface TransactionFormProps {
   onOpenTransferModal: () => void;
   handleTransaction: (type: TransactionType, amount: string, note: string) => Promise<void>;
   isSubmitting: boolean;
-  isPending: boolean;
 }
 
 export function TransactionForm({ 
@@ -29,13 +28,12 @@ export function TransactionForm({
   onOpenTransferModal,
   handleTransaction,
   isSubmitting,
-  isPending
 }: TransactionFormProps) {
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
 
-  const isLoading = isSubmitting || isPending;
+  const isLoading = isSubmitting;
 
   const hashtags = ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec', '#luong', '#thuong', '#kinh_doanh', '#qua_tang'];
 

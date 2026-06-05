@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useRef, useTransition } from "react";
-import { importTransactions } from "@/server/actions/transactions";
+import { useState, useRef } from "react";
+import { importTransactions, getAllTransactions } from "@/server/actions/transactions";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/empty-state";
 import { ReceiptText } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const ExportReportModal = dynamic(() => import("@/components/export-report-modal"), {
   ssr: false,
@@ -37,13 +37,11 @@ interface TransactionsClientProps {
 }
 
 export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [isImporting, setIsImporting] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   
@@ -57,40 +55,49 @@ export default function TransactionsClient({ initialTransactions }: Transactions
   const [sortField, setSortField] = useState<keyof Transaction | 'category' | 'fund'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
+  const { data: transactions = initialTransactions } = useQuery({
+    queryKey: ['transactions'],
+    queryFn: () => getAllTransactions(),
+    initialData: initialTransactions,
+  });
+
+  const importMutation = useMutation({
+    mutationFn: importTransactions,
+    onSuccess: (result) => {
+      if (result.success) {
+        toast.success(`Nhập dữ liệu thành công!`, {
+          description: `Đã nhập ${result.count} giao dịch mới.`
+        });
+        queryClient.invalidateQueries({ queryKey: ['transactions'] });
+        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      } else {
+        toast.error("Lỗi khi nhập dữ liệu CSV.");
+      }
+    },
+    onError: (err) => {
+      console.error("Import failed:", err);
+      toast.error("Lỗi khi nhập dữ liệu CSV.");
+    },
+    onSettled: () => {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  });
+
   const itemsPerPage = 15;
 
   const handleImportCSV = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsImporting(true);
     const reader = new FileReader();
     reader.onload = async (event) => {
       const text = event.target?.result as string;
-      try {
-        const result = await importTransactions(text);
-        if (result.success) {
-          toast.success(`Nhập dữ liệu thành công!`, {
-            description: `Đã nhập ${result.count} giao dịch mới.`
-          });
-          startTransition(() => {
-            router.refresh();
-          });
-        } else {
-          toast.error("Lỗi khi nhập dữ liệu CSV.");
-        }
-      } catch (err) {
-        console.error("Import failed:", err);
-        toast.error("Lỗi khi nhập dữ liệu CSV.");
-      } finally {
-        setIsImporting(false);
-        if (fileInputRef.current) fileInputRef.current.value = "";
-      }
+      importMutation.mutate(text);
     };
     reader.readAsText(file);
   };
 
-  const filteredTransactions = initialTransactions.filter(tx => {
+  const filteredTransactions = transactions.filter(tx => {
     // Note search filter
     if (searchTerm && !(tx.note || '').toLowerCase().includes(searchTerm.toLowerCase()) && !(tx.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
@@ -182,11 +189,11 @@ export default function TransactionsClient({ initialTransactions }: Transactions
           />
           <button 
             onClick={() => fileInputRef.current?.click()}
-            disabled={isImporting || isPending}
+            disabled={importMutation.isPending}
             className="flex items-center gap-2 bg-white/[0.05] hover:bg-white/[0.1] text-foreground font-medium px-4 py-2 rounded-xl transition-colors border border-border hover:border-white/[0.1] cursor-pointer shrink-0 disabled:opacity-50"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-            {(isImporting || isPending) ? "Đang xử lý..." : "Nhập CSV"}
+            {importMutation.isPending ? "Đang xử lý..." : "Nhập CSV"}
           </button>
           <button 
             onClick={handleExportCSV}

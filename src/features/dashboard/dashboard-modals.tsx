@@ -21,7 +21,6 @@ interface DashboardModalsProps {
   amount: string;
   handleTransfer: () => Promise<void>;
   isSubmitting: boolean;
-  isPending: boolean;
 }
 
 export function DashboardModals({
@@ -40,9 +39,8 @@ export function DashboardModals({
   amount,
   handleTransfer,
   isSubmitting,
-  isPending
 }: DashboardModalsProps) {
-  const isLoading = isSubmitting || isPending;
+  const isLoading = isSubmitting;
 
   return (
     <>

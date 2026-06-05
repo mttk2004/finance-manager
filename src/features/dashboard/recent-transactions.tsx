@@ -6,10 +6,9 @@ import { useRouter } from "next/navigation";
 interface RecentTransactionsProps {
   groupedTransactions: Record<string, Transaction[]>;
   isSubmitting: boolean;
-  isPending: boolean;
 }
 
-export function RecentTransactions({ groupedTransactions, isSubmitting, isPending }: RecentTransactionsProps) {
+export function RecentTransactions({ groupedTransactions, isSubmitting }: RecentTransactionsProps) {
   const router = useRouter();
 
   return (
@@ -21,7 +20,7 @@ export function RecentTransactions({ groupedTransactions, isSubmitting, isPendin
         </div>
         
         <div className="space-y-8">
-          {(isSubmitting || isPending) && (
+          {isSubmitting && (
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="h-3 w-20 bg-white/5 rounded animate-pulse"></div>
@@ -39,7 +38,7 @@ export function RecentTransactions({ groupedTransactions, isSubmitting, isPendin
               </div>
             </div>
           )}
-          {Object.keys(groupedTransactions).length === 0 && !isSubmitting && !isPending ? (
+          {Object.keys(groupedTransactions).length === 0 && !isSubmitting ? (
             <EmptyState 
               icon={ReceiptText}
               title="Chưa có giao dịch"
