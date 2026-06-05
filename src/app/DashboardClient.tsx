@@ -192,6 +192,17 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
 
   const hashtags = ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec', '#luong', '#thuong', '#kinh_doanh', '#qua_tang'];
 
+  const formatMoney = (amount: number) => amount.toLocaleString('vi-VN') + "đ";
+  
+  const formatBudget = (amount: number) => {
+    if (amount >= 1000000) {
+      const triệu = amount / 1000000;
+      if (triệu % 1 === 0) return triệu + "tr";
+      return triệu.toFixed(1) + "tr";
+    }
+    return amount.toLocaleString('vi-VN') + "đ";
+  };
+
   const handleTransaction = async (type: 'INCOME' | 'EXPENSE' | 'LEND' | 'BORROW' | 'TRANSFER') => {
     if (!amount || amount === '0' || isSubmitting) return;
     if (type === 'TRANSFER' && (!transferToFund || transferToFund.id === activeFund.id)) {
@@ -370,12 +381,12 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
               <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Ngân sách T{new Date().getMonth() + 1}</h3>
               <span className="text-[10px] text-muted-foreground">
                 {initialData.totalBudgetMonth > 0 
-                  ? `Còn lại ${((initialData.totalBudgetMonth - initialData.totalSpentMonth) / 1000000).toFixed(1)}M` 
+                  ? `Còn lại ${formatMoney(initialData.totalBudgetMonth - initialData.totalSpentMonth)}` 
                   : 'Chưa thiết lập'}
               </span>
             </div>
             <div className="text-xl font-mono text-foreground mb-3">
-              {(initialData.totalSpentMonth / 1000000).toFixed(1)}M<span className="text-muted-foreground text-sm"> / {(initialData.totalBudgetMonth / 1000000).toFixed(1)}M</span>
+              {formatBudget(initialData.totalSpentMonth)}<span className="text-muted-foreground text-sm"> / {formatBudget(initialData.totalBudgetMonth)}</span>
             </div>
             
             <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden relative">
@@ -628,8 +639,8 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
                        </span>
                        <span className="font-mono text-muted-foreground">
                          <span className={isNearingLimit ? "text-rose-400 font-bold" : "text-foreground"}>
-                           {(budget.spent / 1000000).toFixed(1)}M
-                         </span> / {(budget.amountLimit / 1000000).toFixed(1)}M
+                           {formatBudget(budget.spent)}
+                         </span> / {formatBudget(budget.amountLimit)}
                        </span>
                      </div>
                      <div className="h-1.5 w-full bg-neutral-900 rounded-full overflow-hidden relative">
@@ -654,7 +665,25 @@ export default function DashboardClient({ initialData }: DashboardClientProps) {
             </div>
             
             <div className="space-y-8">
-              {Object.keys(groupedTransactions).length === 0 ? (
+              {(isSubmitting || isPending) && (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-3 w-20 bg-white/5 rounded animate-pulse"></div>
+                    <div className="h-[1px] flex-1 bg-white/[0.03]"></div>
+                  </div>
+                  <div className="w-full p-4 rounded-3xl bg-card border border-border flex items-center justify-between opacity-50">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-white/5 animate-pulse shrink-0"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 w-32 bg-white/5 rounded animate-pulse"></div>
+                        <div className="h-3 w-20 bg-white/5 rounded animate-pulse"></div>
+                      </div>
+                    </div>
+                    <div className="h-4 w-16 bg-white/5 rounded animate-pulse"></div>
+                  </div>
+                </div>
+              )}
+              {Object.keys(groupedTransactions).length === 0 && !isSubmitting && !isPending ? (
                 <EmptyState 
                   icon={ReceiptText}
                   title="Chưa có giao dịch"

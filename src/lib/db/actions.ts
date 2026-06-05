@@ -450,11 +450,11 @@ export async function deleteFund(id: string) {
 }
 
 export async function getFunds() {
-  return await db.select().from(funds);
+  return await db.select().from(funds).orderBy(funds.name);
 }
 
 export async function getCategories() {
-  return await db.select().from(categories);
+  return await db.select().from(categories).orderBy(categories.name);
 }
 
 export async function createCategory(data: {
@@ -517,6 +517,7 @@ export async function getBudgets(period: string) {
   const globalBudgets = await getGlobalBudgets();
   const allCategories = await db.query.categories.findMany({
     where: eq(categories.type, 'EXPENSE'),
+    orderBy: [categories.name],
   });
   
   // Return combined view for settings

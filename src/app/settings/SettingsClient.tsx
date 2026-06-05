@@ -193,7 +193,8 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     if (!catName || !catIcon || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await createCategory({ name: catName, type: catType, icon: catIcon });
+      const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      await createCategory({ name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray });
       resetCategoryForm();
       startTransition(() => {
         router.refresh();
@@ -209,7 +210,8 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     if (!catName || !editingCategoryId || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await updateCategory(editingCategoryId, { name: catName, type: catType, icon: catIcon });
+      const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
+      await updateCategory(editingCategoryId, { name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray });
       resetCategoryForm();
       startTransition(() => {
         router.refresh();
@@ -241,6 +243,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     setCatName("");
     setCatType("EXPENSE");
     setCatIcon("");
+    setCatHashtags("");
     setIsAddingCategory(false);
     setEditingCategoryId(null);
   };
@@ -250,6 +253,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
     setCatName(cat.name);
     setCatType(cat.type);
     setCatIcon(cat.icon || "");
+    setCatHashtags(cat.hashtags?.join(", ") || "");
     setIsAddingCategory(false);
   };
 
@@ -848,6 +852,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
               )}
             </div>
           </div>
+        )}
         {activeTab === "general" && (
           <div className="space-y-6">
             <h3 className="font-medium text-foreground">Cài đặt chung</h3>
