@@ -583,10 +583,10 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {initialFunds.length === 0 ? (
+              {funds.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8 col-span-2">Chưa có quỹ nào</p>
               ) : (
-                initialFunds.map((fund, idx) => {
+                funds.map((fund, idx) => {
                   const gradients = [
                     'from-emerald-500/20 to-teal-500/5',
                     'from-blue-500/20 to-indigo-500/5',
@@ -730,10 +730,10 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             )}
             
             <div className="space-y-3">
-              {initialCategories.length === 0 ? (
+              {categories.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Chưa có danh mục nào</p>
               ) : (
-                initialCategories.map(cat => (
+                categories.map(cat => (
                   <div key={cat.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingCategoryId === cat.id ? 'bg-blue-500/5 border-blue-500/20' : 'bg-secondary border-white/[0.02]'}`}>
                     <div className="flex items-center gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${cat.type === 'INCOME' ? 'bg-emerald-500/10' : 'bg-rose-500/10'}`}>
@@ -797,7 +797,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                   onChange={(e) => setBudgetCategoryId(e.target.value)}
                   options={[
                     { value: "", label: "-- Chọn danh mục chi tiêu --" },
-                    ...initialCategories.filter(c => c.type === 'EXPENSE').map(c => ({
+                    ...categories.filter(c => c.type === 'EXPENSE').map(c => ({
                       value: c.id,
                       label: `${c.icon} ${c.name}`
                     }))
@@ -822,10 +822,10 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             )}
             
             <div className="space-y-3">
-              {initialBudgets.length === 0 ? (
+              {budgets.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">Chưa có ngân sách nào được thiết lập cho tháng này.</p>
               ) : (
-                initialBudgets.map(budget => (
+                budgets.map(budget => (
                   <div key={budget.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingBudgetId === budget.id ? 'bg-orange-500/5 border-orange-500/20' : 'bg-secondary border-white/[0.02]'}`}>
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-orange-500/10">
@@ -907,7 +907,7 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                       onChange={(e) => setTemplateCategoryId(e.target.value)}
                       options={[
                         { value: "", label: "-- Tự động theo hashtag --" },
-                        ...initialCategories.filter(c => c.type === (templateType === 'INCOME' ? 'INCOME' : 'EXPENSE')).map(c => ({
+                        ...categories.filter(c => c.type === (templateType === 'INCOME' ? 'INCOME' : 'EXPENSE')).map(c => ({
                           value: c.id,
                           label: `${c.icon} ${c.name}`
                         }))
@@ -947,10 +947,10 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
             )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {initialTemplates.length === 0 ? (
+              {templates.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8 col-span-2">Chưa có lối tắt nào</p>
               ) : (
-                initialTemplates.map((template) => (
+                templates.map((template) => (
                   <div key={template.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${editingTemplateId === template.id ? 'bg-blue-500/5 border-blue-500/20' : 'bg-secondary border-white/[0.02]'}`}>
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-blue-500/10">
