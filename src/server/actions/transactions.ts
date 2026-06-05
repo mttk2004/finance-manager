@@ -22,12 +22,13 @@ export async function createTransaction(data: {
       if (foundHashtags) {
         const lowerHashtags = foundHashtags.map(t => t.toLowerCase());
         
-        const matchedCategories = await tx.select({ id: categories.id })
-          .from(categories)
-          .where(sql`${categories.hashtags} && ${lowerHashtags}::text[]`);
+        const allCategories = await tx.select({ id: categories.id, hashtags: categories.hashtags }).from(categories);
+        const match = allCategories.find(c => 
+          c.hashtags?.some(h => lowerHashtags.includes(h.toLowerCase()))
+        );
 
-        if (matchedCategories.length > 0) {
-          finalCategoryId = matchedCategories[0].id;
+        if (match) {
+          finalCategoryId = match.id;
         }
       }
     }
