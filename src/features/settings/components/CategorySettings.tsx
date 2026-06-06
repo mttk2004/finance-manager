@@ -4,16 +4,21 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { Category } from "@/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createCategory, updateCategory, deleteCategory } from "@/server/actions/categories";
+import { useCategories } from "@/hooks/use-categories";
 
 interface CategorySettingsProps {
   categories: Category[];
   isLoading: boolean;
 }
 
-export function CategorySettings({ categories, isLoading: parentIsLoading }: CategorySettingsProps) {
-  const queryClient = useQueryClient();
+export function CategorySettings({ categories: initialCategories, isLoading: parentIsLoading }: CategorySettingsProps) {
+  const { 
+    categories, 
+    createCategory, 
+    updateCategory, 
+    deleteCategory, 
+    isSubmitting 
+  } = useCategories(initialCategories);
 
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
@@ -21,6 +26,8 @@ export function CategorySettings({ categories, isLoading: parentIsLoading }: Cat
   const [catType, setCatType] = useState<'INCOME' | 'EXPENSE'>("EXPENSE");
   const [catIcon, setCatIcon] = useState("");
   const [catHashtags, setCatHashtags] = useState("");
+
+  const isLoading = parentIsLoading || isSubmitting;
 
   const resetCategoryForm = () => {
     setCatName("");
@@ -31,93 +38,25 @@ export function CategorySettings({ categories, isLoading: parentIsLoading }: Cat
     setEditingCategoryId(null);
   };
 
-  const categoryMutations = {
-    create: useMutation({
-      mutationFn: createCategory,
-      onMutate: async (newCat) => {
-        resetCategoryForm();
-        toast.success("Đã thêm danh mục mới");
-        await queryClient.cancelQueries({ queryKey: ['categories'] });
-        const previous = queryClient.getQueryData<Category[]>(['categories']);
-        if (previous) {
-          queryClient.setQueryData(['categories'], [...previous, { id: Date.now().toString(), ...newCat, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Category]);
-        }
-        return { previous };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['categories'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      },
-      onError: (err, newV, context) => {
-        if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
-        toast.error("Lỗi khi thêm danh mục");
-      }
-    }),
-    update: useMutation({
-      mutationFn: (vars: { id: string, data: any }) => updateCategory(vars.id, vars.data),
-      onMutate: async ({ id, data }) => {
-        resetCategoryForm();
-        toast.success("Đã cập nhật danh mục");
-        await queryClient.cancelQueries({ queryKey: ['categories'] });
-        const previous = queryClient.getQueryData<Category[]>(['categories']);
-        if (previous) {
-          queryClient.setQueryData(['categories'], previous.map(c => 
-            c.id === id ? { ...c, ...data } : c
-          ));
-        }
-        return { previous };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['categories'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      },
-      onError: (err, newV, context) => {
-        if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
-        toast.error("Lỗi khi cập nhật danh mục");
-      },
-    }),
-    delete: useMutation({
-      mutationFn: deleteCategory,
-      onMutate: async (id) => {
-        toast.success("Đã xóa danh mục");
-        await queryClient.cancelQueries({ queryKey: ['categories'] });
-        const previous = queryClient.getQueryData<Category[]>(['categories']);
-        if (previous) {
-          queryClient.setQueryData(['categories'], previous.filter(c => c.id !== id));
-        }
-        return { previous };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['categories'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      },
-      onError: (err, newV, context) => {
-        if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
-        toast.error("Lỗi khi xóa danh mục");
-      },
-    })
-  };
-
-  const isSubmitting = Object.values(categoryMutations).some(m => m.isPending);
-  const isLoading = parentIsLoading || isSubmitting;
-
   const handleAddCategory = () => {
-    if (!catName || !catIcon || categoryMutations.create.isPending) return;
+    if (!catName || !catIcon || isSubmitting) return;
     const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
-    categoryMutations.create.mutate({ name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray });
+    createCategory({ name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray }, {
+      onSuccess: resetCategoryForm
+    });
   };
 
   const handleUpdateCategory = () => {
-    if (!catName || !editingCategoryId || categoryMutations.update.isPending) return;
+    if (!catName || !editingCategoryId || isSubmitting) return;
     const hashtagsArray = catHashtags.split(',').map(s => s.trim()).filter(s => s.length > 0);
-    categoryMutations.update.mutate({ id: editingCategoryId, data: { name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray } });
+    updateCategory({ id: editingCategoryId, data: { name: catName, type: catType, icon: catIcon, hashtags: hashtagsArray } }, {
+      onSuccess: resetCategoryForm
+    });
   };
 
   const handleDeleteCategory = (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa danh mục này?") && !categoryMutations.delete.isPending) {
-      categoryMutations.delete.mutate(id);
+    if (confirm("Bạn có chắc chắn muốn xóa danh mục này?") && !isSubmitting) {
+      deleteCategory(id);
     }
   };
 

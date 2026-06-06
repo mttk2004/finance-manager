@@ -2,32 +2,22 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { resetData } from "@/server/actions/dashboard";
+import { useDashboard } from "@/hooks/use-dashboard";
 
 interface GeneralSettingsProps {
   isLoading: boolean;
 }
 
 export function GeneralSettings({ isLoading: parentIsLoading }: GeneralSettingsProps) {
-  const queryClient = useQueryClient();
+  const { resetData, isResetting } = useDashboard();
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
 
-  const resetMutation = useMutation({
-    mutationFn: resetData,
-    onSuccess: () => {
-      queryClient.invalidateQueries();
-      setIsResetConfirmOpen(false);
-      toast.success("Đã xóa toàn bộ dữ liệu và thiết lập lại mặc định!");
-    },
-    onError: () => toast.error("Không thể xóa dữ liệu")
-  });
-
-  const isSubmitting = resetMutation.isPending;
-  const isLoading = parentIsLoading || isSubmitting;
+  const isLoading = parentIsLoading || isResetting;
 
   const handleResetData = () => {
-    resetMutation.mutate();
+    resetData(undefined, {
+      onSuccess: () => setIsResetConfirmOpen(false)
+    });
   };
 
   return (
@@ -65,17 +55,17 @@ export function GeneralSettings({ isLoading: parentIsLoading }: GeneralSettingsP
             <div className="flex gap-3">
               <button 
                 onClick={() => setIsResetConfirmOpen(false)}
-                disabled={isSubmitting}
+                disabled={isLoading}
                 className="flex-1 py-3 px-4 rounded-xl text-muted-foreground font-medium text-sm hover:bg-white/[0.03] transition-colors cursor-pointer disabled:opacity-50"
               >
                 Hủy bỏ
               </button>
               <button 
                 onClick={handleResetData}
-                disabled={isSubmitting}
+                disabled={isLoading}
                 className="flex-1 py-3 px-4 rounded-xl bg-rose-500 text-white font-semibold text-sm hover:bg-rose-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
               >
-                {isSubmitting ? "Đang xóa..." : "Xác nhận xóa"}
+                {isLoading ? "Đang xóa..." : "Xác nhận xóa"}
               </button>
             </div>
           </div>

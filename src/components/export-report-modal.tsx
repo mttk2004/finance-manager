@@ -3,11 +3,13 @@
 import { useState, useRef } from "react";
 import { getReportData } from "@/server/actions/charts";
 import { toast } from "sonner";
-import { CashFlowChart } from "@/components/cash-flow-chart";
-import { CategoryDonutChart } from "@/components/category-donut-chart";
+import { ReportData, Transaction, CategorySpending } from "@/types";
 import jsPDF from "jspdf";
 import { toPng } from "html-to-image";
-import { ReportData, Transaction, CategorySpending } from "@/types";
+import dynamic from "next/dynamic";
+
+const CashFlowChart = dynamic(() => import("@/components/cash-flow-chart").then(mod => mod.CashFlowChart), { ssr: false });
+const CategoryDonutChart = dynamic(() => import("@/components/category-donut-chart").then(mod => mod.CategoryDonutChart), { ssr: false });
 
 export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const [startDate, setStartDate] = useState(new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0]);

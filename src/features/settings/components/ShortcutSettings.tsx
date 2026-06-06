@@ -5,8 +5,7 @@ import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { AmountInput } from "@/components/amount-input";
 import { Category, Template } from "@/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createTemplate, updateTemplate, deleteTemplate } from "@/server/actions/templates";
+import { useTemplates } from "@/hooks/use-templates";
 
 interface ShortcutSettingsProps {
   categories: Category[];
@@ -14,8 +13,14 @@ interface ShortcutSettingsProps {
   isLoading: boolean;
 }
 
-export function ShortcutSettings({ categories, templates, isLoading: parentIsLoading }: ShortcutSettingsProps) {
-  const queryClient = useQueryClient();
+export function ShortcutSettings({ categories, templates: initialTemplates, isLoading: parentIsLoading }: ShortcutSettingsProps) {
+  const { 
+    templates, 
+    createTemplate, 
+    updateTemplate, 
+    deleteTemplate, 
+    isSubmitting 
+  } = useTemplates(initialTemplates);
 
   const [isAddingTemplate, setIsAddingTemplate] = useState(false);
   const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
@@ -25,6 +30,8 @@ export function ShortcutSettings({ categories, templates, isLoading: parentIsLoa
   const [templateAmount, setTemplateAmount] = useState("");
   const [templateNote, setTemplateNote] = useState("");
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
+
+  const isLoading = parentIsLoading || isSubmitting;
 
   const resetTemplateForm = () => {
     setTemplateTitle("");
@@ -36,82 +43,22 @@ export function ShortcutSettings({ categories, templates, isLoading: parentIsLoa
     setEditingTemplateId(null);
   };
 
-  const templateMutations = {
-    create: useMutation({
-      mutationFn: createTemplate,
-      onMutate: async (newTpl) => {
-        resetTemplateForm();
-        toast.success("Đã thêm lối tắt mới");
-        await queryClient.cancelQueries({ queryKey: ['templates'] });
-        const previous = queryClient.getQueryData<Template[]>(['templates']);
-        if (previous) {
-          queryClient.setQueryData(['templates'], [...previous, { id: Date.now().toString(), ...newTpl, createdAt: new Date() } as unknown as Template]);
-        }
-        return { previous };
-      },
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['templates'] }),
-      onError: (err, newV, context) => {
-        if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
-        toast.error("Lỗi khi thêm lối tắt");
-      }
-    }),
-    update: useMutation({
-      mutationFn: (vars: { id: string, data: any }) => updateTemplate(vars.id, vars.data),
-      onMutate: async ({ id, data }) => {
-        resetTemplateForm();
-        toast.success("Đã cập nhật lối tắt");
-        await queryClient.cancelQueries({ queryKey: ['templates'] });
-        const previous = queryClient.getQueryData<Template[]>(['templates']);
-        if (previous) {
-          queryClient.setQueryData(['templates'], previous.map(t => 
-            t.id === id ? { ...t, ...data } : t
-          ));
-        }
-        return { previous };
-      },
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['templates'] }),
-      onError: (err, newV, context) => {
-        if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
-        toast.error("Lỗi khi cập nhật lối tắt");
-      },
-    }),
-    delete: useMutation({
-      mutationFn: deleteTemplate,
-      onMutate: async (id) => {
-        setTemplateToDelete(null);
-        toast.success("Đã xóa lối tắt");
-        await queryClient.cancelQueries({ queryKey: ['templates'] });
-        const previous = queryClient.getQueryData<Template[]>(['templates']);
-        if (previous) {
-          queryClient.setQueryData(['templates'], previous.filter(t => t.id !== id));
-        }
-        return { previous };
-      },
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['templates'] }),
-      onError: (err, newV, context) => {
-        if (context?.previous) queryClient.setQueryData(['templates'], context.previous);
-        toast.error("Lỗi khi xóa lối tắt");
-      },
-    })
-  };
-
-  const isSubmitting = Object.values(templateMutations).some(m => m.isPending);
-  const isLoading = parentIsLoading || isSubmitting;
-
   const handleAddTemplate = () => {
-    if (!templateTitle || templateMutations.create.isPending) return;
-    templateMutations.create.mutate({
+    if (!templateTitle || isSubmitting) return;
+    createTemplate({
       title: templateTitle,
       type: templateType,
       categoryId: templateCategoryId || undefined,
       amount: parseInt(templateAmount) || undefined,
       notePreset: templateNote || undefined,
+    }, {
+      onSuccess: resetTemplateForm
     });
   };
 
   const handleUpdateTemplate = () => {
-    if (!editingTemplateId || !templateTitle || templateMutations.update.isPending) return;
-    templateMutations.update.mutate({
+    if (!editingTemplateId || !templateTitle || isSubmitting) return;
+    updateTemplate({
       id: editingTemplateId,
       data: {
         title: templateTitle,
@@ -120,12 +67,16 @@ export function ShortcutSettings({ categories, templates, isLoading: parentIsLoa
         amount: parseInt(templateAmount) || undefined,
         notePreset: templateNote || undefined,
       }
+    }, {
+      onSuccess: resetTemplateForm
     });
   };
 
   const handleDeleteTemplate = () => {
-    if (!templateToDelete || templateMutations.delete.isPending) return;
-    templateMutations.delete.mutate(templateToDelete.id);
+    if (!templateToDelete || isSubmitting) return;
+    deleteTemplate(templateToDelete.id, {
+      onSuccess: () => setTemplateToDelete(null)
+    });
   };
 
   const startEditTemplate = (template: Template) => {

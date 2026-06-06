@@ -5,8 +5,7 @@ import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";
 import { AmountInput } from "@/components/amount-input";
 import { Category, Budget } from "@/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { upsertBudget } from "@/server/actions/budgets";
+import { useBudgets } from "@/hooks/use-budgets";
 
 interface BudgetSettingsProps {
   categories: Category[];
@@ -15,13 +14,19 @@ interface BudgetSettingsProps {
   isLoading: boolean;
 }
 
-export function BudgetSettings({ categories, budgets, currentMonthPeriod, isLoading: parentIsLoading }: BudgetSettingsProps) {
-  const queryClient = useQueryClient();
+export function BudgetSettings({ categories, budgets: initialBudgets, currentMonthPeriod, isLoading: parentIsLoading }: BudgetSettingsProps) {
+  const { 
+    budgets, 
+    upsertBudget, 
+    isSubmitting 
+  } = useBudgets(currentMonthPeriod, initialBudgets);
 
   const [isAddingBudget, setIsAddingBudget] = useState(false);
   const [editingBudgetId, setEditingBudgetId] = useState<string | null>(null);
   const [budgetCategoryId, setBudgetCategoryId] = useState("");
   const [budgetAmount, setBudgetAmount] = useState("");
+
+  const isLoading = parentIsLoading || isSubmitting;
 
   const resetBudgetForm = () => {
     setBudgetCategoryId("");
@@ -30,35 +35,14 @@ export function BudgetSettings({ categories, budgets, currentMonthPeriod, isLoad
     setEditingBudgetId(null);
   };
 
-  const budgetMutation = useMutation({
-    mutationFn: upsertBudget,
-    onMutate: async (data) => {
-      resetBudgetForm();
-      toast.success("Đã cập nhật ngân sách");
-      const queryKey = ['budgets', currentMonthPeriod];
-      await queryClient.cancelQueries({ queryKey });
-      const previous = queryClient.getQueryData<Budget[]>(queryKey);
-      if (previous) {
-        queryClient.setQueryData(queryKey, [...previous.filter(b => b.categoryId !== data.categoryId), data as any]);
-      }
-      return { previous, queryKey };
-    },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['budgets'] }),
-    onError: (err, newV, context) => {
-      if (context?.previous) queryClient.setQueryData(context.queryKey, context.previous);
-      toast.error("Lỗi khi cập nhật ngân sách");
-    },
-  });
-
-  const isSubmitting = budgetMutation.isPending;
-  const isLoading = parentIsLoading || isSubmitting;
-
   const handleUpsertBudget = () => {
-    if (!budgetCategoryId || !budgetAmount || budgetMutation.isPending) return;
-    budgetMutation.mutate({
+    if (!budgetCategoryId || !budgetAmount || isSubmitting) return;
+    upsertBudget({
       categoryId: budgetCategoryId,
       amountLimit: parseInt(budgetAmount) || 0,
       period: currentMonthPeriod,
+    }, {
+      onSuccess: resetBudgetForm
     });
   };
 

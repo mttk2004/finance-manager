@@ -1,12 +1,11 @@
 "use client";
 
-import { getFunds } from "@/server/actions/funds";
-import { getCategories } from "@/server/actions/categories";
-import { getBudgets } from "@/server/actions/budgets";
-import { getTemplates } from "@/server/actions/templates";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Fund, Category, Budget, Template } from "@/types";
-import { useQuery } from "@tanstack/react-query";
+import { useFunds } from "@/hooks/use-funds";
+import { useCategories } from "@/hooks/use-categories";
+import { useBudgets } from "@/hooks/use-budgets";
+import { useTemplates } from "@/hooks/use-templates";
 import { FundSettings } from "./components/FundSettings";
 import { CategorySettings } from "./components/CategorySettings";
 import { BudgetSettings } from "./components/BudgetSettings";
@@ -37,32 +36,13 @@ export default function SettingsClient({
     router.push(`/settings?tab=${tab}`, { scroll: false });
   };
   
-  // --- Queries ---
-  const { data: funds = initialFunds, isLoading: fundsLoading } = useQuery({
-    queryKey: ['funds'],
-    queryFn: () => getFunds(),
-    initialData: initialFunds,
-  });
+  // --- Custom Hooks ---
+  const { funds, isFetching: fundsFetching } = useFunds(initialFunds);
+  const { categories, isFetching: categoriesFetching } = useCategories(initialCategories);
+  const { budgets, isFetching: budgetsFetching } = useBudgets(currentMonthPeriod, initialBudgets);
+  const { templates, isFetching: templatesFetching } = useTemplates(initialTemplates);
 
-  const { data: categories = initialCategories, isLoading: categoriesLoading } = useQuery({
-    queryKey: ['categories'],
-    queryFn: () => getCategories(),
-    initialData: initialCategories,
-  });
-
-  const { data: budgets = initialBudgets, isLoading: budgetsLoading } = useQuery({
-    queryKey: ['budgets', currentMonthPeriod],
-    queryFn: () => getBudgets(currentMonthPeriod),
-    initialData: initialBudgets,
-  });
-
-  const { data: templates = initialTemplates, isLoading: templatesLoading } = useQuery({
-    queryKey: ['templates'],
-    queryFn: () => getTemplates(),
-    initialData: initialTemplates,
-  });
-
-  const isLoading = fundsLoading || categoriesLoading || budgetsLoading || templatesLoading;
+  const isLoading = fundsFetching || categoriesFetching || budgetsFetching || templatesFetching;
 
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 max-w-3xl mx-auto mt-4 md:mt-8 px-4 md:px-0">

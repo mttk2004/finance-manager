@@ -4,22 +4,30 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AmountInput } from "@/components/amount-input";
 import { Fund } from "@/types";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createFund, updateFund, deleteFund, setDefaultFund } from "@/server/actions/funds";
+import { useFunds } from "@/hooks/use-funds";
 
 interface FundSettingsProps {
   funds: Fund[];
   isLoading: boolean;
 }
 
-export function FundSettings({ funds, isLoading: parentIsLoading }: FundSettingsProps) {
-  const queryClient = useQueryClient();
+export function FundSettings({ funds: initialFunds, isLoading: parentIsLoading }: FundSettingsProps) {
+  const { 
+    funds, 
+    createFund, 
+    updateFund, 
+    deleteFund, 
+    setDefaultFund, 
+    isSubmitting 
+  } = useFunds(initialFunds);
   
   const [isAddingFund, setIsAddingFund] = useState(false);
   const [editingFundId, setEditingFundId] = useState<string | null>(null);
   const [fundToDelete, setFundToDelete] = useState<Fund | null>(null);
   const [fundName, setFundName] = useState("");
   const [fundBalance, setFundBalance] = useState("");
+
+  const isLoading = parentIsLoading || isSubmitting;
 
   const resetFundForm = () => {
     setFundName("");
@@ -28,123 +36,33 @@ export function FundSettings({ funds, isLoading: parentIsLoading }: FundSettings
     setEditingFundId(null);
   };
 
-  const fundMutations = {
-    create: useMutation({
-      mutationFn: createFund,
-      onMutate: async (newFund) => {
-        resetFundForm();
-        toast.success("Đã thêm quỹ mới");
-        await queryClient.cancelQueries({ queryKey: ['funds'] });
-        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
-        if (previousFunds) {
-          queryClient.setQueryData(['funds'], [...previousFunds, { id: Date.now().toString(), ...newFund, isDefault: previousFunds.length === 0, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Fund]);
-        }
-        return { previousFunds };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['funds'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      },
-      onError: (err, newV, context) => {
-        if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
-        toast.error("Lỗi khi thêm quỹ");
-      }
-    }),
-    update: useMutation({
-      mutationFn: (vars: { id: string, data: any }) => updateFund(vars.id, vars.data),
-      onMutate: async ({ id, data }) => {
-        resetFundForm();
-        toast.success("Đã cập nhật quỹ");
-        await queryClient.cancelQueries({ queryKey: ['funds'] });
-        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
-        if (previousFunds) {
-          queryClient.setQueryData(['funds'], previousFunds.map(f => 
-            f.id === id ? { ...f, ...data } : f
-          ));
-        }
-        return { previousFunds };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['funds'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      },
-      onError: (err, newV, context) => {
-        if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
-        toast.error("Lỗi khi cập nhật quỹ");
-      },
-    }),
-    delete: useMutation({
-      mutationFn: deleteFund,
-      onMutate: async (id) => {
-        setFundToDelete(null);
-        toast.success("Đã xóa quỹ");
-        await queryClient.cancelQueries({ queryKey: ['funds'] });
-        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
-        if (previousFunds) {
-          queryClient.setQueryData(['funds'], previousFunds.filter(f => f.id !== id));
-        }
-        return { previousFunds };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['funds'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-        queryClient.invalidateQueries({ queryKey: ['transactions'] });
-      },
-      onError: (err, newV, context) => {
-        if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
-        toast.error(err instanceof Error ? err.message : "Lỗi khi xóa quỹ");
-      },
-    }),
-    setDefault: useMutation({
-      mutationFn: setDefaultFund,
-      onMutate: async (id) => {
-        toast.success("Đã thay đổi quỹ mặc định");
-        await queryClient.cancelQueries({ queryKey: ['funds'] });
-        const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
-        if (previousFunds) {
-          queryClient.setQueryData(['funds'], previousFunds.map(f => ({
-            ...f,
-            isDefault: f.id === id
-          })));
-        }
-        return { previousFunds };
-      },
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: ['funds'] });
-      },
-      onError: (err, newV, context) => {
-        if (context?.previousFunds) {
-          queryClient.setQueryData(['funds'], context.previousFunds);
-        }
-        toast.error("Lỗi khi thay đổi quỹ");
-      },
-    })
-  };
-
-  const isSubmitting = Object.values(fundMutations).some(m => m.isPending);
-  const isLoading = parentIsLoading || isSubmitting;
-
   const handleAddFund = () => {
-    if (!fundName || fundMutations.create.isPending) return;
-    fundMutations.create.mutate({ name: fundName, balance: parseInt(fundBalance) || 0 });
+    if (!fundName || isSubmitting) return;
+    createFund({ name: fundName, balance: parseInt(fundBalance) || 0 }, {
+      onSuccess: resetFundForm
+    });
   };
 
   const handleUpdateFund = () => {
-    if (!fundName || !editingFundId || fundMutations.update.isPending) return;
-    fundMutations.update.mutate({ 
+    if (!fundName || !editingFundId || isSubmitting) return;
+    updateFund({ 
       id: editingFundId, 
       data: { name: fundName, balance: parseInt(fundBalance) || 0 } 
+    }, {
+      onSuccess: resetFundForm
     });
   };
 
   const handleDeleteFund = () => {
-    if (!fundToDelete || fundMutations.delete.isPending) return;
-    fundMutations.delete.mutate(fundToDelete.id);
+    if (!fundToDelete || isSubmitting) return;
+    deleteFund(fundToDelete.id, {
+      onSuccess: () => setFundToDelete(null)
+    });
   };
 
   const handleSetDefaultFund = (id: string) => {
-    if (fundMutations.setDefault.isPending) return;
-    fundMutations.setDefault.mutate(id);
+    if (isSubmitting) return;
+    setDefaultFund(id);
   };
 
   const startEditFund = (fund: Fund) => {

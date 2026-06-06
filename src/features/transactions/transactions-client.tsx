@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { importTransactions, getAllTransactions } from "@/server/actions/transactions";
+import { useState, useRef, useMemo } from "react";
+import { importTransactions } from "@/server/actions/transactions";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/empty-state";
 import { AmountInput } from "@/components/amount-input";
 import { ReceiptText } from "lucide-react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTransactions } from "@/hooks/use-transactions";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 const ExportReportModal = dynamic(() => import("@/components/export-report-modal"), {
   ssr: false,
@@ -38,7 +39,6 @@ interface TransactionsClientProps {
 }
 
 export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
-  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [filter, setFilter] = useState<'ALL' | 'INCOME' | 'EXPENSE' | 'TRANSFER'>('ALL');
   const [searchTerm, setSearchTerm] = useState("");
@@ -56,11 +56,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
   const [sortField, setSortField] = useState<keyof Transaction | 'category' | 'fund'>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const { data: transactions = initialTransactions } = useQuery({
-    queryKey: ['transactions'],
-    queryFn: () => getAllTransactions(),
-    initialData: initialTransactions,
-  });
+  const { transactions: allTransactions, isLoading, deleteTransaction } = useTransactions(undefined, initialTransactions);
 
   const importMutation = useMutation({
     mutationFn: importTransactions,
@@ -69,8 +65,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
         toast.success(`Nhập dữ liệu thành công!`, {
           description: `Đã nhập ${result.count} giao dịch mới.`
         });
-        queryClient.invalidateQueries({ queryKey: ['transactions'] });
-        queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+        // queryClient.invalidateQueries done in useTransactions settled or manually here
       } else {
         toast.error("Lỗi khi nhập dữ liệu CSV.");
       }
@@ -98,7 +93,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
     reader.readAsText(file);
   };
 
-  const filteredTransactions = transactions.filter(tx => {
+  const filteredTransactions = ((allTransactions as any)?.transactions || allTransactions as any[] || []).filter((tx: Transaction) => {
     // Note search filter
     if (searchTerm && !(tx.note || '').toLowerCase().includes(searchTerm.toLowerCase()) && !(tx.category?.name || '').toLowerCase().includes(searchTerm.toLowerCase())) {
       return false;
