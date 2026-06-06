@@ -6,10 +6,11 @@ import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/empty-state";
 import { AmountInput } from "@/components/amount-input";
-import { ReceiptText, Trash2, Calendar, Tag, Wallet, Search, Filter, FileText, Download, Upload, ChevronLeft, ChevronRight } from "lucide-react";
+import { CustomSelect } from "@/components/ui/custom-select";
+import { ReceiptText, Trash2, Calendar, Tag, Wallet, Search, Filter, FileText, Download, Upload, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useMutation } from "@tanstack/react-query";
-import { Transaction, TransactionType } from "@/types";
+import { Transaction, Fund, Category } from "@/types";
 
 const ExportReportModal = dynamic(() => import("@/components/export-report-modal"), {
   ssr: false,
@@ -21,10 +22,14 @@ interface TransactionsClientProps {
     totalPages: number;
     totalCount: number;
   };
+  funds: Fund[];
+  categories: Category[];
 }
 
-export default function TransactionsClient({ initialTransactions }: TransactionsClientProps) {
+export default function TransactionsClient({ initialTransactions, funds, categories }: TransactionsClientProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Basic States
   const [filterType, setFilterType] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -32,6 +37,8 @@ export default function TransactionsClient({ initialTransactions }: Transactions
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   
   // Advanced Filter States
+  const [fundId, setFundId] = useState<string>('ALL');
+  const [categoryId, setCategoryId] = useState<string>('ALL');
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [minAmount, setMinAmount] = useState("");
@@ -41,20 +48,35 @@ export default function TransactionsClient({ initialTransactions }: Transactions
   const [sortField, setSortField] = useState<string>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const filters = useMemo(() => ({
-    type: filterType === 'ALL' ? undefined : filterType,
-    searchTerm: searchTerm || undefined,
-    startDate: startDate || undefined,
-    endDate: endDate || undefined,
-    minAmount: minAmount ? parseInt(minAmount) : undefined,
-    maxAmount: maxAmount ? parseInt(maxAmount) : undefined,
-    sortField,
-    sortOrder,
-    page: currentPage,
-    limit: 15,
-  }), [filterType, searchTerm, startDate, endDate, minAmount, maxAmount, sortField, sortOrder, currentPage]);
+  const filters = useMemo(() => {
+    const f: any = {
+      page: currentPage,
+      limit: 15,
+      sortField,
+      sortOrder,
+    };
+    if (filterType !== 'ALL') f.type = filterType;
+    if (fundId !== 'ALL') f.fundId = fundId;
+    if (categoryId !== 'ALL') f.categoryId = categoryId;
+    if (searchTerm) f.searchTerm = searchTerm;
+    if (startDate) f.startDate = startDate;
+    if (endDate) f.endDate = endDate;
+    if (minAmount) f.minAmount = parseInt(minAmount);
+    if (maxAmount) f.maxAmount = parseInt(maxAmount);
+    return f;
+  }, [filterType, fundId, categoryId, searchTerm, startDate, endDate, minAmount, maxAmount, sortField, sortOrder, currentPage]);
 
-  const { transactions: data, isLoading, deleteTransaction } = useTransactions(filters, initialTransactions);
+  // Only use initialTransactions if it's the first page with no filters
+  const isDefaultFilters = useMemo(() => (
+    filterType === 'ALL' && fundId === 'ALL' && categoryId === 'ALL' && 
+    !searchTerm && !startDate && !endDate && !minAmount && !maxAmount && 
+    currentPage === 1 && sortField === 'date' && sortOrder === 'desc'
+  ), [filterType, fundId, categoryId, searchTerm, startDate, endDate, minAmount, maxAmount, currentPage, sortField, sortOrder]);
+
+  const { transactions: data, isLoading, deleteTransaction } = useTransactions(
+    filters, 
+    isDefaultFilters ? initialTransactions : undefined
+  );
 
   const transactions = (data as any)?.transactions || [];
   const totalPages = (data as any)?.totalPages || 1;
@@ -103,6 +125,8 @@ export default function TransactionsClient({ initialTransactions }: Transactions
 
   const resetFilters = () => {
     setFilterType('ALL');
+    setFundId('ALL');
+    setCategoryId('ALL');
     setSearchTerm("");
     setStartDate("");
     setEndDate("");
@@ -210,56 +234,90 @@ export default function TransactionsClient({ initialTransactions }: Transactions
       </div>
 
       {isAdvancedFilterOpen && (
-        <div className="bg-secondary border border-border rounded-3xl p-6 mb-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Từ ngày</label>
-            <input 
-              type="date" 
-              value={startDate}
-              onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
-            />
+        <div className="bg-secondary border border-border rounded-[2rem] p-6 mb-8 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+              <Filter className="w-4 h-4" />
+              Bộ lọc nâng cao
+            </h3>
+            <button onClick={() => setIsAdvancedFilterOpen(false)} className="text-muted-foreground hover:text-white">
+              <X className="w-4 h-4" />
+            </button>
           </div>
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến ngày</label>
-            <input 
-              type="date" 
-              value={endDate}
-              onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Số tiền từ</label>
-            <AmountInput 
-              placeholder="VD: 50000"
-              value={minAmount}
-              onChange={(val) => { setMinAmount(val); setCurrentPage(1); }}
-              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white" 
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến số tiền</label>
-            <div className="flex gap-2">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Khoản chi từ Quỹ</label>
+              <CustomSelect 
+                value={fundId}
+                onChange={(e) => { setFundId(e.target.value); setCurrentPage(1); }}
+                options={[
+                  { value: 'ALL', label: 'Tất cả các quỹ' },
+                  ...funds.map(f => ({ value: f.id, label: f.name }))
+                ]}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Theo Danh mục</label>
+              <CustomSelect 
+                value={categoryId}
+                onChange={(e) => { setCategoryId(e.target.value); setCurrentPage(1); }}
+                options={[
+                  { value: 'ALL', label: 'Tất cả danh mục' },
+                  ...categories.map(c => ({ value: c.id, label: `${c.icon} ${c.name}` }))
+                ]}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Từ ngày</label>
+              <input 
+                type="date" 
+                value={startDate}
+                onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến ngày</label>
+              <input 
+                type="date" 
+                value={endDate}
+                onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Số tiền tối thiểu</label>
               <AmountInput 
-                placeholder="VD: 1000000"
+                placeholder="VD: 50.000"
+                value={minAmount}
+                onChange={(val) => { setMinAmount(val); setCurrentPage(1); }}
+                className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm text-white" 
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Số tiền tối đa</label>
+              <AmountInput 
+                placeholder="VD: 1.000.000"
                 value={maxAmount}
                 onChange={(val) => { setMaxAmount(val); setCurrentPage(1); }}
-                className="flex-1 bg-card border border-border rounded-xl px-3 py-2 text-sm text-white" 
+                className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm text-white" 
               />
+            </div>
+            <div className="lg:col-span-2 flex items-end gap-3">
               <button 
                 onClick={resetFilters}
-                className="px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-white transition-colors border border-border"
-                title="Xóa bộ lọc"
+                className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-bold transition-colors border border-border flex items-center justify-center gap-2"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-3.5 h-3.5" />
+                Xóa tất cả bộ lọc
               </button>
             </div>
           </div>
         </div>
       )}
 
-      <div className="bg-card border border-border rounded-3xl p-4 md:p-6 overflow-hidden relative">
+      <div className="bg-card border border-border rounded-3xl p-4 md:p-6 overflow-hidden relative min-h-[400px]">
         {isLoading && (
           <div className="absolute inset-0 bg-background/40 backdrop-blur-[1px] z-10 flex items-center justify-center">
             <div className="w-6 h-6 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
@@ -271,7 +329,7 @@ export default function TransactionsClient({ initialTransactions }: Transactions
             icon={ReceiptText}
             title="Không tìm thấy giao dịch"
             description="Hãy thử thay đổi từ khóa tìm kiếm hoặc bộ lọc của bạn."
-            className="py-12"
+            className="py-20"
           />
         ) : (
           <>

@@ -2,11 +2,9 @@
 
 import { db } from '@/lib/db';
 import { transactions, funds, categories } from '@/lib/db/schema';
-import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
+import { desc, eq, sql, and, gte, lt, asc, exists, ilike, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-
-import { transactionSchema, transactionFilterSchema, TransactionFilter } from '@/lib/validations';
-import { ilike, or } from 'drizzle-orm';
+import { transactionSchema, transactionFilterSchema } from '@/lib/validations';
 
 export async function createTransaction(rawData: any) {
   const data = transactionSchema.parse(rawData);
@@ -146,15 +144,29 @@ export async function getAllTransactions(rawFilters?: any) {
   if (searchTerm) {
     conditions.push(or(
       ilike(transactions.note, `%${searchTerm}%`),
-      sql`EXISTS (SELECT 1 FROM ${categories} WHERE ${categories.id} = ${transactions.categoryId} AND ${categories.name} ILIKE ${`%${searchTerm}%`})`
+      exists(
+        db.select()
+          .from(categories)
+          .where(and(
+            eq(categories.id, transactions.categoryId),
+            ilike(categories.name, `%${searchTerm}%`)
+          ))
+      )
     ));
   }
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const totalCountResult = await db.select({ count: sql<number>`count(*)` }).from(transactions).where(where);
-  const totalCount = totalCountResult[0].count;
+  const totalCount = Number(totalCountResult[0].count);
   const totalPages = Math.ceil(totalCount / limit);
+
+  // Dynamic sorting helper
+  const getOrderBy = () => {
+    const col = (transactions as any)[sortField];
+    if (!col) return desc(transactions.date);
+    return sortOrder === 'asc' ? asc(col) : desc(col);
+  };
 
   const data = await db.query.transactions.findMany({
     where,
@@ -162,7 +174,7 @@ export async function getAllTransactions(rawFilters?: any) {
       category: true,
       fund: true,
     },
-    orderBy: [desc(transactions.date)], 
+    orderBy: [getOrderBy()],
     limit,
     offset: (page - 1) * limit,
   });
