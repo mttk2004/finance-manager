@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, memo } from "react";
 import { numberToVietnameseText } from "@/lib/number-vietnamese";
 
 interface AmountInputProps {
@@ -11,7 +11,7 @@ interface AmountInputProps {
   disabled?: boolean;
 }
 
-export function AmountInput({ value, onChange, className, placeholder, disabled }: AmountInputProps) {
+export const AmountInput = memo(function AmountInput({ value, onChange, className, placeholder, disabled }: AmountInputProps) {
   const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Function to format number with spaces
@@ -86,4 +86,4 @@ export function AmountInput({ value, onChange, className, placeholder, disabled 
       )}
     </div>
   );
-}
+});

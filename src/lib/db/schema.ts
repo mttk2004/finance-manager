@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, uuid, boolean, bigint, jsonb, pgEnum, unique } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp, uuid, boolean, bigint, jsonb, pgEnum, unique, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 export const categoryTypeEnum = pgEnum('category_type', ['INCOME', 'EXPENSE']);
@@ -42,7 +42,11 @@ export const transactions = pgTable('transactions', {
   date: timestamp('date', { withTimezone: true }).defaultNow(),
   note: text('note'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
+}, (table) => [
+  index('transactions_date_idx').on(table.date),
+  index('transactions_fund_id_idx').on(table.fundId),
+  index('transactions_category_id_idx').on(table.categoryId),
+]);
 
 export const transactionsRelations = relations(transactions, ({ one }) => ({
   fund: one(funds, {

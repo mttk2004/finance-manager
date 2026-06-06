@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { AmountInput } from "@/components/amount-input";
 import { Category, Fund, TransactionType } from "@/types";
 import { toast } from "sonner";
@@ -35,15 +35,15 @@ export function TransactionForm({
 
   const isLoading = isSubmitting;
 
-  const hashtags = ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec', '#luong', '#thuong', '#kinh_doanh', '#qua_tang'];
+  const hashtags = useMemo(() => ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec', '#luong', '#thuong', '#kinh_doanh', '#qua_tang'], []);
 
-  const applyTemplate = (template: { amount: number | null; notePreset: string | null; title: string }) => {
+  const applyTemplate = useCallback((template: { amount: number | null; notePreset: string | null; title: string }) => {
     if (template.amount) setAmount(template.amount.toString());
     if (template.notePreset) setNote(template.notePreset);
     toast.info(`Đã áp dụng lối tắt: ${template.title}`);
-  };
+  }, []);
 
-  const detectedCategory = (() => {
+  const detectedCategory = useMemo(() => {
     const foundHashtags = note.match(/#\w+/g);
     if (!foundHashtags) return null;
     const lowerHashtags = foundHashtags.map(t => t.toLowerCase());
@@ -51,12 +51,12 @@ export function TransactionForm({
     return allCategories.find(cat => 
       cat.hashtags?.some(h => lowerHashtags.includes(h.toLowerCase()))
     );
-  })();
+  }, [note, allCategories]);
 
   const isIncomeDisabled = detectedCategory?.type === 'EXPENSE';
   const isExpenseDisabled = detectedCategory?.type === 'INCOME';
 
-  const onHandleTransaction = async (type: TransactionType) => {
+  const onHandleTransaction = useCallback(async (type: TransactionType) => {
     if (type === 'TRANSFER') {
       onOpenTransferModal();
       return;
@@ -64,7 +64,7 @@ export function TransactionForm({
     await handleTransaction(type, amount, note);
     setAmount("");
     setNote("");
-  };
+  }, [amount, note, handleTransaction, onOpenTransferModal]);
 
   return (
     <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
