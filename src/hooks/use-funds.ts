@@ -5,23 +5,25 @@ import { getFunds, createFund, updateFund, deleteFund, setDefaultFund } from "@/
 import { Fund } from "@/types";
 import { toast } from "sonner";
 import { handleError } from "@/lib/error-handler";
+import { QUERY_KEYS } from "@/lib/constants";
+import { fundSchema } from "@/lib/validations";
 
 export function useFunds(initialData?: Fund[]) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['funds'],
+    queryKey: QUERY_KEYS.FUNDS,
     queryFn: () => getFunds(),
     initialData,
   });
 
   const createMutation = useMutation({
-    mutationFn: createFund,
+    mutationFn: (data: any) => createFund(fundSchema.parse(data)),
     onMutate: async (newFund) => {
-      await queryClient.cancelQueries({ queryKey: ['funds'] });
-      const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.FUNDS });
+      const previousFunds = queryClient.getQueryData<Fund[]>(QUERY_KEYS.FUNDS);
       if (previousFunds) {
-        queryClient.setQueryData(['funds'], [
+        queryClient.setQueryData(QUERY_KEYS.FUNDS, [
           ...previousFunds, 
           { id: 'temp-' + Date.now(), ...newFund, isDefault: previousFunds.length === 0, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Fund
         ]);
@@ -30,22 +32,22 @@ export function useFunds(initialData?: Fund[]) {
     },
     onSuccess: () => {
       toast.success("Đã thêm quỹ mới");
-      queryClient.invalidateQueries({ queryKey: ['funds'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FUNDS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
     },
     onError: (err, newV, context) => {
-      if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
+      if (context?.previousFunds) queryClient.setQueryData(QUERY_KEYS.FUNDS, context.previousFunds);
       handleError(err, "Không thể thêm quỹ mới");
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: (vars: { id: string, data: any }) => updateFund(vars.id, vars.data),
+    mutationFn: (vars: { id: string, data: any }) => updateFund(vars.id, fundSchema.partial().parse(vars.data)),
     onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['funds'] });
-      const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.FUNDS });
+      const previousFunds = queryClient.getQueryData<Fund[]>(QUERY_KEYS.FUNDS);
       if (previousFunds) {
-        queryClient.setQueryData(['funds'], previousFunds.map(f => 
+        queryClient.setQueryData(QUERY_KEYS.FUNDS, previousFunds.map(f => 
           f.id === id ? { ...f, ...data } : f
         ));
       }
@@ -53,11 +55,11 @@ export function useFunds(initialData?: Fund[]) {
     },
     onSuccess: () => {
       toast.success("Đã cập nhật quỹ");
-      queryClient.invalidateQueries({ queryKey: ['funds'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FUNDS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
     },
     onError: (err, newV, context) => {
-      if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
+      if (context?.previousFunds) queryClient.setQueryData(QUERY_KEYS.FUNDS, context.previousFunds);
       handleError(err, "Không thể cập nhật quỹ");
     },
   });
@@ -65,21 +67,20 @@ export function useFunds(initialData?: Fund[]) {
   const deleteMutation = useMutation({
     mutationFn: deleteFund,
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['funds'] });
-      const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.FUNDS });
+      const previousFunds = queryClient.getQueryData<Fund[]>(QUERY_KEYS.FUNDS);
       if (previousFunds) {
-        queryClient.setQueryData(['funds'], previousFunds.filter(f => f.id !== id));
+        queryClient.setQueryData(QUERY_KEYS.FUNDS, previousFunds.filter(f => f.id !== id));
       }
       return { previousFunds };
     },
     onSuccess: () => {
       toast.success("Đã xóa quỹ");
-      queryClient.invalidateQueries({ queryKey: ['funds'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FUNDS });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
     },
     onError: (err, newV, context) => {
-      if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
+      if (context?.previousFunds) queryClient.setQueryData(QUERY_KEYS.FUNDS, context.previousFunds);
       handleError(err, "Không thể xóa quỹ");
     },
   });
@@ -87,10 +88,10 @@ export function useFunds(initialData?: Fund[]) {
   const setDefaultMutation = useMutation({
     mutationFn: setDefaultFund,
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['funds'] });
-      const previousFunds = queryClient.getQueryData<Fund[]>(['funds']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.FUNDS });
+      const previousFunds = queryClient.getQueryData<Fund[]>(QUERY_KEYS.FUNDS);
       if (previousFunds) {
-        queryClient.setQueryData(['funds'], previousFunds.map(f => ({
+        queryClient.setQueryData(QUERY_KEYS.FUNDS, previousFunds.map(f => ({
           ...f,
           isDefault: f.id === id
         })));
@@ -99,10 +100,10 @@ export function useFunds(initialData?: Fund[]) {
     },
     onSuccess: () => {
       toast.success("Đã thay đổi quỹ mặc định");
-      queryClient.invalidateQueries({ queryKey: ['funds'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FUNDS });
     },
     onError: (err, newV, context) => {
-      if (context?.previousFunds) queryClient.setQueryData(['funds'], context.previousFunds);
+      if (context?.previousFunds) queryClient.setQueryData(QUERY_KEYS.FUNDS, context.previousFunds);
       handleError(err, "Không thể thay đổi quỹ mặc định");
     },
   });

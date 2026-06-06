@@ -14,7 +14,9 @@ const CategoryDonutChart = dynamic(() => import("@/components/category-donut-cha
 const TimeSeriesChart = dynamic(() => import("@/components/time-series-chart").then(mod => mod.TimeSeriesChart), { ssr: false });
 const MomLineChart = dynamic(() => import("@/components/mom-line-chart").then(mod => mod.MomLineChart), { ssr: false });
 
-type Range = 'this-month' | 'last-month' | 'last-3-months' | 'last-6-months' | 'last-12-months' | 'all-time';
+import { QUERY_KEYS, DATE_RANGE_OPTIONS } from "@/lib/constants";
+
+type Range = typeof DATE_RANGE_OPTIONS[number]['value'];
 
 interface ChartsClientProps {
   initialBalance: BalanceHistory[];
@@ -22,20 +24,13 @@ interface ChartsClientProps {
   initialCategory: CategorySpending[];
 }
 
-const rangeOptions = [
-  { value: "this-month", label: "Tháng này" },
-  { value: "last-month", label: "Tháng trước" },
-  { value: "last-3-months", label: "3 tháng gần nhất" },
-  { value: "last-6-months", label: "6 tháng gần nhất" },
-  { value: "last-12-months", label: "12 tháng gần nhất" },
-  { value: "all-time", label: "Tất cả thời gian" },
-];
+const rangeOptions = DATE_RANGE_OPTIONS;
 
 interface ChartWrapperProps {
   title: string;
   children: React.ReactNode;
-  range: Range;
-  setRange: (range: Range) => void;
+  range: string;
+  setRange: (range: string) => void;
   isFetching: boolean;
 }
 
@@ -48,7 +43,7 @@ const ChartWrapper = ({ title, children, range, setRange, isFetching }: ChartWra
       </div>
       <CustomSelect 
         value={range}
-        onChange={(e) => setRange(e.target.value as Range)}
+        onChange={(e) => setRange(e.target.value)}
         options={rangeOptions}
       />
     </div>
@@ -59,40 +54,40 @@ const ChartWrapper = ({ title, children, range, setRange, isFetching }: ChartWra
 );
 
 export default function ChartsClient({ initialBalance, initialTrend, initialCategory }: ChartsClientProps) {
-  const [balanceRange, setBalanceRange] = useState<Range>('this-month');
-  const [trendRange, setTrendRange] = useState<Range>('this-month');
-  const [barRange, setBarRange] = useState<Range>('this-month');
-  const [categoryRange, setCategoryRange] = useState<Range>('this-month');
-  const [topRange, setTopRange] = useState<Range>('this-month');
+  const [balanceRange, setBalanceRange] = useState<string>('this-month');
+  const [trendRange, setTrendRange] = useState<string>('this-month');
+  const [barRange, setBarRange] = useState<string>('this-month');
+  const [categoryRange, setCategoryRange] = useState<string>('this-month');
+  const [topRange, setTopRange] = useState<string>('this-month');
   
   // React Query for fine-grained loading states
   const balanceQuery = useQuery({
-    queryKey: ['balanceHistory', balanceRange],
-    queryFn: () => getBalanceHistory(balanceRange),
+    queryKey: QUERY_KEYS.BALANCE_HISTORY(balanceRange),
+    queryFn: () => getBalanceHistory(balanceRange as any),
     initialData: balanceRange === 'this-month' ? initialBalance : undefined,
   });
 
   const trendQuery = useQuery({
-    queryKey: ['cashFlowTrend', trendRange],
-    queryFn: () => getCashFlowData(trendRange),
+    queryKey: QUERY_KEYS.CASH_FLOW_TREND(trendRange),
+    queryFn: () => getCashFlowData(trendRange as any),
     initialData: trendRange === 'this-month' ? initialTrend : undefined,
   });
 
   const barQuery = useQuery({
-    queryKey: ['cashFlowBar', barRange],
-    queryFn: () => getCashFlowData(barRange),
+    queryKey: QUERY_KEYS.CASH_FLOW_BAR(barRange),
+    queryFn: () => getCashFlowData(barRange as any),
     initialData: barRange === 'this-month' ? initialTrend : undefined,
   });
 
   const categoryQuery = useQuery({
-    queryKey: ['categorySpending', categoryRange],
-    queryFn: () => getCategorySpendingData(categoryRange),
+    queryKey: QUERY_KEYS.CATEGORY_SPENDING(categoryRange),
+    queryFn: () => getCategorySpendingData(categoryRange as any),
     initialData: categoryRange === 'this-month' ? initialCategory : undefined,
   });
 
   const topQuery = useQuery({
-    queryKey: ['topSpending', topRange],
-    queryFn: () => getCategorySpendingData(topRange),
+    queryKey: QUERY_KEYS.TOP_SPENDING(topRange),
+    queryFn: () => getCategorySpendingData(topRange as any),
     initialData: topRange === 'this-month' ? initialCategory : undefined,
   });
 

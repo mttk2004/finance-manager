@@ -5,14 +5,11 @@ import { transactions, funds, categories } from '@/lib/db/schema';
 import { desc, eq, sql, and, gte, lt } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 
-export async function createTransaction(data: {
-  fundId: string;
-  toFundId?: string;
-  categoryId?: string;
-  amount: number;
-  type: 'INCOME' | 'EXPENSE' | 'TRANSFER' | 'LEND' | 'BORROW';
-  note?: string;
-}) {
+import { transactionSchema, transactionFilterSchema, TransactionFilter } from '@/lib/validations';
+import { ilike, or } from 'drizzle-orm';
+
+export async function createTransaction(rawData: any) {
+  const data = transactionSchema.parse(rawData);
   const result = await db.transaction(async (tx) => {
     let finalCategoryId = data.categoryId;
 
@@ -40,7 +37,7 @@ export async function createTransaction(data: {
       amount: data.amount,
       type: data.type,
       note: data.note,
-      date: new Date(),
+      date: data.date || new Date(),
     }).returning();
 
     // Update main fund balance
@@ -130,14 +127,51 @@ export async function deleteTransaction(id: string) {
   return result;
 }
 
-export async function getAllTransactions() {
-  return await db.query.transactions.findMany({
+export async function getAllTransactions(rawFilters?: any) {
+  const validatedFilters = transactionFilterSchema.parse(rawFilters || {});
+  const { 
+    type, fundId, categoryId, startDate, endDate, minAmount, maxAmount, searchTerm, 
+    sortField, sortOrder, page = 1, limit = 15 
+  } = validatedFilters;
+
+  const conditions = [];
+
+  if (type && type !== 'ALL') conditions.push(eq(transactions.type, type as any));
+  if (fundId && fundId !== 'ALL') conditions.push(eq(transactions.fundId, fundId));
+  if (categoryId && categoryId !== 'ALL') conditions.push(eq(transactions.categoryId, categoryId));
+  if (startDate) conditions.push(gte(transactions.date, new Date(startDate)));
+  if (endDate) conditions.push(lt(transactions.date, new Date(new Date(endDate).setHours(23, 59, 59, 999))));
+  if (minAmount) conditions.push(gte(transactions.amount, minAmount));
+  if (maxAmount) conditions.push(lt(transactions.amount, maxAmount));
+  if (searchTerm) {
+    conditions.push(or(
+      ilike(transactions.note, `%${searchTerm}%`),
+      sql`EXISTS (SELECT 1 FROM ${categories} WHERE ${categories.id} = ${transactions.categoryId} AND ${categories.name} ILIKE ${`%${searchTerm}%`})`
+    ));
+  }
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const totalCountResult = await db.select({ count: sql<number>`count(*)` }).from(transactions).where(where);
+  const totalCount = totalCountResult[0].count;
+  const totalPages = Math.ceil(totalCount / limit);
+
+  const data = await db.query.transactions.findMany({
+    where,
     with: {
       category: true,
       fund: true,
     },
-    orderBy: [desc(transactions.date)],
+    orderBy: [desc(transactions.date)], 
+    limit,
+    offset: (page - 1) * limit,
   });
+
+  return {
+    transactions: data,
+    totalPages,
+    totalCount
+  };
 }
 
 export async function importTransactions(csvText: string) {

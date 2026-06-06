@@ -5,13 +5,15 @@ import { getAllTransactions, createTransaction, deleteTransaction } from "@/serv
 import { toast } from "sonner";
 import { handleError } from "@/lib/error-handler";
 import { TransactionType } from "@/types";
+import { QUERY_KEYS } from "@/lib/constants";
+import { TransactionFilter } from "@/lib/validations";
 
-export function useTransactions(filters?: any, initialData?: any) {
+export function useTransactions(filters?: TransactionFilter, initialData?: any) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['transactions', filters],
-    queryFn: () => getAllTransactions(),
+    queryKey: QUERY_KEYS.TRANSACTIONS(filters),
+    queryFn: () => getAllTransactions(filters),
     initialData,
   });
 
@@ -43,8 +45,8 @@ export function useTransactions(filters?: any, initialData?: any) {
     },
     onError: (err) => handleError(err, "Lỗi khi thực hiện giao dịch"),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] }); // Invalidate all transaction lists
       queryClient.invalidateQueries({ queryKey: ['balanceHistory'] });
       queryClient.invalidateQueries({ queryKey: ['cashFlowTrend'] });
       queryClient.invalidateQueries({ queryKey: ['cashFlowBar'] });

@@ -5,23 +5,25 @@ import { getCategories, createCategory, updateCategory, deleteCategory } from "@
 import { Category } from "@/types";
 import { toast } from "sonner";
 import { handleError } from "@/lib/error-handler";
+import { QUERY_KEYS } from "@/lib/constants";
+import { categorySchema } from "@/lib/validations";
 
 export function useCategories(initialData?: Category[]) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
-    queryKey: ['categories'],
+    queryKey: QUERY_KEYS.CATEGORIES,
     queryFn: () => getCategories(),
     initialData,
   });
 
   const createMutation = useMutation({
-    mutationFn: createCategory,
+    mutationFn: (data: any) => createCategory(categorySchema.parse(data)),
     onMutate: async (newCat) => {
-      await queryClient.cancelQueries({ queryKey: ['categories'] });
-      const previous = queryClient.getQueryData<Category[]>(['categories']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CATEGORIES });
+      const previous = queryClient.getQueryData<Category[]>(QUERY_KEYS.CATEGORIES);
       if (previous) {
-        queryClient.setQueryData(['categories'], [
+        queryClient.setQueryData(QUERY_KEYS.CATEGORIES, [
           ...previous, 
           { id: 'temp-' + Date.now(), ...newCat, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Category
         ]);
@@ -30,22 +32,22 @@ export function useCategories(initialData?: Category[]) {
     },
     onSuccess: () => {
       toast.success("Đã thêm danh mục mới");
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CATEGORIES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
     },
     onError: (err, newV, context) => {
-      if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
+      if (context?.previous) queryClient.setQueryData(QUERY_KEYS.CATEGORIES, context.previous);
       handleError(err, "Không thể thêm danh mục mới");
     }
   });
 
   const updateMutation = useMutation({
-    mutationFn: (vars: { id: string, data: any }) => updateCategory(vars.id, vars.data),
+    mutationFn: (vars: { id: string, data: any }) => updateCategory(vars.id, categorySchema.partial().parse(vars.data)),
     onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ['categories'] });
-      const previous = queryClient.getQueryData<Category[]>(['categories']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CATEGORIES });
+      const previous = queryClient.getQueryData<Category[]>(QUERY_KEYS.CATEGORIES);
       if (previous) {
-        queryClient.setQueryData(['categories'], previous.map(c => 
+        queryClient.setQueryData(QUERY_KEYS.CATEGORIES, previous.map(c => 
           c.id === id ? { ...c, ...data } : c
         ));
       }
@@ -53,12 +55,11 @@ export function useCategories(initialData?: Category[]) {
     },
     onSuccess: () => {
       toast.success("Đã cập nhật danh mục");
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CATEGORIES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
     },
     onError: (err, newV, context) => {
-      if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
+      if (context?.previous) queryClient.setQueryData(QUERY_KEYS.CATEGORIES, context.previous);
       handleError(err, "Không thể cập nhật danh mục");
     },
   });
@@ -66,21 +67,20 @@ export function useCategories(initialData?: Category[]) {
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
     onMutate: async (id) => {
-      await queryClient.cancelQueries({ queryKey: ['categories'] });
-      const previous = queryClient.getQueryData<Category[]>(['categories']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CATEGORIES });
+      const previous = queryClient.getQueryData<Category[]>(QUERY_KEYS.CATEGORIES);
       if (previous) {
-        queryClient.setQueryData(['categories'], previous.filter(c => c.id !== id));
+        queryClient.setQueryData(QUERY_KEYS.CATEGORIES, previous.filter(c => c.id !== id));
       }
       return { previous };
     },
     onSuccess: () => {
       toast.success("Đã xóa danh mục");
-      queryClient.invalidateQueries({ queryKey: ['categories'] });
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.CATEGORIES });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
     },
     onError: (err, newV, context) => {
-      if (context?.previous) queryClient.setQueryData(['categories'], context.previous);
+      if (context?.previous) queryClient.setQueryData(QUERY_KEYS.CATEGORIES, context.previous);
       handleError(err, "Không thể xóa danh mục");
     },
   });
