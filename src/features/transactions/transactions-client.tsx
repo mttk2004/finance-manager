@@ -5,6 +5,7 @@ import { importTransactions, getAllTransactions } from "@/server/actions/transac
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/empty-state";
+import { AmountInput } from "@/components/amount-input";
 import { ReceiptText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -277,23 +278,21 @@ export default function TransactionsClient({ initialTransactions }: Transactions
           </div>
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Số tiền từ</label>
-            <input 
-              type="number" 
+            <AmountInput 
               placeholder="VD: 50000"
               value={minAmount}
-              onChange={(e) => { setMinAmount(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+              onChange={(val) => { setMinAmount(val); setCurrentPage(1); }}
+              className="w-full bg-card border border-border rounded-xl px-3 py-2 text-sm text-white" 
             />
           </div>
           <div className="space-y-2">
             <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến số tiền</label>
             <div className="flex gap-2">
-              <input 
-                type="number" 
+              <AmountInput 
                 placeholder="VD: 1000000"
                 value={maxAmount}
-                onChange={(e) => { setMaxAmount(e.target.value); setCurrentPage(1); }}
-                className="flex-1 bg-card border border-border rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-white/20 transition-colors"
+                onChange={(val) => { setMaxAmount(val); setCurrentPage(1); }}
+                className="flex-1 bg-card border border-border rounded-xl px-3 py-2 text-sm text-white" 
               />
               <button 
                 onClick={resetFilters}

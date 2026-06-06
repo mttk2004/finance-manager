@@ -51,7 +51,7 @@ export function AmountInput({ value, onChange, className, placeholder, disabled 
         onChange={handleInputChange}
         onFocus={() => { if (value.length > 0 && value.length < 5 && !disabled) setShowSuggestions(true); }}
         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        className={className}
+        className={`w-full text-center md:text-left font-mono font-bold tracking-tighter focus:outline-none placeholder:text-muted-foreground/30 ${className}`}
         disabled={disabled}
         aria-label="Số tiền"
       />

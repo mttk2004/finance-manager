@@ -9,6 +9,7 @@ import { resetData } from "@/server/actions/dashboard";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { CustomSelect } from "@/components/ui/custom-select";
+import { AmountInput } from "@/components/amount-input";
 import { Fund, Category, Budget, Template } from "@/types";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
@@ -565,13 +566,14 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                   placeholder="Tên quỹ (VD: Tiết kiệm)" 
                   className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-2 w-full" 
                 />
-                <input 
-                  type="number" 
-                  value={fundBalance}
-                  onChange={(e) => setFundBalance(e.target.value)}
-                  placeholder="Số dư" 
-                  className="sm:w-32 bg-card border border-border rounded-lg px-3 py-1.5 text-sm font-mono text-foreground focus:outline-none placeholder:text-muted-foreground/60 w-full" 
-                />
+                <div className="sm:w-32 w-full">
+                  <AmountInput 
+                    value={fundBalance}
+                    onChange={(val) => setFundBalance(val)}
+                    placeholder="Số dư" 
+                    className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm" 
+                  />
+                </div>
                 <button 
                   onClick={editingFundId ? handleUpdateFund : handleAddFund}
                   disabled={isSubmitting}
@@ -804,13 +806,14 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                   ]}
                   className="w-full sm:flex-1"
                 />
-                <input 
-                  type="number" 
-                  value={budgetAmount}
-                  onChange={(e) => setBudgetAmount(e.target.value)}
-                  placeholder="Hạn mức (VND)" 
-                  className="w-full sm:w-40 bg-card border border-border rounded-lg px-3 py-1.5 text-sm font-mono text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
-                />
+                <div className="w-full sm:w-40">
+                  <AmountInput 
+                    value={budgetAmount}
+                    onChange={(val) => setBudgetAmount(val)}
+                    placeholder="Hạn mức" 
+                    className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm" 
+                  />
+                </div>
                 <button 
                   onClick={handleUpsertBudget}
                   disabled={isSubmitting || !budgetCategoryId || !budgetAmount}
@@ -917,12 +920,11 @@ export default function SettingsClient({ initialFunds, initialCategories, initia
                   </div>
                   <div className="space-y-2">
                     <label className="text-xs text-muted-foreground font-medium ml-1">Số tiền (tùy chọn)</label>
-                    <input 
-                      type="number" 
+                    <AmountInput 
                       value={templateAmount}
-                      onChange={(e) => setTemplateAmount(e.target.value)}
+                      onChange={(val) => setTemplateAmount(val)}
                       placeholder="VD: 30000" 
-                      className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm font-mono text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
+                      className="bg-card border border-border rounded-xl px-4 py-2 text-sm" 
                     />
                   </div>
                 </div>
