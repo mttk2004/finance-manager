@@ -14,14 +14,16 @@ import { useTransactions } from "@/hooks/use-transactions";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
-import { useEffect } from "react";
+import { useEffect, Suspense, use } from "react";
 import { useDashboardStore } from "@/hooks/use-dashboard-store";
+import { CashFlowChart } from "@/components/cash-flow-chart";
 
 interface DashboardClientProps {
   initialData: DashboardData;
+  cashFlowPromise: Promise<CashFlowItem[]>;
 }
 
-  export default function DashboardClient({ initialData }: DashboardClientProps) {
+  export default function DashboardClient({ initialData, cashFlowPromise }: DashboardClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -128,6 +130,15 @@ interface DashboardClientProps {
               fundCount={data.allFunds.length}
             />
 
+            <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
+              <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium mb-6">Xu hướng thu chi</h3>
+              <div className="h-64 w-full">
+                <Suspense fallback={<div className="h-full w-full bg-white/[0.02] animate-pulse rounded-2xl" />}>
+                  <CashFlowChartWrapper promise={cashFlowPromise} />
+                </Suspense>
+              </div>
+            </section>
+
             <CategoryBudgets budgetTracking={data.budgetTracking} />
           </div>
 
@@ -139,4 +150,9 @@ interface DashboardClientProps {
       </div>
     </>
   );
+}
+
+function CashFlowChartWrapper({ promise }: { promise: Promise<CashFlowItem[]> }) {
+  const data = use(promise);
+  return <CashFlowChart data={data} />;
 }
