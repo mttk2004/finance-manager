@@ -1,19 +1,11 @@
 'use server'
 
-import { db } from '@/lib/db';
-import { categories } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
 import { unstable_cache, revalidateTag, revalidatePath } from 'next/cache';
+import { CategoryService } from '../services/categories';
 
 export const getCachedCategories = unstable_cache(
   async () => {
-    return await db.select({
-      id: categories.id,
-      name: categories.name,
-      type: categories.type,
-      icon: categories.icon,
-      hashtags: categories.hashtags
-    }).from(categories).orderBy(categories.name);
+    return await CategoryService.getAll();
   },
   ['categories'],
   { tags: ['categories'], revalidate: 3600 }
@@ -29,10 +21,7 @@ export async function createCategory(data: {
   icon: string;
   hashtags?: string[];
 }) {
-  const [newCat] = await db.insert(categories).values({
-    ...data,
-    hashtags: data.hashtags || [],
-  }).returning();
+  const newCat = await CategoryService.create(data);
 
   revalidateTag('categories', 'max');
   revalidatePath('/', 'layout');
@@ -47,13 +36,7 @@ export async function updateCategory(id: string, data: {
   icon?: string;
   hashtags?: string[];
 }) {
-  const [updatedCat] = await db.update(categories)
-    .set({
-      ...data,
-      hashtags: data.hashtags,
-    })
-    .where(eq(categories.id, id))
-    .returning();
+  const updatedCat = await CategoryService.update(id, data);
 
   revalidateTag('categories', 'max');
   revalidatePath('/', 'layout');
@@ -63,7 +46,7 @@ export async function updateCategory(id: string, data: {
 }
 
 export async function deleteCategory(id: string) {
-  const result = await db.delete(categories).where(eq(categories.id, id)).returning();
+  const result = await CategoryService.delete(id);
   
   revalidateTag('categories', 'max');
   revalidatePath('/', 'layout');

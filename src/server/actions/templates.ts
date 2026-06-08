@@ -1,17 +1,10 @@
 'use server'
 
-import { db } from '@/lib/db';
-import { templates } from '@/lib/db/schema';
-import { desc, eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { TemplateService } from '../services/templates';
 
 export async function getTemplates() {
-  return await db.query.templates.findMany({
-    with: {
-      category: true,
-    },
-    orderBy: [desc(templates.createdAt)],
-  });
+  return await TemplateService.getAll();
 }
 
 export async function createTemplate(data: {
@@ -21,9 +14,7 @@ export async function createTemplate(data: {
   amount?: number;
   notePreset?: string;
 }) {
-  const [newTemplate] = await db.insert(templates).values({
-    ...data,
-  }).returning();
+  const newTemplate = await TemplateService.create(data);
   
   revalidatePath('/', 'layout');
   revalidatePath('/settings', 'page');
@@ -37,12 +28,7 @@ export async function updateTemplate(id: string, data: {
   amount?: number;
   notePreset?: string;
 }) {
-  const [updatedTemplate] = await db.update(templates)
-    .set({
-      ...data,
-    })
-    .where(eq(templates.id, id))
-    .returning();
+  const updatedTemplate = await TemplateService.update(id, data);
   
   revalidatePath('/', 'layout');
   revalidatePath('/settings', 'page');
@@ -50,7 +36,7 @@ export async function updateTemplate(id: string, data: {
 }
 
 export async function deleteTemplate(id: string) {
-  const result = await db.delete(templates).where(eq(templates.id, id)).returning();
+  const result = await TemplateService.delete(id);
   
   revalidatePath('/', 'layout');
   revalidatePath('/settings', 'page');
