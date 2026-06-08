@@ -1,33 +1,53 @@
 import { useState, useCallback, useMemo } from "react";
 import { AmountInput } from "@/components/amount-input";
-import { Category, Fund, TransactionType, Template } from "@/types";
+import { Category, TransactionType, Template } from "@/types";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+import { useTransactions } from "@/hooks/use-transactions";
+import { useDashboardStore } from "@/hooks/use-dashboard-store";
 
 interface TransactionFormProps {
-  activeFund: Fund;
   allCategories: Category[];
   allTemplates: Template[];
-  onOpenFundSelector: () => void;
-  onOpenTransferModal: () => void;
-  handleTransaction: (type: TransactionType, amount: string, note: string) => Promise<void>;
-  isSubmitting: boolean;
 }
 
 export function TransactionForm({ 
-  activeFund, 
   allCategories, 
-  allTemplates, 
-  onOpenFundSelector, 
-  onOpenTransferModal,
-  handleTransaction,
-  isSubmitting,
+  allTemplates,
 }: TransactionFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const { activeFund } = useDashboardStore();
+  const { createTransaction, isSubmitting } = useTransactions();
+
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
 
   const isLoading = isSubmitting;
+
+  const onOpenFundSelector = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('modal', 'fund-selector');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const onOpenTransferModal = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('modal', 'transfer');
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
+  const handleTransaction = async (type: TransactionType, amount: string, note: string) => {
+    if (!amount || amount === '0' || isSubmitting || !activeFund) return;
+    
+    await createTransaction({
+      fundId: activeFund.id,
+      amount: parseInt(amount),
+      type,
+      note,
+    });
+  };
 
   const hashtags = useMemo(() => ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec', '#luong', '#thuong', '#kinh_doanh', '#qua_tang'], []);
 
@@ -71,7 +91,7 @@ export function TransactionForm({
             className="text-[10px] uppercase font-mono font-medium tracking-tight bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded flex items-center gap-1 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors cursor-pointer disabled:opacity-50"
           >
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-            {activeFund.name}
+            {activeFund?.name || "Chọn quỹ"}
           </button>
         </div>
         <div className="hidden md:flex gap-2">
@@ -158,7 +178,7 @@ export function TransactionForm({
         <div className="grid grid-cols-2 gap-4 pt-4">
           <button 
             onClick={() => onHandleTransaction('EXPENSE')}
-            disabled={!amount || amount === '0' || isLoading || isExpenseDisabled}
+            disabled={!amount || amount === '0' || isLoading || isExpenseDisabled || !activeFund}
             className="group relative py-4 md:py-5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-sm md:text-base border border-rose-500/20 hover:border-rose-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:shadow-[0_0_30px_rgba(244,63,94,0.2)]"
           >
             <span className="relative z-10">{isLoading ? 'ĐANG XỬ LÝ...' : 'CHI TIỀN'}</span>
@@ -166,7 +186,7 @@ export function TransactionForm({
           </button>
           <button 
             onClick={() => onHandleTransaction('INCOME')}
-            disabled={!amount || amount === '0' || isLoading || isIncomeDisabled}
+            disabled={!amount || amount === '0' || isLoading || isIncomeDisabled || !activeFund}
             className="group relative py-4 md:py-5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold text-sm md:text-base border border-emerald-500/20 hover:border-emerald-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.1)] hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]"
           >
             <span className="relative z-10">{isLoading ? 'ĐANG XỬ LÝ...' : 'THU VÀO'}</span>
@@ -176,21 +196,21 @@ export function TransactionForm({
         <div className="grid grid-cols-3 gap-4 mt-2">
           <button 
             onClick={() => onHandleTransaction('BORROW')}
-            disabled={!amount || amount === '0' || isLoading}
+            disabled={!amount || amount === '0' || isLoading || !activeFund}
             className="py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
           >
             Đi vay
           </button>
           <button 
             onClick={() => onHandleTransaction('LEND')}
-            disabled={!amount || amount === '0' || isLoading}
+            disabled={!amount || amount === '0' || isLoading || !activeFund}
             className="py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
           >
             Cho vay
           </button>
           <button 
             onClick={() => onHandleTransaction('TRANSFER')}
-            disabled={!amount || amount === '0' || isLoading}
+            disabled={!amount || amount === '0' || isLoading || !activeFund}
             className="py-2 rounded-xl text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 font-medium text-xs border border-transparent hover:border-blue-500/20 transition-all cursor-pointer disabled:opacity-40"
           >
             Chuyển quỹ

@@ -14,6 +14,9 @@ import { useTransactions } from "@/hooks/use-transactions";
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 
+import { useEffect } from "react";
+import { useDashboardStore } from "@/hooks/use-dashboard-store";
+
 interface DashboardClientProps {
   initialData: DashboardData;
 }
@@ -22,6 +25,7 @@ interface DashboardClientProps {
   const router = useRouter();
   const searchParams = useSearchParams();
   const pathname = usePathname();
+  const { activeFund, setActiveFund } = useDashboardStore();
 
   const activeModal = searchParams.get('modal');
   const isDistributionModalOpen = activeModal === 'distribution';
@@ -46,23 +50,14 @@ interface DashboardClientProps {
 
   const data = dashboardData || initialData;
 
-  const [activeFund, setActiveFund] = useState<Fund>(
-    data.allFunds.find((f: Fund) => f.isDefault) || data.allFunds[0]
-  );
-
-  const handleTransaction = async (type: TransactionType, amount: string, note: string) => {
-    if (!amount || amount === '0' || isSubmitting) return;
-    
-    await createTransaction({
-      fundId: activeFund.id,
-      amount: parseInt(amount),
-      type,
-      note,
-    });
-  };
+  useEffect(() => {
+    if (!activeFund && data.allFunds.length > 0) {
+      setActiveFund(data.allFunds.find((f: Fund) => f.isDefault) || data.allFunds[0]);
+    }
+  }, [data.allFunds, activeFund, setActiveFund]);
 
   const handleTransfer = async () => {
-    if (!transferAmount || transferAmount === '0' || !transferToFund || isSubmitting) return;
+    if (!transferAmount || transferAmount === '0' || !transferToFund || isSubmitting || !activeFund) return;
     
     await createTransaction({
       fundId: activeFund.id,
@@ -102,9 +97,7 @@ interface DashboardClientProps {
         setFundSelectorOpen={(open) => setModal(open ? 'fund-selector' : null)}
         isTransferModalOpen={isTransferModalOpen}
         setTransferModalOpen={(open) => setModal(open ? 'transfer' : null)}
-        activeFund={activeFund}
         funds={data.allFunds}
-        onSelectFund={setActiveFund}
         transferToFund={transferToFund}
         setTransferToFund={setTransferToFund}
         amount={transferAmount}
@@ -123,13 +116,8 @@ interface DashboardClientProps {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4 md:px-0">
           <div className="lg:col-span-2 space-y-8">
             <TransactionForm
-              activeFund={activeFund}
               allCategories={data.allCategories}
               allTemplates={data.allTemplates}
-              onOpenFundSelector={() => setModal('fund-selector')}
-              onOpenTransferModal={() => setModal('transfer')}
-              handleTransaction={handleTransaction}
-              isSubmitting={isSubmitting}
             />
 
             <FinancialInsights 

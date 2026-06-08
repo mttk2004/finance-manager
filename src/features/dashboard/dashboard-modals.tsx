@@ -5,6 +5,8 @@ import { Fund } from "@/types";
 const DailyReminderModal = dynamic(() => import("@/components/daily-reminder-modal").then(mod => mod.DailyReminderModal), { ssr: false });
 const IncomeDistributionModal = dynamic(() => import("@/components/income-distribution-modal").then(mod => mod.IncomeDistributionModal), { ssr: false });
 
+import { useDashboardStore } from "@/hooks/use-dashboard-store";
+
 interface DashboardModalsProps {
   showReminder: boolean;
   isDistributionModalOpen: boolean;
@@ -13,9 +15,7 @@ interface DashboardModalsProps {
   setFundSelectorOpen: (open: boolean) => void;
   isTransferModalOpen: boolean;
   setTransferModalOpen: (open: boolean) => void;
-  activeFund: Fund;
   funds: Fund[];
-  onSelectFund: (fund: Fund) => void;
   transferToFund: Fund | null;
   setTransferToFund: (fund: Fund | null) => void;
   amount: string;
@@ -31,16 +31,17 @@ export function DashboardModals({
   setFundSelectorOpen,
   isTransferModalOpen,
   setTransferModalOpen,
-  activeFund,
   funds,
-  onSelectFund,
   transferToFund,
   setTransferToFund,
   amount,
   handleTransfer,
   isSubmitting,
 }: DashboardModalsProps) {
+  const { activeFund, setActiveFund } = useDashboardStore();
   const isLoading = isSubmitting;
+
+  if (!activeFund) return null;
 
   return (
     <>
@@ -53,7 +54,7 @@ export function DashboardModals({
         funds={funds}
         onSelectFund={(fundName) => {
           const fund = funds.find(f => f.name === fundName);
-          if (fund) onSelectFund(fund);
+          if (fund) setActiveFund(fund);
         }} 
       />
       {/* Transfer Modal */}
