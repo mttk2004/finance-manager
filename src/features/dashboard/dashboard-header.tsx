@@ -2,9 +2,10 @@ interface DashboardHeaderProps {
   totalBalance: number;
   totalSpentMonth: number;
   totalBudgetMonth: number;
+  onOpenDistributionModal: () => void;
 }
 
-export function DashboardHeader({ totalBalance, totalSpentMonth, totalBudgetMonth }: DashboardHeaderProps) {
+export function DashboardHeader({ totalBalance, totalSpentMonth, totalBudgetMonth, onOpenDistributionModal }: DashboardHeaderProps) {
   const formatMoney = (amount: number) => amount.toLocaleString('vi-VN') + "đ";
   
   const formatBudget = (amount: number) => {
@@ -34,7 +35,10 @@ export function DashboardHeader({ totalBalance, totalSpentMonth, totalBudgetMont
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="md:col-span-2 bg-card p-5 md:p-6 rounded-3xl border border-border flex flex-col justify-center relative overflow-hidden group">
+        <div 
+          onClick={onOpenDistributionModal}
+          className="md:col-span-2 bg-card p-5 md:p-6 rounded-3xl border border-border flex flex-col justify-center relative overflow-hidden group cursor-pointer hover:border-emerald-500/30 transition-all"
+        >
            <div className="absolute top-0 right-0 p-6 opacity-20 group-hover:opacity-40 transition-opacity">
               <svg width="100" height="100" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="60" cy="60" r="59.5" stroke="currentColor" strokeDasharray="4 4" className="text-emerald-500"/>

@@ -12,14 +12,32 @@ import { DashboardModals } from "./dashboard-modals";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useTransactions } from "@/hooks/use-transactions";
 
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
+
 interface DashboardClientProps {
   initialData: DashboardData;
 }
 
   export default function DashboardClient({ initialData }: DashboardClientProps) {
-  const [isDistributionModalOpen, setDistributionModalOpen] = useState(false);
-  const [isFundSelectorOpen, setFundSelectorOpen] = useState(false);
-  const [isTransferModalOpen, setTransferModalOpen] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+
+  const activeModal = searchParams.get('modal');
+  const isDistributionModalOpen = activeModal === 'distribution';
+  const isFundSelectorOpen = activeModal === 'fund-selector';
+  const isTransferModalOpen = activeModal === 'transfer';
+
+  const setModal = (modalName: string | null) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (modalName) {
+      params.set('modal', modalName);
+    } else {
+      params.delete('modal');
+    }
+    router.push(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   const [transferToFund, setTransferToFund] = useState<Fund | null>(null);
   const [transferAmount, setTransferAmount] = useState("");
 
@@ -55,7 +73,7 @@ interface DashboardClientProps {
     
     toast.success("Chuyển tiền thành công");
     setTransferAmount("");
-    setTransferModalOpen(false);
+    setModal(null);
   };
 
   // Group transactions by date
@@ -79,11 +97,11 @@ interface DashboardClientProps {
       <DashboardModals 
         showReminder={data.showReminder}
         isDistributionModalOpen={isDistributionModalOpen}
-        setDistributionModalOpen={setDistributionModalOpen}
+        setDistributionModalOpen={(open) => setModal(open ? 'distribution' : null)}
         isFundSelectorOpen={isFundSelectorOpen}
-        setFundSelectorOpen={setFundSelectorOpen}
+        setFundSelectorOpen={(open) => setModal(open ? 'fund-selector' : null)}
         isTransferModalOpen={isTransferModalOpen}
-        setTransferModalOpen={setTransferModalOpen}
+        setTransferModalOpen={(open) => setModal(open ? 'transfer' : null)}
         activeFund={activeFund}
         funds={data.allFunds}
         onSelectFund={setActiveFund}
@@ -99,16 +117,17 @@ interface DashboardClientProps {
           totalBalance={data.totalBalance}
           totalSpentMonth={data.totalSpentMonth}
           totalBudgetMonth={data.totalBudgetMonth}
+          onOpenDistributionModal={() => setModal('distribution')}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4 md:px-0">
           <div className="lg:col-span-2 space-y-8">
-            <TransactionForm 
+            <TransactionForm
               activeFund={activeFund}
               allCategories={data.allCategories}
               allTemplates={data.allTemplates}
-              onOpenFundSelector={() => setFundSelectorOpen(true)}
-              onOpenTransferModal={() => setTransferModalOpen(true)}
+              onOpenFundSelector={() => setModal('fund-selector')}
+              onOpenTransferModal={() => setModal('transfer')}
               handleTransaction={handleTransaction}
               isSubmitting={isSubmitting}
             />
