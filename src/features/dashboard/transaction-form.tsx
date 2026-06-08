@@ -1,19 +1,13 @@
 import { useState, useCallback, useMemo } from "react";
 import { AmountInput } from "@/components/amount-input";
-import { Category, Fund, TransactionType } from "@/types";
+import { Category, Fund, TransactionType, Template } from "@/types";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
 interface TransactionFormProps {
   activeFund: Fund;
   allCategories: Category[];
-  allTemplates: {
-    id: string;
-    title: string;
-    amount: number | null;
-    notePreset: string | null;
-    category?: { icon: string | null } | null;
-  }[];
+  allTemplates: Template[];
   onOpenFundSelector: () => void;
   onOpenTransferModal: () => void;
   handleTransaction: (type: TransactionType, amount: string, note: string) => Promise<void>;
@@ -37,7 +31,7 @@ export function TransactionForm({
 
   const hashtags = useMemo(() => ['#an_sang', '#cafe', '#di_chuyen', '#mua_sam', '#vui_ve', '#lam_viec', '#luong', '#thuong', '#kinh_doanh', '#qua_tang'], []);
 
-  const applyTemplate = useCallback((template: { amount: number | null; notePreset: string | null; title: string }) => {
+  const applyTemplate = useCallback((template: Template) => {
     if (template.amount) setAmount(template.amount.toString());
     if (template.notePreset) setNote(template.notePreset);
     toast.info(`Đã áp dụng lối tắt: ${template.title}`);

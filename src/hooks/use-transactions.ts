@@ -4,29 +4,25 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getAllTransactions, createTransaction, deleteTransaction } from "@/server/actions/transactions";
 import { toast } from "sonner";
 import { handleError } from "@/lib/error-handler";
-import { TransactionType } from "@/types";
+import { TransactionType, TransactionsResponse, DashboardData } from "@/types";
 import { QUERY_KEYS } from "@/lib/constants";
 import { TransactionFilter } from "@/lib/validations";
 
-export function useTransactions(filters?: TransactionFilter, initialData?: any) {
+export function useTransactions(filters?: TransactionFilter, initialData?: TransactionsResponse) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: QUERY_KEYS.TRANSACTIONS(filters),
-    queryFn: () => getAllTransactions(filters),
+    queryFn: () => getAllTransactions(filters) as Promise<TransactionsResponse>,
     initialData,
   });
 
   const createMutation = useMutation({
     mutationFn: createTransaction,
     onMutate: async (newTxData) => {
-      await queryClient.cancelQueries({ queryKey: ['dashboard'] });
-      const previousDashboard = queryClient.getQueryData<any>(['dashboard']);
+      await queryClient.cancelQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      const previousDashboard = queryClient.getQueryData<DashboardData>(QUERY_KEYS.DASHBOARD);
       
-      if (previousDashboard) {
-        // Optimistic update for dashboard could be complex, let's keep it simple or detailed as before
-        // For now, let's just invalidate on settle
-      }
       return { previousDashboard };
     },
     onSuccess: (newTx, variables) => {

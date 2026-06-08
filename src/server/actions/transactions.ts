@@ -4,9 +4,11 @@ import { db } from '@/lib/db';
 import { transactions, funds, categories } from '@/lib/db/schema';
 import { desc, eq, sql, and, gte, lt, asc, exists, ilike, or } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
-import { transactionSchema, transactionFilterSchema } from '@/lib/validations';
+import { transactionSchema, transactionFilterSchema, TransactionFilter } from '@/lib/validations';
+import { z } from 'zod';
+import { TransactionType } from '@/types';
 
-export async function createTransaction(rawData: any) {
+export async function createTransaction(rawData: z.infer<typeof transactionSchema>) {
   const data = transactionSchema.parse(rawData);
   const result = await db.transaction(async (tx) => {
     let finalCategoryId = data.categoryId;
@@ -125,7 +127,7 @@ export async function deleteTransaction(id: string) {
   return result;
 }
 
-export async function getAllTransactions(rawFilters?: any) {
+export async function getAllTransactions(rawFilters?: TransactionFilter) {
   const validatedFilters = transactionFilterSchema.parse(rawFilters || {});
   const { 
     type, fundId, categoryId, startDate, endDate, minAmount, maxAmount, searchTerm, 
@@ -134,7 +136,7 @@ export async function getAllTransactions(rawFilters?: any) {
 
   const conditions = [];
 
-  if (type && type !== 'ALL') conditions.push(eq(transactions.type, type as any));
+  if (type && type !== 'ALL') conditions.push(eq(transactions.type, type as TransactionType));
   if (fundId && fundId !== 'ALL') conditions.push(eq(transactions.fundId, fundId));
   if (categoryId && categoryId !== 'ALL') conditions.push(eq(transactions.categoryId, categoryId));
   if (startDate) conditions.push(gte(transactions.date, new Date(startDate)));
@@ -163,7 +165,7 @@ export async function getAllTransactions(rawFilters?: any) {
 
   // Dynamic sorting helper
   const getOrderBy = () => {
-    const col = (transactions as any)[sortField];
+    const col = (transactions as Record<string, any>)[sortField];
     if (!col) return desc(transactions.date);
     return sortOrder === 'asc' ? asc(col) : desc(col);
   };

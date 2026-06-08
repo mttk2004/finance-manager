@@ -72,6 +72,27 @@ export interface BalanceHistory {
   balance: number;
 }
 
+export interface DashboardData {
+  allFunds: Fund[];
+  recentTransactions: Transaction[];
+  totalBalance: number;
+  showReminder: boolean;
+  budgetTracking: (Budget & { spent: number })[];
+  totalSpentMonth: number;
+  totalSpentLastMonth: number;
+  totalBudgetMonth: number;
+  currentMonthPeriod: string;
+  allCategories: Category[];
+  initialCashFlow: CashFlowItem[];
+  allTemplates: Template[];
+}
+
+export interface TransactionsResponse {
+  transactions: Transaction[];
+  totalPages: number;
+  totalCount: number;
+}
+
 export interface ReportData {
   summary: {
     income: number;

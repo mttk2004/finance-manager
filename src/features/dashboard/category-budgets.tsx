@@ -1,16 +1,9 @@
 import { EmptyState } from "@/components/empty-state";
 import { PieChart } from "lucide-react";
+import { Budget } from "@/types";
 
 interface CategoryBudgetsProps {
-  budgetTracking: {
-    id: string;
-    spent: number;
-    amountLimit: number;
-    category?: {
-      icon: string | null;
-      name: string;
-    } | null;
-  }[];
+  budgetTracking: (Budget & { spent: number })[];
 }
 
 export function CategoryBudgets({ budgetTracking }: CategoryBudgetsProps) {

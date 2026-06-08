@@ -8,6 +8,8 @@ import { handleError } from "@/lib/error-handler";
 import { QUERY_KEYS } from "@/lib/constants";
 import { categorySchema } from "@/lib/validations";
 
+import { z } from "zod";
+
 export function useCategories(initialData?: Category[]) {
   const queryClient = useQueryClient();
 
@@ -18,14 +20,14 @@ export function useCategories(initialData?: Category[]) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => createCategory(categorySchema.parse(data)),
+    mutationFn: (data: z.infer<typeof categorySchema>) => createCategory(categorySchema.parse(data)),
     onMutate: async (newCat) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CATEGORIES });
       const previous = queryClient.getQueryData<Category[]>(QUERY_KEYS.CATEGORIES);
       if (previous) {
         queryClient.setQueryData(QUERY_KEYS.CATEGORIES, [
           ...previous, 
-          { id: 'temp-' + Date.now(), ...newCat, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Category
+          { id: 'temp-' + Date.now(), ...newCat } as Category
         ]);
       }
       return { previous };
@@ -42,13 +44,13 @@ export function useCategories(initialData?: Category[]) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (vars: { id: string, data: any }) => updateCategory(vars.id, categorySchema.partial().parse(vars.data)),
+    mutationFn: (vars: { id: string, data: Partial<z.infer<typeof categorySchema>> }) => updateCategory(vars.id, categorySchema.partial().parse(vars.data)),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CATEGORIES });
       const previous = queryClient.getQueryData<Category[]>(QUERY_KEYS.CATEGORIES);
       if (previous) {
         queryClient.setQueryData(QUERY_KEYS.CATEGORIES, previous.map(c => 
-          c.id === id ? { ...c, ...data } : c
+          c.id === id ? { ...c, ...data } as Category : c
         ));
       }
       return { previous };

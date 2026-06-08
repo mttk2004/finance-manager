@@ -8,6 +8,8 @@ import { handleError } from "@/lib/error-handler";
 import { QUERY_KEYS } from "@/lib/constants";
 import { fundSchema } from "@/lib/validations";
 
+import { z } from "zod";
+
 export function useFunds(initialData?: Fund[]) {
   const queryClient = useQueryClient();
 
@@ -18,14 +20,14 @@ export function useFunds(initialData?: Fund[]) {
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => createFund(fundSchema.parse(data)),
+    mutationFn: (data: z.infer<typeof fundSchema>) => createFund(fundSchema.parse(data)),
     onMutate: async (newFund) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.FUNDS });
       const previousFunds = queryClient.getQueryData<Fund[]>(QUERY_KEYS.FUNDS);
       if (previousFunds) {
         queryClient.setQueryData(QUERY_KEYS.FUNDS, [
           ...previousFunds, 
-          { id: 'temp-' + Date.now(), ...newFund, isDefault: previousFunds.length === 0, createdAt: new Date(), updatedAt: new Date(), userId: '' } as unknown as Fund
+          { id: 'temp-' + Date.now(), ...newFund, isDefault: previousFunds.length === 0 } as Fund
         ]);
       }
       return { previousFunds };
@@ -42,13 +44,13 @@ export function useFunds(initialData?: Fund[]) {
   });
 
   const updateMutation = useMutation({
-    mutationFn: (vars: { id: string, data: any }) => updateFund(vars.id, fundSchema.partial().parse(vars.data)),
+    mutationFn: (vars: { id: string, data: Partial<z.infer<typeof fundSchema>> }) => updateFund(vars.id, fundSchema.partial().parse(vars.data)),
     onMutate: async ({ id, data }) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.FUNDS });
       const previousFunds = queryClient.getQueryData<Fund[]>(QUERY_KEYS.FUNDS);
       if (previousFunds) {
         queryClient.setQueryData(QUERY_KEYS.FUNDS, previousFunds.map(f => 
-          f.id === id ? { ...f, ...data } : f
+          f.id === id ? { ...f, ...data } as Fund : f
         ));
       }
       return { previousFunds };

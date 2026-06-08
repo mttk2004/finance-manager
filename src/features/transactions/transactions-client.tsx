@@ -10,21 +10,18 @@ import { CustomSelect } from "@/components/ui/custom-select";
 import { ReceiptText, Trash2, Calendar, Tag, Wallet, Search, Filter, FileText, Download, Upload, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useMutation } from "@tanstack/react-query";
-import { Transaction, Fund, Category } from "@/types";
+import { Transaction, Fund, Category, TransactionsResponse } from "@/types";
+import { TransactionFilter } from "@/lib/validations";
+
+interface TransactionsClientProps {
+  initialTransactions: TransactionsResponse;
+  funds: Fund[];
+  categories: Category[];
+}
 
 const ExportReportModal = dynamic(() => import("@/components/export-report-modal"), {
   ssr: false,
 });
-
-interface TransactionsClientProps {
-  initialTransactions: {
-    transactions: Transaction[];
-    totalPages: number;
-    totalCount: number;
-  };
-  funds: Fund[];
-  categories: Category[];
-}
 
 export default function TransactionsClient({ initialTransactions, funds, categories }: TransactionsClientProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -48,8 +45,8 @@ export default function TransactionsClient({ initialTransactions, funds, categor
   const [sortField, setSortField] = useState<string>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const filters = useMemo(() => {
-    const f: any = {
+  const filters = useMemo((): TransactionFilter => {
+    const f: TransactionFilter = {
       page: currentPage,
       limit: 15,
       sortField,
@@ -78,8 +75,8 @@ export default function TransactionsClient({ initialTransactions, funds, categor
     isDefaultFilters ? initialTransactions : undefined
   );
 
-  const transactions = (data as any)?.transactions || [];
-  const totalPages = (data as any)?.totalPages || 1;
+  const transactions = (data as TransactionsResponse)?.transactions || [];
+  const totalPages = (data as TransactionsResponse)?.totalPages || 1;
 
   const importMutation = useMutation({
     mutationFn: importTransactions,

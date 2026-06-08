@@ -8,6 +8,8 @@ import { handleError } from "@/lib/error-handler";
 import { QUERY_KEYS } from "@/lib/constants";
 import { budgetSchema } from "@/lib/validations";
 
+import { z } from "zod";
+
 export function useBudgets(period: string, initialData?: Budget[]) {
   const queryClient = useQueryClient();
 
@@ -18,7 +20,7 @@ export function useBudgets(period: string, initialData?: Budget[]) {
   });
 
   const upsertMutation = useMutation({
-    mutationFn: (data: any) => upsertBudget(budgetSchema.parse(data)),
+    mutationFn: (data: z.infer<typeof budgetSchema>) => upsertBudget(budgetSchema.parse(data)),
     onMutate: async (data) => {
       const queryKey = QUERY_KEYS.BUDGETS(period);
       await queryClient.cancelQueries({ queryKey });
@@ -26,7 +28,7 @@ export function useBudgets(period: string, initialData?: Budget[]) {
       if (previous) {
         queryClient.setQueryData(queryKey, [
           ...previous.filter(b => b.categoryId !== data.categoryId), 
-          data as any
+          { ...data, isOverride: true, id: 'temp' } as Budget
         ]);
       }
       return { previous, queryKey };

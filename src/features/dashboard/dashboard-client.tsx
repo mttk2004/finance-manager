@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Transaction, TransactionType, Fund, Category, CashFlowItem } from "@/types";
+import { Transaction, TransactionType, Fund, Category, CashFlowItem, DashboardData } from "@/types";
 import { DashboardHeader } from "./dashboard-header";
 import { TransactionForm } from "./transaction-form";
 import { FinancialInsights } from "./financial-insights";
@@ -12,38 +12,9 @@ import { DashboardModals } from "./dashboard-modals";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useTransactions } from "@/hooks/use-transactions";
 
-interface DashboardData {
-  allFunds: Fund[];
-  recentTransactions: Transaction[];
-  totalBalance: number;
-  showReminder: boolean;
-  budgetTracking: {
-    id: string;
-    spent: number;
-    amountLimit: number;
-    category?: {
-      icon: string | null;
-      name: string;
-    } | null;
-  }[];
-  totalSpentMonth: number;
-  totalSpentLastMonth: number;
-  totalBudgetMonth: number;
-  currentMonthPeriod: string;
-  allCategories: Category[];
-  initialCashFlow: CashFlowItem[];
-  allTemplates: {
-    id: string;
-    title: string;
-    amount: number | null;
-    notePreset: string | null;
-    category?: { icon: string | null } | null;
-  }[];
-  }
-
-  interface DashboardClientProps {
+interface DashboardClientProps {
   initialData: DashboardData;
-  }
+}
 
   export default function DashboardClient({ initialData }: DashboardClientProps) {
   const [isDistributionModalOpen, setDistributionModalOpen] = useState(false);

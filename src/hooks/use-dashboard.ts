@@ -6,12 +6,14 @@ import { toast } from "sonner";
 import { handleError } from "@/lib/error-handler";
 import { QUERY_KEYS } from "@/lib/constants";
 
-export function useDashboard(initialData?: any) {
+import { DashboardData } from "@/types";
+
+export function useDashboard(initialData?: DashboardData) {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: QUERY_KEYS.DASHBOARD,
-    queryFn: () => getDashboardData(),
+    queryFn: () => getDashboardData() as Promise<DashboardData>,
     initialData,
     staleTime: 30000,
   });
