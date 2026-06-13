@@ -153,6 +153,33 @@ export function TransactionForm({
         
         <div className="relative">
           <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Ghi chú & Hashtag</label>
+          
+          {showHashtagSuggestions && (
+            <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-2 border-b border-white/5 bg-white/5">
+                <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-medium px-2">Gợi ý danh mục</span>
+              </div>
+              <div className="max-h-48 overflow-y-auto">
+                {hashtagSuggestions.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => applyHashtag(cat.hashtags?.[0] || `#${cat.name.replace(/\s+/g, '_').toLowerCase()}`)}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-lg">{cat.icon || "📝"}</span>
+                      <div className="flex flex-col items-start">
+                        <span className="text-sm font-medium text-foreground">{cat.name}</span>
+                        <span className="text-[10px] text-muted-foreground">{cat.hashtags?.[0] || 'Chưa có hashtag'}</span>
+                      </div>
+                    </div>
+                    <div className="text-xs text-emerald-500/50 group-hover:text-emerald-500 transition-colors font-mono">CHỌN</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <input 
             type="text" 
             value={note}
