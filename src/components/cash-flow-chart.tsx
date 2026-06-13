@@ -42,22 +42,28 @@ export function CashFlowChart({ data }: { data: CashFlowData[] }) {
             dy={15} 
           />
           <Tooltip 
-            cursor={{fill: 'rgba(255, 255, 255, 0.03)'}}
+            cursor={{fill: 'rgba(255, 255, 255, 0.05)', stroke: 'rgba(255, 255, 255, 0.1)', strokeWidth: 1}}
             contentStyle={{ 
-              backgroundColor: 'rgba(23, 23, 23, 0.9)', 
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.08)', 
-              borderRadius: '20px', 
-              fontSize: '12px', 
-              boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
-              padding: '12px'
+              backgroundColor: 'rgba(23, 23, 23, 0.95)', 
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.1)', 
+              borderRadius: '24px', 
+              fontSize: '13px', 
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)',
+              padding: '16px',
+              zIndex: 100
             }}
-            itemStyle={{ padding: '2px 0' }}
-            labelStyle={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}
+            itemStyle={{ padding: '4px 0' }}
+            labelStyle={{ color: '#aaa', marginBottom: '10px', fontWeight: 'bold', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={(value: any, name: any) => {
               const label = name === 'income' ? 'Thu nhập' : 'Chi tiêu';
-              return [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)), label];
+              return [
+                <span key={name} className="font-mono font-bold text-foreground">
+                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
+                </span>, 
+                <span key={`${name}-label`} className={name === 'income' ? 'text-emerald-400' : 'text-rose-400'}>{label}</span>
+              ];
             }}
           />
           <Bar name="income" dataKey="income" fill="url(#colorIncome)" radius={[6, 6, 0, 0]} maxBarSize={24} />
