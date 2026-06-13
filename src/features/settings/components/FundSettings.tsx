@@ -92,29 +92,56 @@ export function FundSettings({ funds: initialFunds, isLoading: parentIsLoading }
       </div>
       
       {(isAddingFund || editingFundId) && (
-        <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-secondary p-3 rounded-xl border border-border">
-          <input 
-            type="text" 
-            value={fundName}
-            onChange={(e) => setFundName(e.target.value)}
-            placeholder="Tên quỹ (VD: Tiết kiệm)" 
-            className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-2 w-full" 
-          />
-          <div className="sm:w-32 w-full">
-            <AmountInput 
-              value={fundBalance}
-              onChange={(val) => setFundBalance(val)}
-              placeholder="Số dư" 
-              className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm" 
-            />
+        <div className="fixed inset-0 z-50 flex items-center justify-center md:items-end bg-black/60 backdrop-blur-sm px-4 md:px-0">
+          <div className="bg-card border border-border rounded-3xl md:rounded-t-[2.5rem] md:rounded-b-none p-6 md:p-10 max-w-lg w-full shadow-2xl relative animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-xl font-bold text-foreground tracking-tight">
+                {editingFundId ? "Chỉnh sửa quỹ" : "Thêm quỹ mới"}
+              </h2>
+              <button onClick={resetFundForm} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Tên quỹ (VD: Tiền mặt, Thẻ ATM...)</label>
+                <input 
+                  type="text" 
+                  value={fundName}
+                  onChange={(e) => setFundName(e.target.value)}
+                  placeholder="Nhập tên quỹ..." 
+                  className="w-full bg-secondary border border-white/5 rounded-2xl px-5 py-4 text-lg font-medium text-foreground focus:outline-none focus:border-white/20 transition-all" 
+                />
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Số dư hiện tại (VND)</label>
+                <AmountInput 
+                  value={fundBalance}
+                  onChange={(val) => setFundBalance(val)}
+                  placeholder="0" 
+                  className="bg-secondary border border-white/5 rounded-2xl px-5 py-4 text-3xl" 
+                />
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  onClick={resetFundForm}
+                  className="flex-1 py-4 rounded-2xl text-muted-foreground font-medium text-sm hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button 
+                  onClick={editingFundId ? handleUpdateFund : handleAddFund}
+                  disabled={isSubmitting || !fundName}
+                  className="flex-[2] py-4 rounded-2xl bg-foreground text-background font-bold text-sm hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? "Đang lưu..." : (editingFundId ? "Cập nhật quỹ" : "Lưu quỹ")}
+                </button>
+              </div>
+            </div>
           </div>
-          <button 
-            onClick={editingFundId ? handleUpdateFund : handleAddFund}
-            disabled={isSubmitting}
-            className="px-4 py-1.5 rounded-lg bg-emerald-500 text-black font-semibold text-sm hover:bg-emerald-400 cursor-pointer w-full sm:w-auto disabled:opacity-50"
-          >
-            {isSubmitting ? "Đang lưu..." : "Lưu"}
-          </button>
         </div>
       )}
       
