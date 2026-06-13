@@ -23,8 +23,33 @@ export function TransactionForm({
 
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
 
   const isLoading = isSubmitting;
+
+  const hashtagSuggestions = useMemo(() => {
+    const lastWord = note.split(" ").pop() || "";
+    if (!lastWord.startsWith("#")) return [];
+    
+    const query = lastWord.slice(1).toLowerCase();
+    return allCategories.filter(cat => 
+      cat.hashtags?.some(h => h.toLowerCase().includes(query)) ||
+      cat.name.toLowerCase().includes(query)
+    ).slice(0, 5);
+  }, [note, allCategories]);
+
+  useEffect(() => {
+    const lastWord = note.split(" ").pop() || "";
+    setShowHashtagSuggestions(lastWord.startsWith("#") && hashtagSuggestions.length > 0);
+  }, [note, hashtagSuggestions]);
+
+  const applyHashtag = (tag: string) => {
+    const words = note.split(" ");
+    words.pop();
+    const newNote = [...words, tag].join(" ").trim() + " ";
+    setNote(newNote);
+    setShowHashtagSuggestions(false);
+  };
 
   const onOpenFundSelector = () => {
     const params = new URLSearchParams(searchParams.toString());
