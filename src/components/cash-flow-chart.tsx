@@ -19,10 +19,20 @@ export function CashFlowChart({ data }: { data: CashFlowData[] }) {
 
   return (
     <div className="h-full w-full relative">
+      <div className="absolute -top-2 right-0 flex gap-4 z-10">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Thu nhập</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-rose-500"></div>
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">Chi tiêu</span>
+        </div>
+      </div>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={data}
-          margin={{ top: 5, right: 0, left: 0, bottom: 0 }}
+          margin={{ top: 20, right: 0, left: 0, bottom: 0 }}
         >
           <defs>
             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
