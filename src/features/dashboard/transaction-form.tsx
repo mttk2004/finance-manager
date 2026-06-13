@@ -152,7 +152,12 @@ export function TransactionForm({
     <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Nhập nhanh (One-Tap)</h3>
+          <div className="flex items-center gap-1.5 group/tooltip relative">
+            <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium cursor-help">Nhập nhanh (One-Tap)</h3>
+            <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-[#1a1a1a] border border-white/10 rounded-xl text-[10px] text-muted-foreground opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-20 shadow-xl">
+              Nhấn vào các lối tắt bên phải để tự động điền sẵn số tiền và ghi chú thường dùng.
+            </div>
+          </div>
           <button 
             onClick={onOpenFundSelector}
             disabled={isLoading}
@@ -235,7 +240,12 @@ export function TransactionForm({
         </div>
         
         <div className="relative">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Ghi chú & Hashtag</label>
+          <div className="flex items-center gap-1.5 mb-2 group/tooltip relative">
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 block cursor-help">Ghi chú & Hashtag</label>
+            <div className="absolute bottom-full left-0 mb-1 w-56 p-2 bg-[#1a1a1a] border border-white/10 rounded-xl text-[10px] text-muted-foreground opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-20 shadow-xl">
+              Gõ ký tự <strong>#</strong> để mở danh sách gợi ý. Hệ thống sẽ tự động phân loại giao dịch dựa trên hashtag bạn chọn.
+            </div>
+          </div>
           
           {showHashtagSuggestions && (
             <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">

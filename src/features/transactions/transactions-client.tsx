@@ -81,17 +81,21 @@ export default function TransactionsClient({ initialTransactions, funds, categor
   const importMutation = useMutation({
     mutationFn: importTransactions,
     onSuccess: (result) => {
-      if (result.success) {
+      if (result.success && result.count > 0) {
         toast.success(`Nhập dữ liệu thành công!`, {
           description: `Đã nhập ${result.count} giao dịch mới.`
         });
+      } else if (result.errors && result.errors.length > 0) {
+        toast.error("Nhập dữ liệu có lỗi", {
+          description: result.errors.slice(0, 3).join('\n') + (result.errors.length > 3 ? `\n... và ${result.errors.length - 3} lỗi khác` : '')
+        });
       } else {
-        toast.error("Lỗi khi nhập dữ liệu CSV.");
+        toast.info("Không có giao dịch nào được nhập.");
       }
     },
     onError: (err) => {
       console.error("Import failed:", err);
-      toast.error("Lỗi khi nhập dữ liệu CSV.");
+      toast.error("Lỗi khi kết nối hệ thống để nhập CSV.");
     },
     onSettled: () => {
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -205,7 +209,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
           <button 
             onClick={() => setIsAdvancedFilterOpen(!isAdvancedFilterOpen)}
             className={`px-4 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors border border-dashed cursor-pointer flex items-center gap-2 ${
-              isAdvancedFilterOpen ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-transparent border-border text-muted-foreground hover:text-white'
+              isAdvancedFilterOpen || fundId !== 'ALL' || categoryId !== 'ALL' || startDate || endDate || minAmount || maxAmount ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' : 'bg-transparent border-border text-muted-foreground hover:text-white'
             }`}
           >
             <Filter className="w-3.5 h-3.5" />
@@ -229,6 +233,37 @@ export default function TransactionsClient({ initialTransactions, funds, categor
           </div>
         </div>
       </div>
+
+      {/* Active Filter Chips */}
+      {(fundId !== 'ALL' || categoryId !== 'ALL' || startDate || endDate || minAmount || maxAmount) && !isAdvancedFilterOpen && (
+        <div className="flex flex-wrap gap-2 mb-6 animate-in fade-in">
+          <span className="text-[10px] uppercase font-bold text-muted-foreground py-1.5 px-1">Đang lọc:</span>
+          {fundId !== 'ALL' && (
+            <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-lg text-xs">
+              <span className="opacity-70">Quỹ:</span> {funds.find(f => f.id === fundId)?.name}
+              <button onClick={() => { setFundId('ALL'); setCurrentPage(1); }} className="hover:text-white ml-1 cursor-pointer"><X className="w-3 h-3" /></button>
+            </div>
+          )}
+          {categoryId !== 'ALL' && (
+            <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-lg text-xs">
+              <span className="opacity-70">DM:</span> {categories.find(c => c.id === categoryId)?.name}
+              <button onClick={() => { setCategoryId('ALL'); setCurrentPage(1); }} className="hover:text-white ml-1 cursor-pointer"><X className="w-3 h-3" /></button>
+            </div>
+          )}
+          {(startDate || endDate) && (
+            <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-lg text-xs">
+              <span className="opacity-70">TG:</span> {startDate ? new Date(startDate).toLocaleDateString('vi-VN') : 'Bắt đầu'} - {endDate ? new Date(endDate).toLocaleDateString('vi-VN') : 'Hiện tại'}
+              <button onClick={() => { setStartDate(''); setEndDate(''); setCurrentPage(1); }} className="hover:text-white ml-1 cursor-pointer"><X className="w-3 h-3" /></button>
+            </div>
+          )}
+          {(minAmount || maxAmount) && (
+            <div className="flex items-center gap-1.5 bg-blue-500/10 text-blue-400 border border-blue-500/20 px-3 py-1 rounded-lg text-xs">
+              <span className="opacity-70">Tiền:</span> {minAmount ? `${parseInt(minAmount).toLocaleString()}đ` : '0đ'} - {maxAmount ? `${parseInt(maxAmount).toLocaleString()}đ` : 'Max'}
+              <button onClick={() => { setMinAmount(''); setMaxAmount(''); setCurrentPage(1); }} className="hover:text-white ml-1 cursor-pointer"><X className="w-3 h-3" /></button>
+            </div>
+          )}
+        </div>
+      )}
 
       {isAdvancedFilterOpen && (
         <div className="bg-secondary border border-border rounded-[2rem] p-6 mb-8 space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">

@@ -176,7 +176,7 @@ export class TransactionService {
 
   static async import(csvText: string) {
     const lines = csvText.split('\n');
-    if (lines.length <= 1) return { success: false, count: 0 };
+    if (lines.length <= 1) return { success: false, count: 0, errors: ["File CSV trống hoặc không đúng định dạng"] };
 
     const allFunds = await db.select().from(funds);
     const allCategories = await db.select().from(categories);
@@ -186,13 +186,18 @@ export class TransactionService {
       'INCOME': 'INCOME', 'EXPENSE': 'EXPENSE', 'TRANSFER': 'TRANSFER', 'LEND': 'LEND', 'BORROW': 'BORROW'
     };
 
+    const errors: string[] = [];
+
     const results = await db.transaction(async (tx) => {
       let importedCount = 0;
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const parts = line.split(',').map(s => s.replace(/^"|"$/g, '').trim());
-        if (parts.length < 6) continue;
+        if (parts.length < 6) {
+          errors.push(`Dòng ${i + 1}: Thiếu cột dữ liệu`);
+          continue;
+        }
 
         const dateStr = parts[1];
         const typeStr = parts[2];
@@ -202,10 +207,18 @@ export class TransactionService {
         const note = parts[6];
 
         const fund = allFunds.find(f => f.name === fundName);
-        if (!fund) continue;
+        if (!fund) {
+          errors.push(`Dòng ${i + 1}: Không tìm thấy quỹ "${fundName}"`);
+          continue;
+        }
 
         const category = allCategories.find(c => c.name === categoryName);
         const type = typeMap[typeStr] || 'EXPENSE';
+
+        if (isNaN(amount) || amount <= 0) {
+          errors.push(`Dòng ${i + 1}: Số tiền không hợp lệ ("${parts[5]}")`);
+          continue;
+        }
 
         await tx.insert(transactions).values({
           fundId: fund.id,
@@ -227,7 +240,7 @@ export class TransactionService {
       return importedCount;
     });
 
-    return { success: true, count: results };
+    return { success: results > 0 || errors.length === 0, count: results, errors };
   }
 
   static async checkYesterday() {
