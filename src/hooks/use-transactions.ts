@@ -26,18 +26,23 @@ export function useTransactions(filters?: TransactionFilter, initialData?: Trans
       return { previousDashboard };
     },
     onSuccess: (newTx, variables) => {
-      toast.success(
-        variables.type === 'INCOME' ? "Đã ghi nhận thu nhập" :
-        variables.type === 'EXPENSE' ? "Đã ghi nhận chi tiêu" : "Đã ghi nhận giao dịch",
-        {
-          description: `${variables.amount.toLocaleString('vi-VN')}đ`,
-          duration: 5000,
-          action: {
-            label: "Hoàn tác",
-            onClick: () => deleteMutation.mutate(newTx.id)
+      const typeLabel = 
+        variables.type === 'INCOME' ? "thu nhập" :
+        variables.type === 'EXPENSE' ? "chi tiêu" :
+        variables.type === 'TRANSFER' ? "chuyển quỹ" : "giao dịch";
+
+      toast.success(`Đã ghi nhận ${typeLabel}`, {
+        description: `${variables.amount.toLocaleString('vi-VN')}đ${variables.note ? ` - ${variables.note}` : ''}`,
+        duration: 8000,
+        action: {
+          label: "Hoàn tác",
+          onClick: () => {
+            deleteMutation.mutate(newTx.id, {
+              onSuccess: () => toast.success("Đã hoàn tác giao dịch")
+            });
           }
         }
-      );
+      });
     },
     onError: (err) => handleError(err, "Lỗi khi thực hiện giao dịch"),
     onSettled: () => {

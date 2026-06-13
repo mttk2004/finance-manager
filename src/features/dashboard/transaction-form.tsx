@@ -54,6 +54,26 @@ export function TransactionForm({
     setShowHashtagSuggestions(false);
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      
+      if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        const amountInput = document.querySelector('input[aria-label="Số tiền"]') as HTMLInputElement;
+        amountInput?.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const recentNotes = useMemo(() => {
+    const notes = allTemplates.map(t => t.notePreset).filter(Boolean) as string[];
+    // Get unique notes from templates
+    return Array.from(new Set(notes)).slice(0, 3);
+  }, [allTemplates]);
+
   const onOpenFundSelector = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('modal', 'fund-selector');
@@ -148,7 +168,7 @@ export function TransactionForm({
               key={template.id} 
               onClick={() => applyTemplate(template)}
               disabled={isLoading}
-              className="px-4 py-2 border border-white/5 rounded-full bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              className="px-4 py-2 border border-white/5 rounded-2xl bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
             >
                 <span>{template.category?.icon || "⚡"}</span>
                 <span>{template.title}</span>
@@ -157,10 +177,15 @@ export function TransactionForm({
           <button 
             onClick={() => router.push('/settings?tab=shortcuts')}
             disabled={isLoading}
-            className="px-4 py-2 border border-white/5 rounded-full bg-secondary/50 hover:bg-secondary transition-all text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground cursor-pointer disabled:opacity-50"
+            className="px-4 py-2 border border-white/5 rounded-2xl bg-secondary/50 hover:bg-secondary transition-all text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground cursor-pointer disabled:opacity-50"
           >
             +
           </button>
+          <div className="ml-2 flex items-center">
+             <kbd className="hidden lg:inline-flex h-5 items-center gap-1 rounded border border-white/10 bg-white/5 px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+               <span className="text-xs">N</span>
+             </kbd>
+          </div>
         </div>
       </div>
 
@@ -246,6 +271,20 @@ export function TransactionForm({
             disabled={isLoading}
             className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 placeholder:text-muted-foreground/60 transition-colors disabled:opacity-50" 
           />
+          {recentNotes.length > 0 && !note && (
+            <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
+              <span className="text-[9px] uppercase font-bold text-muted-foreground/40 mt-1 whitespace-nowrap">Gợi ý:</span>
+              {recentNotes.map(rn => (
+                <button
+                  key={rn}
+                  onClick={() => setNote(rn)}
+                  className="text-[10px] px-2 py-1 rounded-lg bg-white/[0.02] border border-white/[0.05] text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all whitespace-nowrap cursor-pointer"
+                >
+                  {rn}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2 mt-3">
             {hashtags.map(tag => (
               <button 
