@@ -39,11 +39,14 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
             data={chartData}
             cx="50%"
             cy="50%"
-            innerRadius={65}
-            outerRadius={90}
-            paddingAngle={4}
+            innerRadius="65%"
+            outerRadius="90%"
+            paddingAngle={5}
             dataKey="value"
             stroke="none"
+            animationBegin={0}
+            animationDuration={1500}
+            animationEasing="ease-out"
           >
             {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -51,24 +54,29 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
           </Pie>
           <Tooltip 
             contentStyle={{ 
-              backgroundColor: 'rgba(23, 23, 23, 0.9)', 
-              backdropFilter: 'blur(12px)',
-              border: '1px solid rgba(255,255,255,0.08)', 
-              borderRadius: '20px', 
-              fontSize: '12px', 
-              boxShadow: '0 20px 40px rgba(0,0,0,0.6)',
-              padding: '12px'
+              backgroundColor: 'rgba(23, 23, 23, 0.95)', 
+              backdropFilter: 'blur(16px)',
+              border: '1px solid rgba(255,255,255,0.1)', 
+              borderRadius: '24px', 
+              fontSize: '13px', 
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.8)',
+              padding: '16px',
+              zIndex: 100
             }}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            formatter={(value: any) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
-            labelStyle={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}
+            formatter={(value: any, name: any) => [
+              <span key={name} className="font-mono font-bold text-foreground">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
+              </span>,
+              <span key={`${name}-label`} className="text-muted-foreground">{name}</span>
+            ]}
           />
         </PieChart>
       </ResponsiveContainer>
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="text-[10px] text-muted-foreground uppercase tracking-widest mb-1">Tổng chi</span>
-        <span className="text-lg font-mono font-bold text-white">
-          {(totalSpent / 1000000).toFixed(1)}M
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none translate-y-1">
+        <span className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-bold mb-1 opacity-50">Tổng chi</span>
+        <span className="text-2xl font-mono font-bold text-foreground tracking-tighter">
+          {(totalSpent / 1000000).toFixed(1)}<span className="text-muted-foreground text-sm ml-0.5">M</span>
         </span>
       </div>
     </div>

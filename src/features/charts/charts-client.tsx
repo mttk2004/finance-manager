@@ -133,7 +133,7 @@ export default function ChartsClient({ initialBalance, initialTrend, initialCate
         </ChartWrapper>
 
         <ChartWrapper title="Phân bổ chi tiêu" range={categoryRange} setRange={setCategoryRange} isFetching={categoryQuery.isFetching}>
-          <div className="flex-1 w-full relative min-h-[250px]">
+          <div className="h-80 w-full relative">
              <CategoryDonutChart data={categoryQuery.data || []} />
           </div>
         </ChartWrapper>
