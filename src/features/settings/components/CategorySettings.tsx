@@ -89,49 +89,82 @@ export function CategorySettings({ categories: initialCategories, isLoading: par
       </div>
       
       {(isAddingCategory || editingCategoryId) && (
-        <div className="space-y-4 mb-6 bg-secondary p-4 rounded-xl border border-border">
-          <div className="flex flex-col sm:flex-row gap-3 items-center">
-            <CustomSelect 
-              value={catType} 
-              onChange={(e) => setCatType(e.target.value as 'INCOME' | 'EXPENSE')}
-              options={[
-                { value: "EXPENSE", label: "Chi tiêu" },
-                { value: "INCOME", label: "Thu nhập" }
-              ]}
-              className="w-full sm:w-auto"
-            />
-            <input 
-              type="text" 
-              value={catIcon}
-              onChange={(e) => setCatIcon(e.target.value)}
-              placeholder="Icon (VD: 🍜)" 
-              className="w-full sm:w-20 bg-card border border-border rounded-lg px-3 py-1.5 text-sm text-center text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
-            />
-            <input 
-              type="text" 
-              value={catName}
-              onChange={(e) => setCatName(e.target.value)}
-              placeholder="Tên danh mục (VD: Ăn uống)" 
-              className="flex-1 bg-transparent text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60 px-2 w-full" 
-            />
+        <div className="fixed inset-0 z-50 flex items-center justify-center md:items-end bg-black/60 backdrop-blur-sm px-4 md:px-0">
+          <div className="bg-card border border-border rounded-3xl md:rounded-t-[2.5rem] md:rounded-b-none p-6 md:p-10 max-w-lg w-full shadow-2xl relative animate-in slide-in-from-bottom-4 duration-300">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-xl font-bold text-foreground tracking-tight">
+                {editingCategoryId ? "Chỉnh sửa danh mục" : "Thêm danh mục mới"}
+              </h2>
+              <button onClick={resetCategoryForm} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <div className="sm:col-span-1">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Loại</label>
+                  <CustomSelect 
+                    value={catType} 
+                    onChange={(e) => setCatType(e.target.value as 'INCOME' | 'EXPENSE')}
+                    options={[
+                      { value: "EXPENSE", label: "Chi" },
+                      { value: "INCOME", label: "Thu" }
+                    ]}
+                    className="w-full bg-secondary border-white/5"
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Icon</label>
+                  <input 
+                    type="text" 
+                    value={catIcon}
+                    onChange={(e) => setCatIcon(e.target.value)}
+                    placeholder="VD: 🍜" 
+                    className="w-full bg-secondary border border-white/5 rounded-xl px-3 py-2.5 text-center text-foreground focus:outline-none focus:border-white/20" 
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Tên danh mục</label>
+                  <input 
+                    type="text" 
+                    value={catName}
+                    onChange={(e) => setCatName(e.target.value)}
+                    placeholder="VD: Ăn uống" 
+                    className="w-full bg-secondary border border-white/5 rounded-xl px-4 py-2.5 text-foreground focus:outline-none focus:border-white/20" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Hashtags (Tự động nhận diện)</label>
+                <input 
+                  type="text" 
+                  value={catHashtags}
+                  onChange={(e) => setCatHashtags(e.target.value)}
+                  placeholder="VD: #an_uong, #cafe" 
+                  className="w-full bg-secondary border border-white/5 rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-white/20" 
+                />
+                <p className="text-[10px] text-muted-foreground mt-2 px-1">Phân tách bằng dấu phẩy. Dùng hashtag này trong ghi chú để tự động chọn danh mục.</p>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button 
+                  onClick={resetCategoryForm}
+                  className="flex-1 py-4 rounded-2xl text-muted-foreground font-medium text-sm hover:bg-white/5 transition-colors cursor-pointer"
+                >
+                  Hủy bỏ
+                </button>
+                <button 
+                  onClick={editingCategoryId ? handleUpdateCategory : handleAddCategory}
+                  disabled={isSubmitting || !catName || !catIcon}
+                  className="flex-[2] py-4 rounded-2xl bg-foreground text-background font-bold text-sm hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                >
+                  {isSubmitting ? "Đang lưu..." : (editingCategoryId ? "Cập nhật danh mục" : "Lưu danh mục")}
+                </button>
+              </div>
+            </div>
           </div>
-          <div>
-            <input 
-              type="text" 
-              value={catHashtags}
-              onChange={(e) => setCatHashtags(e.target.value)}
-              placeholder="Hashtags (VD: #an_uong, #cafe)" 
-              className="w-full bg-card border border-border rounded-lg px-3 py-2 text-sm text-foreground focus:outline-none placeholder:text-muted-foreground/60" 
-            />
-            <p className="text-[10px] text-muted-foreground mt-1 px-1">Phân tách bằng dấu phẩy, bắt đầu bằng dấu #</p>
-          </div>
-          <button 
-            onClick={editingCategoryId ? handleUpdateCategory : handleAddCategory}
-            disabled={isSubmitting}
-            className="w-full py-2 rounded-lg bg-blue-500 text-white font-semibold text-sm hover:bg-blue-400 cursor-pointer disabled:opacity-50"
-          >
-            {isSubmitting ? "Đang lưu..." : "Lưu danh mục"}
-          </button>
         </div>
       )}
       
