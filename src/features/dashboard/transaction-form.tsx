@@ -25,6 +25,7 @@ export function TransactionForm({
 
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
 
   const isLoading = isSubmitting;
@@ -65,7 +66,7 @@ export function TransactionForm({
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const handleTransaction = async (type: TransactionType, amount: string, note: string) => {
+  const handleTransaction = async (type: TransactionType, amount: string, note: string, customDate?: string) => {
     if (!amount || amount === '0' || isSubmitting || !activeFund) return;
     
     await createTransaction({
@@ -73,6 +74,7 @@ export function TransactionForm({
       amount: parseInt(amount),
       type,
       note,
+      date: customDate ? new Date(customDate) : new Date(),
     });
   };
 
@@ -117,13 +119,14 @@ export function TransactionForm({
       onOpenTransferModal();
       return;
     }
-    await handleTransaction(type, amount, note);
+    await handleTransaction(type, amount, note, date);
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
       window.navigator.vibrate(50);
     }
     setAmount("");
     setNote("");
-  }, [amount, note, handleTransaction, onOpenTransferModal]);
+    setDate(new Date().toISOString().split('T')[0]);
+  }, [amount, note, date, handleTransaction, onOpenTransferModal]);
 
   return (
     <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
@@ -254,6 +257,19 @@ export function TransactionForm({
                 {tag}
               </button>
             ))}
+          </div>
+        </div>
+
+        <div className="relative">
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Ngày giao dịch</label>
+          <div className="relative group">
+            <input 
+              type="date" 
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              disabled={isLoading}
+              className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 transition-colors disabled:opacity-50 [color-scheme:dark]" 
+            />
           </div>
         </div>
         
