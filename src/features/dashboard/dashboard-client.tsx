@@ -106,7 +106,7 @@ interface DashboardClientProps {
         isSubmitting={isSubmitting}
       />
 
-      <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-8 md:space-y-12 max-w-5xl mx-auto mt-4 md:mt-8">
+      <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-4 md:space-y-6 max-w-5xl mx-auto mt-2 md:mt-4">
         <DashboardHeader 
           totalBalance={data.totalBalance}
           totalSpentMonth={data.totalSpentMonth}
@@ -114,8 +114,8 @@ interface DashboardClientProps {
           onOpenDistributionModal={() => setModal('distribution')}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 px-4 md:px-0">
-          <div className="lg:col-span-2 space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 px-4 md:px-0">
+          <div className="space-y-4 md:space-y-6">
             <TransactionForm
               allCategories={data.allCategories}
               allTemplates={data.allTemplates}

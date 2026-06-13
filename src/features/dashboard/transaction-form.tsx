@@ -149,11 +149,11 @@ export function TransactionForm({
   }, [amount, note, date, handleTransaction, onOpenTransferModal]);
 
   return (
-    <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
-      <div className="flex justify-between items-center mb-6">
+    <section className="bg-card border border-border rounded-2xl p-5 md:p-6">
+      <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 group/tooltip relative">
-            <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium cursor-help">Nhập nhanh (One-Tap)</h3>
+            <h3 className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium cursor-help">Nhập nhanh (One-Tap)</h3>
             <div className="absolute bottom-full left-0 mb-2 w-48 p-2 bg-[#1a1a1a] border border-white/10 rounded-xl text-[10px] text-muted-foreground opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-20 shadow-xl">
               Nhấn vào các lối tắt bên phải để tự động điền sẵn số tiền và ghi chú thường dùng.
             </div>
@@ -173,7 +173,7 @@ export function TransactionForm({
               key={template.id} 
               onClick={() => applyTemplate(template)}
               disabled={isLoading}
-              className="px-4 py-2 border border-white/5 rounded-2xl bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+              className="px-3 py-1.5 border border-white/5 rounded-xl bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
             >
                 <span>{template.category?.icon || "⚡"}</span>
                 <span>{template.title}</span>
@@ -182,7 +182,7 @@ export function TransactionForm({
           <button 
             onClick={() => router.push('/settings?tab=shortcuts')}
             disabled={isLoading}
-            className="px-4 py-2 border border-white/5 rounded-2xl bg-secondary/50 hover:bg-secondary transition-all text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground cursor-pointer disabled:opacity-50"
+            className="px-3 py-1.5 border border-white/5 rounded-xl bg-secondary/50 hover:bg-secondary transition-all text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground cursor-pointer disabled:opacity-50"
           >
             +
           </button>
@@ -195,13 +195,13 @@ export function TransactionForm({
       </div>
 
       {/* Mobile quick templates */}
-      <div className="flex md:hidden overflow-x-auto pb-4 gap-2 snap-x scrollbar-hide -mx-2 px-2 mb-2">
+      <div className="flex md:hidden overflow-x-auto pb-3 gap-2 snap-x scrollbar-hide -mx-2 px-2 mb-1">
          {allTemplates.map((template) => (
            <button 
             key={template.id} 
             onClick={() => applyTemplate(template)}
             disabled={isLoading}
-            className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+            className="snap-start shrink-0 px-3 py-2 border border-white/5 rounded-xl bg-secondary hover:bg-[#222222] active:scale-95 transition-all text-xs font-medium text-muted-foreground cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
            >
               <span>{template.category?.icon || "⚡"}</span>
               <span>{template.title}</span>
@@ -210,19 +210,19 @@ export function TransactionForm({
          <button 
           onClick={() => router.push('/settings?tab=shortcuts')}
           disabled={isLoading}
-          className="snap-start shrink-0 px-4 py-3 border border-white/5 rounded-full bg-secondary/50 text-xs font-medium text-muted-foreground/60 cursor-pointer disabled:opacity-50"
+          className="snap-start shrink-0 px-3 py-2 border border-white/5 rounded-xl bg-secondary/50 text-xs font-medium text-muted-foreground/60 cursor-pointer disabled:opacity-50"
          >
           + Thêm
          </button>
       </div>
       
-      <div className="space-y-6 md:space-y-8 mt-4 md:mt-8">
+      <div className="space-y-4 md:space-y-5 mt-2 md:mt-4">
         <div className="relative group">
-          <div className="flex justify-between items-end mb-2">
+          <div className="flex justify-between items-end mb-1">
             <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 block">Số tiền (VND)</label>
             {budgetInfo && (
-              <div className={`text-[10px] font-bold uppercase tracking-tighter px-2 py-0.5 rounded ${budgetInfo.isOver ? 'bg-orange-500/10 text-orange-500 animate-pulse' : 'bg-emerald-500/10 text-emerald-500/60'}`}>
-                {budgetInfo.isOver ? 'Vượt ngân sách' : 'Trong ngân sách'}
+              <div className={`text-[9px] font-bold uppercase tracking-tighter px-1.5 py-0.5 rounded ${budgetInfo.isOver ? 'bg-orange-500/10 text-orange-500 animate-pulse' : 'bg-emerald-500/10 text-emerald-500/60'}`}>
+                {budgetInfo.isOver ? 'Vượt NS' : 'Trong NS'}
                 <span className="ml-1 opacity-60 font-mono">
                   (Còn {budgetInfo.remaining.toLocaleString('vi-VN')}đ)
                 </span>
@@ -234,13 +234,13 @@ export function TransactionForm({
             onChange={setAmount}
             placeholder="0" 
             disabled={isLoading}
-            className={`w-full bg-transparent text-5xl md:text-7xl font-mono py-2 focus:outline-none placeholder:text-neutral-800 text-center md:text-left border-b border-white/5 focus:border-white transition-all pb-4 disabled:opacity-50 ${budgetInfo?.isOver ? 'text-orange-500' : 'text-foreground'}`} 
+            className={`w-full bg-transparent text-4xl md:text-5xl font-mono py-1 focus:outline-none placeholder:text-neutral-800 text-center md:text-left border-b border-white/5 focus:border-white transition-all pb-2 disabled:opacity-50 ${budgetInfo?.isOver ? 'text-orange-500' : 'text-foreground'}`} 
           />
-          <span className={`absolute right-0 bottom-6 text-xl font-mono hidden md:block transition-colors ${budgetInfo?.isOver ? 'text-orange-500/40' : 'text-muted-foreground/60'}`}>đ</span>
+          <span className={`absolute right-0 bottom-4 text-lg font-mono hidden md:block transition-colors ${budgetInfo?.isOver ? 'text-orange-500/40' : 'text-muted-foreground/60'}`}>đ</span>
         </div>
         
         <div className="relative">
-          <div className="flex items-center gap-1.5 mb-2 group/tooltip relative">
+          <div className="flex items-center gap-1.5 mb-1.5 group/tooltip relative">
             <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 block cursor-help">Ghi chú & Hashtag</label>
             <div className="absolute bottom-full left-0 mb-1 w-56 p-2 bg-[#1a1a1a] border border-white/10 rounded-xl text-[10px] text-muted-foreground opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-20 shadow-xl">
               Gõ ký tự <strong>#</strong> để mở danh sách gợi ý. Hệ thống sẽ tự động phân loại giao dịch dựa trên hashtag bạn chọn.
@@ -252,21 +252,21 @@ export function TransactionForm({
               <div className="p-2 border-b border-white/5 bg-white/5">
                 <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-medium px-2">Gợi ý danh mục</span>
               </div>
-              <div className="max-h-48 overflow-y-auto">
+              <div className="max-h-40 overflow-y-auto">
                 {hashtagSuggestions.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => applyHashtag(cat.hashtags?.[0] || `#${cat.name.replace(/\s+/g, '_').toLowerCase()}`)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer"
+                    className="w-full flex items-center justify-between px-3 py-2 hover:bg-white/5 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="text-lg">{cat.icon || "📝"}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{cat.icon || "📝"}</span>
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium text-foreground">{cat.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{cat.hashtags?.[0] || 'Chưa có hashtag'}</span>
+                        <span className="text-xs font-medium text-foreground">{cat.name}</span>
+                        <span className="text-[9px] text-muted-foreground">{cat.hashtags?.[0] || 'Chưa có hashtag'}</span>
                       </div>
                     </div>
-                    <div className="text-xs text-emerald-500/50 group-hover:text-emerald-500 transition-colors font-mono">CHỌN</div>
+                    <div className="text-[10px] text-emerald-500/50 group-hover:text-emerald-500 transition-colors font-mono">CHỌN</div>
                   </button>
                 ))}
               </div>
@@ -279,10 +279,10 @@ export function TransactionForm({
             onChange={(e) => setNote(e.target.value)}
             placeholder="Ví dụ: Ăn trưa #vui_ve" 
             disabled={isLoading}
-            className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 placeholder:text-muted-foreground/60 transition-colors disabled:opacity-50" 
+            className="w-full bg-[#161616] border border-white/[0.03] rounded-xl px-4 py-3 text-sm text-neutral-300 focus:outline-none focus:border-white/20 placeholder:text-muted-foreground/60 transition-colors disabled:opacity-50" 
           />
           {recentNotes.length > 0 && !note && (
-            <div className="flex gap-2 mt-3 overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 mt-2 overflow-x-auto scrollbar-hide">
               <span className="text-[9px] uppercase font-bold text-muted-foreground/40 mt-1 whitespace-nowrap">Gợi ý:</span>
               {recentNotes.map(rn => (
                 <button
@@ -295,13 +295,13 @@ export function TransactionForm({
               ))}
             </div>
           )}
-          <div className="flex flex-wrap gap-2 mt-3">
+          <div className="flex flex-wrap gap-1.5 mt-2">
             {hashtags.map(tag => (
               <button 
                 key={tag}
                 onClick={() => setNote(prev => prev.includes(tag) ? prev : (prev ? `${prev} ${tag}` : tag))}
                 disabled={isLoading}
-                className="text-[10px] px-2 py-1 rounded-full bg-white/[0.03] border border-border text-muted-foreground hover:text-neutral-300 hover:bg-white/[0.08] transition-all cursor-pointer disabled:opacity-50"
+                className="text-[9px] px-2 py-0.5 rounded-full bg-white/[0.03] border border-border text-muted-foreground hover:text-neutral-300 hover:bg-white/[0.08] transition-all cursor-pointer disabled:opacity-50"
               >
                 {tag}
               </button>
@@ -310,26 +310,26 @@ export function TransactionForm({
         </div>
 
         <div className="relative">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Ngày giao dịch</label>
+          <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-1.5 block">Ngày giao dịch</label>
           <div className="relative group">
             <input 
               type="date" 
               value={date}
               onChange={(e) => setDate(e.target.value)}
               disabled={isLoading}
-              className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 transition-colors disabled:opacity-50 [color-scheme:dark]" 
+              className="w-full bg-[#161616] border border-white/[0.03] rounded-xl px-4 py-3 text-sm text-neutral-300 focus:outline-none focus:border-white/20 transition-colors disabled:opacity-50 [color-scheme:dark]" 
             />
           </div>
         </div>
         
-        <div className="grid grid-cols-2 gap-4 pt-4">
+        <div className="grid grid-cols-2 gap-3 pt-2">
           <button 
             onClick={() => onHandleTransaction('EXPENSE')}
             disabled={!amount || amount === '0' || isLoading || isExpenseDisabled || !activeFund}
-            className={`group relative py-4 md:py-5 rounded-2xl font-bold text-sm md:text-base border active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-2xl ${
+            className={`group relative py-3 md:py-4 rounded-xl font-bold text-sm border active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-2xl ${
               budgetInfo?.isOver 
-                ? 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.1)] hover:shadow-[0_0_30px_rgba(249,115,22,0.2)]' 
-                : 'bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/40 shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:shadow-[0_0_30px_rgba(244,63,94,0.2)]'
+                ? 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/40 shadow-[0_0_15px_rgba(249,115,22,0.1)] hover:shadow-[0_0_20px_rgba(249,115,22,0.2)]' 
+                : 'bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/40 shadow-[0_0_15px_rgba(244,63,94,0.1)] hover:shadow-[0_0_20px_rgba(244,63,94,0.2)]'
             }`}
           >
             <span className="relative z-10">{isLoading ? 'ĐANG XỬ LÝ...' : 'CHI TIỀN'}</span>
@@ -338,31 +338,31 @@ export function TransactionForm({
           <button 
             onClick={() => onHandleTransaction('INCOME')}
             disabled={!amount || amount === '0' || isLoading || isIncomeDisabled || !activeFund}
-            className="group relative py-4 md:py-5 rounded-2xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold text-sm md:text-base border border-emerald-500/20 hover:border-emerald-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(16,185,129,0.1)] hover:shadow-[0_0_30px_rgba(16,185,129,0.2)]"
+            className="group relative py-3 md:py-4 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-bold text-sm border border-emerald-500/20 hover:border-emerald-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_15px_rgba(16,185,129,0.1)] hover:shadow-[0_0_20px_rgba(16,185,129,0.2)]"
           >
             <span className="relative z-10">{isLoading ? 'ĐANG XỬ LÝ...' : 'THU VÀO'}</span>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
           </button>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-2">
+        <div className="grid grid-cols-3 gap-2 mt-1">
           <button 
             onClick={() => onHandleTransaction('BORROW')}
             disabled={!amount || amount === '0' || isLoading || !activeFund}
-            className="py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
+            className="py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-[10px] uppercase border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
           >
             Đi vay
           </button>
           <button 
             onClick={() => onHandleTransaction('LEND')}
             disabled={!amount || amount === '0' || isLoading || !activeFund}
-            className="py-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-xs border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
+            className="py-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/[0.02] font-medium text-[10px] uppercase border border-transparent hover:border-border transition-all cursor-pointer disabled:opacity-40"
           >
             Cho vay
           </button>
           <button 
             onClick={() => onHandleTransaction('TRANSFER')}
             disabled={!amount || amount === '0' || isLoading || !activeFund}
-            className="py-2 rounded-xl text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 font-medium text-xs border border-transparent hover:border-blue-500/20 transition-all cursor-pointer disabled:opacity-40"
+            className="py-1.5 rounded-lg text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 font-medium text-[10px] uppercase border border-transparent hover:border-blue-500/20 transition-all cursor-pointer disabled:opacity-40"
           >
             Chuyển quỹ
           </button>
