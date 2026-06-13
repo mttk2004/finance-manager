@@ -76,6 +76,9 @@ export function TransactionForm({
       return;
     }
     await handleTransaction(type, amount, note);
+    if (typeof window !== 'undefined' && window.navigator.vibrate) {
+      window.navigator.vibrate(50);
+    }
     setAmount("");
     setNote("");
   }, [amount, note, handleTransaction, onOpenTransferModal]);

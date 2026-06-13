@@ -68,6 +68,9 @@ interface DashboardClientProps {
       type: 'TRANSFER',
     });
     
+    if (typeof window !== 'undefined' && window.navigator.vibrate) {
+      window.navigator.vibrate(50);
+    }
     toast.success("Chuyển tiền thành công");
     setTransferAmount("");
     setModal(null);
