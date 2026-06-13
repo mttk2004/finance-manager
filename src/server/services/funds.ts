@@ -32,7 +32,7 @@ export class FundService {
     return updatedFund;
   }
 
-  static async delete(id: string) {
+  static async delete(id: string, options?: { transferToFundId?: string }) {
     const fund = await db.query.funds.findFirst({
       where: eq(funds.id, id),
     });
@@ -41,7 +41,32 @@ export class FundService {
       throw new Error("Cannot delete the default fund");
     }
 
-    return await db.delete(funds).where(eq(funds.id, id)).returning();
+    return await db.transaction(async (tx) => {
+      if (options?.transferToFundId) {
+        const targetFund = await tx.query.funds.findFirst({
+          where: eq(funds.id, options.transferToFundId),
+        });
+
+        if (!targetFund) throw new Error("Target fund not found");
+
+        // Update target fund balance
+        await tx.update(funds)
+          .set({ balance: (targetFund.balance || 0) + (fund?.balance || 0) })
+          .where(eq(funds.id, options.transferToFundId));
+
+        // Move transactions to the target fund
+        const { transactions } = await import('@/lib/db/schema');
+        await tx.update(transactions)
+          .set({ fundId: options.transferToFundId })
+          .where(eq(transactions.fundId, id));
+        
+        await tx.update(transactions)
+          .set({ toFundId: options.transferToFundId })
+          .where(eq(transactions.toFundId, id));
+      }
+
+      return await tx.delete(funds).where(eq(funds.id, id)).returning();
+    });
   }
 
   static async setDefault(id: string) {

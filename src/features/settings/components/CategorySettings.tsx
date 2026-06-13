@@ -22,6 +22,7 @@ export function CategorySettings({ categories: initialCategories, isLoading: par
 
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
   const [catName, setCatName] = useState("");
   const [catType, setCatType] = useState<'INCOME' | 'EXPENSE'>("EXPENSE");
   const [catIcon, setCatIcon] = useState("");
@@ -208,6 +209,72 @@ export function CategorySettings({ categories: initialCategories, isLoading: par
           ))
         )}
       </div>
+    </div>
+  );
+}
+inecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                 </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {categoryToDelete && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md px-4">
+          <div className="bg-card border border-border rounded-[2.5rem] p-8 md:p-10 max-w-lg w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+            <div className="mb-8">
+              <div className="w-16 h-16 rounded-3xl bg-rose-500/10 flex items-center justify-center text-rose-500 mb-6 border border-rose-500/20">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+              </div>
+              <h2 className="text-2xl font-bold text-foreground tracking-tight mb-3">Xác nhận xóa danh mục?</h2>
+              <p className="text-muted-foreground leading-relaxed">
+                Bạn sắp xóa danh mục <strong className="text-foreground">{categoryToDelete.name}</strong>. Hãy chọn cách xử lý với các giao dịch thuộc danh mục này.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 block">Tùy chọn an toàn (Tùy chọn)</label>
+              <div className="bg-secondary/50 border border-white/5 rounded-2xl p-4">
+                <p className="text-xs text-muted-foreground mb-3">Chuyển tất cả giao dịch sang danh mục {categoryToDelete.type === 'INCOME' ? 'thu' : 'chi'} khác:</p>
+                <select 
+                  value={transferTargetId}
+                  onChange={(e) => setTransferTargetId(e.target.value)}
+                  className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-white/20 transition-all cursor-pointer"
+                >
+                  <option value="">-- Không chuyển (Xóa sạch) --</option>
+                  {otherCategories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <p className="text-[10px] text-rose-400/60 px-2 italic">
+                * Nếu không chọn, tất cả lịch sử giao dịch gắn liền với danh mục này sẽ bị xóa vĩnh viễn.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button 
+                onClick={() => {
+                  setCategoryToDelete(null);
+                  setTransferTargetId("");
+                }}
+                disabled={isSubmitting}
+                className="flex-1 py-4 rounded-2xl text-muted-foreground font-medium text-sm hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Hủy bỏ
+              </button>
+              <button 
+                onClick={handleDeleteCategory}
+                disabled={isSubmitting}
+                className="flex-[2] py-4 rounded-2xl bg-rose-500 text-white font-bold text-sm hover:bg-rose-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 shadow-[0_0_20px_rgba(244,63,94,0.2)]"
+              >
+                {isSubmitting ? "Đang xử lý..." : (transferTargetId ? "Chuyển & Xóa" : "Xóa vĩnh viễn")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

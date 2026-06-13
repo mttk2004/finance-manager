@@ -45,8 +45,8 @@ export async function updateCategory(id: string, data: {
   return updatedCat;
 }
 
-export async function deleteCategory(id: string) {
-  const result = await CategoryService.delete(id);
+export async function deleteCategory(id: string, options?: { transferToCategoryId?: string }) {
+  const result = await CategoryService.delete(id, options);
   
   revalidateTag('categories', 'max');
   revalidatePath('/', 'layout');

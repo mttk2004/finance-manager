@@ -67,8 +67,8 @@ export function useFunds(initialData?: Fund[]) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteFund,
-    onMutate: async (id) => {
+    mutationFn: (vars: { id: string, options?: { transferToFundId?: string } }) => deleteFund(vars.id, vars.options),
+    onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.FUNDS });
       const previousFunds = queryClient.getQueryData<Fund[]>(QUERY_KEYS.FUNDS);
       if (previousFunds) {

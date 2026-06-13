@@ -29,8 +29,8 @@ export async function updateFund(id: string, data: {
   return updatedFund;
 }
 
-export async function deleteFund(id: string) {
-  const result = await FundService.delete(id);
+export async function deleteFund(id: string, options?: { transferToFundId?: string }) {
+  const result = await FundService.delete(id, options);
   
   revalidatePath('/', 'layout');
   revalidatePath('/settings', 'page');

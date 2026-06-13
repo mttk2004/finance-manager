@@ -42,7 +42,15 @@ export class CategoryService {
     return updatedCat;
   }
 
-  static async delete(id: string) {
-    return await db.delete(categories).where(eq(categories.id, id)).returning();
+  static async delete(id: string, options?: { transferToCategoryId?: string }) {
+    return await db.transaction(async (tx) => {
+      if (options?.transferToCategoryId) {
+        const { transactions } = await import('@/lib/db/schema');
+        await tx.update(transactions)
+          .set({ categoryId: options.transferToCategoryId })
+          .where(eq(transactions.categoryId, id));
+      }
+      return await tx.delete(categories).where(eq(categories.id, id)).returning();
+    });
   }
 }

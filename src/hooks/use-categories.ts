@@ -67,8 +67,8 @@ export function useCategories(initialData?: Category[]) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteCategory,
-    onMutate: async (id) => {
+    mutationFn: (vars: { id: string, options?: { transferToCategoryId?: string } }) => deleteCategory(vars.id, vars.options),
+    onMutate: async ({ id }) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.CATEGORIES });
       const previous = queryClient.getQueryData<Category[]>(QUERY_KEYS.CATEGORIES);
       if (previous) {
