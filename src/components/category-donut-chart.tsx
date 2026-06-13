@@ -66,10 +66,8 @@ export function CategoryDonutChart({ data }: CategoryDonutChartProps) {
               }}
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any, name: any) => [
-                <span key={name} className="font-mono font-bold text-foreground">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
-                </span>,
-                <span key={`${name}-label`} className="text-muted-foreground">{name}</span>
+                new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)),
+                name
               ]}
             />
           </PieChart>

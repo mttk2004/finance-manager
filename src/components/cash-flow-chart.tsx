@@ -68,12 +68,7 @@ export function CashFlowChart({ data }: { data: CashFlowData[] }) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             formatter={(value: any, name: any) => {
               const label = name === 'income' ? 'Thu nhập' : 'Chi tiêu';
-              return [
-                <span key={name} className="font-mono font-bold text-foreground">
-                  {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value))}
-                </span>, 
-                <span key={`${name}-label`} className={name === 'income' ? 'text-emerald-400' : 'text-rose-400'}>{label}</span>
-              ];
+              return [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)), label];
             }}
           />
           <Bar name="income" dataKey="income" fill="url(#colorIncome)" radius={[6, 6, 0, 0]} maxBarSize={24} />

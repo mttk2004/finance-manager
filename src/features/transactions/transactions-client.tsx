@@ -435,7 +435,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                       <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
                         {tx.fund?.name || "Khác"}
                       </td>
-                      <td className="px-4 py-4 text-neutral-300 max-w-[200px] truncate italic">
+                      <td className="px-4 py-4 text-neutral-300 max-w-[200px] truncate italic" title={tx.note || ""}>
                         {tx.note || "-"}
                       </td>
                       <td className={`px-4 py-4 whitespace-nowrap text-right font-mono font-bold ${tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 'text-rose-400'}`}>
