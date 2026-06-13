@@ -2,13 +2,11 @@ import dynamic from "next/dynamic";
 import { FundSelectorModal } from "@/components/fund-selector-modal";
 import { Fund } from "@/types";
 
-const DailyReminderModal = dynamic(() => import("@/components/daily-reminder-modal").then(mod => mod.DailyReminderModal), { ssr: false });
 const IncomeDistributionModal = dynamic(() => import("@/components/income-distribution-modal").then(mod => mod.IncomeDistributionModal), { ssr: false });
 
 import { useDashboardStore } from "@/hooks/use-dashboard-store";
 
 interface DashboardModalsProps {
-  showReminder: boolean;
   isDistributionModalOpen: boolean;
   setDistributionModalOpen: (open: boolean) => void;
   isFundSelectorOpen: boolean;
@@ -24,7 +22,6 @@ interface DashboardModalsProps {
 }
 
 export function DashboardModals({
-  showReminder,
   isDistributionModalOpen,
   setDistributionModalOpen,
   isFundSelectorOpen,
@@ -45,7 +42,6 @@ export function DashboardModals({
 
   return (
     <>
-      <DailyReminderModal show={showReminder} />
       <IncomeDistributionModal isOpen={isDistributionModalOpen} onClose={() => setDistributionModalOpen(false)} />
       <FundSelectorModal 
         isOpen={isFundSelectorOpen} 

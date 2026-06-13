@@ -23,7 +23,6 @@ export class DashboardService {
       lastMonthAggregates,
       monthBudgets,
       expenseCategories,
-      hasTransactionsYesterday,
       allCategories,
       initialCashFlow,
       allTemplates,
@@ -55,7 +54,6 @@ export class DashboardService {
         where: eq(categories.type, 'EXPENSE'),
         columns: { id: true, name: true, icon: true }
       }),
-      TransactionService.checkYesterday(),
       CategoryService.getAll(),
       ChartService.getCashFlow('this-month'),
       TemplateService.getAll(),
@@ -91,7 +89,6 @@ export class DashboardService {
       allFunds,
       recentTransactions,
       totalBalance,
-      showReminder: !hasTransactionsYesterday && recentTransactions.length > 0,
       budgetTracking,
       totalSpentMonth,
       totalSpentLastMonth,

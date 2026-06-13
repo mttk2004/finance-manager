@@ -95,7 +95,6 @@ interface DashboardClientProps {
   return (
     <>
       <DashboardModals 
-        showReminder={data.showReminder}
         isDistributionModalOpen={isDistributionModalOpen}
         setDistributionModalOpen={(open) => setModal(open ? 'distribution' : null)}
         isFundSelectorOpen={isFundSelectorOpen}

@@ -76,7 +76,6 @@ export interface DashboardData {
   allFunds: Fund[];
   recentTransactions: Transaction[];
   totalBalance: number;
-  showReminder: boolean;
   budgetTracking: (Budget & { spent: number })[];
   totalSpentMonth: number;
   totalSpentLastMonth: number;
