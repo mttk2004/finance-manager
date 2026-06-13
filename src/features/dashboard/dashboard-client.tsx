@@ -123,6 +123,7 @@ interface DashboardClientProps {
             <TransactionForm
               allCategories={data.allCategories}
               allTemplates={data.allTemplates}
+              budgetTracking={data.budgetTracking}
             />
 
             <FinancialInsights 

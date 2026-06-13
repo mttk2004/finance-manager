@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { AmountInput } from "@/components/amount-input";
-import { Category, TransactionType, Template } from "@/types";
+import { Category, TransactionType, Template, Budget } from "@/types";
 import { toast } from "sonner";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -9,11 +9,13 @@ import { useDashboardStore } from "@/hooks/use-dashboard-store";
 interface TransactionFormProps {
   allCategories: Category[];
   allTemplates: Template[];
+  budgetTracking?: (Budget & { spent: number })[];
 }
 
 export function TransactionForm({ 
   allCategories, 
   allTemplates,
+  budgetTracking = [],
 }: TransactionFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -95,6 +97,21 @@ export function TransactionForm({
   const isIncomeDisabled = detectedCategory?.type === 'EXPENSE';
   const isExpenseDisabled = detectedCategory?.type === 'INCOME';
 
+  const budgetInfo = useMemo(() => {
+    if (!detectedCategory || detectedCategory.type !== 'EXPENSE' || !amount || amount === '0') return null;
+    const budget = budgetTracking.find(b => b.categoryId === detectedCategory.id);
+    if (!budget) return null;
+
+    const remaining = budget.amountLimit - budget.spent;
+    const isOver = parseInt(amount) > remaining;
+    
+    return {
+      remaining,
+      isOver,
+      limit: budget.amountLimit
+    };
+  }, [detectedCategory, amount, budgetTracking]);
+
   const onHandleTransaction = useCallback(async (type: TransactionType) => {
     if (type === 'TRANSFER') {
       onOpenTransferModal();
@@ -168,15 +185,25 @@ export function TransactionForm({
       
       <div className="space-y-6 md:space-y-8 mt-4 md:mt-8">
         <div className="relative group">
-          <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 mb-2 block">Số tiền (VND)</label>
+          <div className="flex justify-between items-end mb-2">
+            <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 block">Số tiền (VND)</label>
+            {budgetInfo && (
+              <div className={`text-[10px] font-bold uppercase tracking-tighter px-2 py-0.5 rounded ${budgetInfo.isOver ? 'bg-orange-500/10 text-orange-500 animate-pulse' : 'bg-emerald-500/10 text-emerald-500/60'}`}>
+                {budgetInfo.isOver ? 'Vượt ngân sách' : 'Trong ngân sách'}
+                <span className="ml-1 opacity-60 font-mono">
+                  (Còn {budgetInfo.remaining.toLocaleString('vi-VN')}đ)
+                </span>
+              </div>
+            )}
+          </div>
           <AmountInput 
             value={amount}
             onChange={setAmount}
             placeholder="0" 
             disabled={isLoading}
-            className="w-full bg-transparent text-5xl md:text-7xl font-mono text-foreground py-2 focus:outline-none placeholder:text-neutral-800 text-center md:text-left border-b border-white/5 focus:border-white transition-colors pb-4 disabled:opacity-50" 
+            className={`w-full bg-transparent text-5xl md:text-7xl font-mono py-2 focus:outline-none placeholder:text-neutral-800 text-center md:text-left border-b border-white/5 focus:border-white transition-all pb-4 disabled:opacity-50 ${budgetInfo?.isOver ? 'text-orange-500' : 'text-foreground'}`} 
           />
-          <span className="absolute right-0 bottom-6 text-muted-foreground/60 text-xl font-mono hidden md:block">đ</span>
+          <span className={`absolute right-0 bottom-6 text-xl font-mono hidden md:block transition-colors ${budgetInfo?.isOver ? 'text-orange-500/40' : 'text-muted-foreground/60'}`}>đ</span>
         </div>
         
         <div className="relative">
@@ -234,7 +261,11 @@ export function TransactionForm({
           <button 
             onClick={() => onHandleTransaction('EXPENSE')}
             disabled={!amount || amount === '0' || isLoading || isExpenseDisabled || !activeFund}
-            className="group relative py-4 md:py-5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-sm md:text-base border border-rose-500/20 hover:border-rose-500/40 active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:shadow-[0_0_30px_rgba(244,63,94,0.2)]"
+            className={`group relative py-4 md:py-5 rounded-2xl font-bold text-sm md:text-base border active:scale-[0.95] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed overflow-hidden shadow-2xl ${
+              budgetInfo?.isOver 
+                ? 'bg-orange-500/10 text-orange-500 border-orange-500/20 hover:bg-orange-500/20 hover:border-orange-500/40 shadow-[0_0_20px_rgba(249,115,22,0.1)] hover:shadow-[0_0_30px_rgba(249,115,22,0.2)]' 
+                : 'bg-rose-500/10 text-rose-500 border-rose-500/20 hover:bg-rose-500/20 hover:border-rose-500/40 shadow-[0_0_20px_rgba(244,63,94,0.1)] hover:shadow-[0_0_30px_rgba(244,63,94,0.2)]'
+            }`}
           >
             <span className="relative z-10">{isLoading ? 'ĐANG XỬ LÝ...' : 'CHI TIỀN'}</span>
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
