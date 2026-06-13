@@ -37,7 +37,7 @@ export class DashboardService {
           toFund: { columns: { name: true } },
         },
         orderBy: [desc(transactions.date)],
-        limit: 5,
+        limit: 10,
       }),
       db.select({ categoryId: transactions.categoryId, total: sql<number>`sum(${transactions.amount})::int` })
         .from(transactions)

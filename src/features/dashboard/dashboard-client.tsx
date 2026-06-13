@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Transaction, TransactionType, Fund, Category, CashFlowItem, DashboardData } from "@/types";
 import { DashboardHeader } from "./dashboard-header";
 import { TransactionForm } from "./transaction-form";
+import { FinancialInsights } from "./financial-insights";
 import { RecentTransactions } from "./recent-transactions";
 import { DashboardModals } from "./dashboard-modals";
 import { useDashboard } from "@/hooks/use-dashboard";
@@ -106,7 +107,7 @@ interface DashboardClientProps {
         isSubmitting={isSubmitting}
       />
 
-      <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-4 md:space-y-6 max-w-5xl mx-auto mt-2 md:mt-4">
+      <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-6 md:space-y-10 max-w-7xl mx-auto mt-4 md:mt-8">
         <DashboardHeader 
           totalBalance={data.totalBalance}
           totalSpentMonth={data.totalSpentMonth}
@@ -114,12 +115,20 @@ interface DashboardClientProps {
           onOpenDistributionModal={() => setModal('distribution')}
         />
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6 px-4 md:px-0">
-          <div className="space-y-4 md:space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 px-4 md:px-0">
+          <div className="lg:col-span-2 space-y-6 md:space-y-8">
             <TransactionForm
               allCategories={data.allCategories}
               allTemplates={data.allTemplates}
               budgetTracking={data.budgetTracking}
+            />
+
+            <FinancialInsights 
+              totalSpentMonth={data.totalSpentMonth}
+              totalSpentLastMonth={data.totalSpentLastMonth}
+              totalBudgetMonth={data.totalBudgetMonth}
+              totalBalance={data.totalBalance}
+              fundCount={data.allFunds.length}
             />
           </div>
 
