@@ -11,6 +11,7 @@ import { CategorySettings } from "./components/CategorySettings";
 import { BudgetSettings } from "./components/BudgetSettings";
 import { ShortcutSettings } from "./components/ShortcutSettings";
 import { GeneralSettings } from "./components/GeneralSettings";
+import { HelpSettings } from "./components/HelpSettings";
 
 interface SettingsClientProps {
   initialFunds: Fund[];
@@ -58,6 +59,7 @@ export default function SettingsClient({
           { id: "shortcuts", name: "Lối tắt nhanh" },
           { id: "budget", name: "Ngân sách" },
           { id: "general", name: "Chung" },
+          { id: "help", name: "Hướng dẫn" },
         ].map(tab => (
           <button
             key={tab.id}
@@ -95,6 +97,10 @@ export default function SettingsClient({
         
         {activeTab === "general" && (
           <GeneralSettings isLoading={isLoading} />
+        )}
+
+        {activeTab === "help" && (
+          <HelpSettings />
         )}
       </div>
     </div>
