@@ -433,13 +433,25 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                         </div>
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
-                        {tx.fund?.name || "Khác"}
+                        {tx.type === 'TRANSFER' ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-foreground font-medium">{tx.fund?.name}</span>
+                            <span className="text-[10px] opacity-40">→</span>
+                            <span className="text-foreground font-medium">{tx.toFund?.name}</span>
+                          </div>
+                        ) : (
+                          tx.fund?.name || "Khác"
+                        )}
                       </td>
                       <td className="px-4 py-4 text-neutral-300 max-w-[200px] truncate italic" title={tx.note || ""}>
                         {tx.note || "-"}
                       </td>
-                      <td className={`px-4 py-4 whitespace-nowrap text-right font-mono font-bold ${tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                        {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
+                      <td className={`px-4 py-4 whitespace-nowrap text-right font-mono font-bold ${
+                        tx.type === 'INCOME' || tx.type === 'BORROW' ? 'text-emerald-400' : 
+                        tx.type === 'TRANSFER' ? 'text-blue-400' :
+                        'text-rose-400'
+                      }`}>
+                        {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
                       </td>
                       <td className="px-4 py-4">
                          <button 
