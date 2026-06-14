@@ -7,7 +7,7 @@ import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/empty-state";
 import { AmountInput } from "@/components/amount-input";
 import { CustomSelect } from "@/components/ui/custom-select";
-import { ReceiptText, Trash2, Calendar, Tag, Wallet, Search, Filter, FileText, Download, Upload, ChevronLeft, ChevronRight, X, Edit2 } from "lucide-react";
+import { ReceiptText, Trash2, Calendar, Tag, Wallet, Search, Filter, FileText, Download, Upload, ChevronLeft, ChevronRight, X, Edit2, AlertCircle } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Transaction, Fund, Category, TransactionsResponse, TransactionType } from "@/types";
@@ -36,6 +36,9 @@ export default function TransactionsClient({ initialTransactions, funds, categor
   const [editToFundId, setEditToFundId] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [editType, setEditType] = useState<TransactionType>('EXPENSE');
+
+  // Delete States
+  const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
 
   // Basic States
   const [filterType, setFilterType] = useState<string>('ALL');
@@ -156,9 +159,10 @@ export default function TransactionsClient({ initialTransactions, funds, categor
     window.open('/api/export', '_blank');
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) {
-      deleteTransaction(id);
+  const handleDelete = async () => {
+    if (deletingTransactionId) {
+      await deleteTransaction(deletingTransactionId);
+      setDeletingTransactionId(null);
     }
   };
 
@@ -196,12 +200,12 @@ export default function TransactionsClient({ initialTransactions, funds, categor
 
   return (
     <div className="flex flex-col w-full h-full pb-20 md:pb-8 max-w-5xl mx-auto mt-4 md:mt-8 px-4 md:px-0">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-foreground mb-2">Tất cả giao dịch</h1>
-          <p className="text-muted-foreground">Xem và quản lý lịch sử thu chi của bạn.</p>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground mb-1">Giao dịch</h1>
+          <p className="text-sm text-muted-foreground opacity-60">Xem và quản lý lịch sử thu chi của bạn.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -212,24 +216,27 @@ export default function TransactionsClient({ initialTransactions, funds, categor
           <button 
             onClick={() => fileInputRef.current?.click()}
             disabled={importMutation.isPending}
-            className="flex items-center gap-2 bg-white/[0.05] hover:bg-white/[0.1] text-foreground font-medium px-4 py-2 rounded-xl transition-colors border border-border hover:border-white/[0.1] cursor-pointer shrink-0 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.08] text-foreground font-bold px-4 py-2.5 rounded-2xl transition-all border border-white/5 cursor-pointer shrink-0 disabled:opacity-50 text-xs md:text-sm"
           >
-            <Upload className="w-4 h-4" />
-            {importMutation.isPending ? "Đang xử lý..." : "Nhập CSV"}
+            <Upload className="w-4 h-4 text-blue-400" />
+            <span className="hidden md:inline">Nhập CSV</span>
+            <span className="md:hidden">Nhập</span>
           </button>
           <button 
             onClick={handleExportCSV}
-            className="flex items-center gap-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500 font-medium px-4 py-2 rounded-xl transition-colors border border-emerald-500/20 hover:border-emerald-500/40 cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-2 bg-white/[0.03] hover:bg-white/[0.08] text-foreground font-bold px-4 py-2.5 rounded-2xl transition-all border border-white/5 cursor-pointer shrink-0 text-xs md:text-sm"
           >
-            <Download className="w-4 h-4" />
-            Xuất CSV
+            <Download className="w-4 h-4 text-emerald-400" />
+            <span className="hidden md:inline">Xuất CSV</span>
+            <span className="md:hidden">Xuất</span>
           </button>
           <button 
             onClick={() => setIsReportModalOpen(true)}
-            className="flex items-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-medium px-4 py-2 rounded-xl transition-colors border border-rose-500/20 hover:border-rose-500/40 cursor-pointer shrink-0"
+            className="flex items-center justify-center gap-2 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold px-4 py-2.5 rounded-2xl transition-all border border-rose-500/20 cursor-pointer shrink-0 text-xs md:text-sm"
           >
             <FileText className="w-4 h-4" />
-            Báo cáo PDF
+            <span className="hidden md:inline">Báo cáo PDF</span>
+            <span className="md:hidden">Báo cáo</span>
           </button>
         </div>
       </div>
@@ -505,7 +512,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                              <Edit2 className="w-3.5 h-3.5" />
                            </button>
                            <button 
-                             onClick={() => handleDelete(tx.id)}
+                             onClick={() => setDeletingTransactionId(tx.id)}
                              className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-400 transition-all cursor-pointer"
                            >
                              <Trash2 className="w-3.5 h-3.5" />
@@ -550,32 +557,44 @@ export default function TransactionsClient({ initialTransactions, funds, categor
       {/* Edit Modal */}
       {editingTransaction && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
           onClick={() => setEditingTransaction(null)}
         >
           <div 
-            className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+            className="bg-[#121212] border border-white/10 rounded-[2.5rem] p-6 md:p-10 max-w-lg w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] relative animate-in fade-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-foreground tracking-tight">Sửa giao dịch</h2>
-              <button onClick={() => setEditingTransaction(null)} className="p-2 hover:bg-white/5 rounded-full text-muted-foreground">
-                <X size={20} />
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-2xl font-bold text-foreground tracking-tight">Sửa giao dịch</h2>
+              <button onClick={() => setEditingTransaction(null)} className="p-2 hover:bg-white/5 rounded-full text-muted-foreground transition-colors">
+                <X size={24} />
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Số tiền</label>
-                <AmountInput value={editAmount} onChange={setEditAmount} className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-2xl" />
+            <div className="space-y-6">
+              <div className="space-y-2.5">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Số tiền</label>
+                <div className="relative group">
+                  <AmountInput 
+                    value={editAmount} 
+                    onChange={setEditAmount} 
+                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-5 text-4xl font-mono text-center md:text-left focus:border-white/20 transition-all" 
+                  />
+                  <span className="absolute right-6 top-1/2 -translate-y-1/2 text-xl font-mono text-muted-foreground/30 pointer-events-none">đ</span>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Loại</label>
+              <div className="grid grid-cols-2 gap-5">
+                <div className="space-y-2.5">
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Loại</label>
                   <CustomSelect 
                     value={editType}
-                    onChange={(e) => setEditType(e.target.value as TransactionType)}
+                    onChange={(e) => {
+                      const newType = e.target.value as TransactionType;
+                      setEditType(newType);
+                      // Reset toFundId if not transfer
+                      if (newType !== 'TRANSFER') setEditToFundId("");
+                    }}
                     options={[
                       { value: 'EXPENSE', label: 'Chi tiêu' },
                       { value: 'INCOME', label: 'Thu nhập' },
@@ -585,67 +604,110 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                     ]}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Ngày</label>
+                <div className="space-y-2.5">
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Ngày</label>
                   <input 
                     type="date" 
                     value={editDate}
                     onChange={(e) => setEditDate(e.target.value)}
-                    className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/20"
+                    className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-white/20 transition-all [color-scheme:dark]"
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Từ Quỹ</label>
-                <CustomSelect 
-                  value={editFundId}
-                  onChange={(e) => setEditFundId(e.target.value)}
-                  options={funds.map(f => ({ value: f.id, label: f.name }))}
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="space-y-2.5">
+                  <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">
+                    {editType === 'TRANSFER' ? 'Từ Quỹ' : 'Tài khoản / Quỹ'}
+                  </label>
+                  <CustomSelect 
+                    value={editFundId}
+                    onChange={(e) => setEditFundId(e.target.value)}
+                    options={funds.map(f => ({ value: f.id, label: f.name }))}
+                  />
+                </div>
+
+                {editType === 'TRANSFER' ? (
+                  <div className="space-y-2.5 animate-in fade-in slide-in-from-left-2">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Đến Quỹ</label>
+                    <CustomSelect 
+                      value={editToFundId}
+                      onChange={(e) => setEditToFundId(e.target.value)}
+                      options={funds.filter(f => f.id !== editFundId).map(f => ({ value: f.id, label: f.name }))}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2.5">
+                    <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Danh mục</label>
+                    <CustomSelect 
+                      value={editCategoryId}
+                      onChange={(e) => setEditCategoryId(e.target.value)}
+                      options={[
+                        { value: '', label: 'Không có danh mục' },
+                        ...categories.map(c => ({ value: c.id, label: `${c.icon} ${c.name}` }))
+                      ]}
+                    />
+                  </div>
+                )}
               </div>
 
-              {editType === 'TRANSFER' ? (
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến Quỹ</label>
-                  <CustomSelect 
-                    value={editToFundId}
-                    onChange={(e) => setEditToFundId(e.target.value)}
-                    options={funds.filter(f => f.id !== editFundId).map(f => ({ value: f.id, label: f.name }))}
-                  />
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Danh mục</label>
-                  <CustomSelect 
-                    value={editCategoryId}
-                    onChange={(e) => setEditCategoryId(e.target.value)}
-                    options={[
-                      { value: '', label: 'Không có danh mục' },
-                      ...categories.map(c => ({ value: c.id, label: `${c.icon} ${c.name}` }))
-                    ]}
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Ghi chú</label>
+              <div className="space-y-2.5">
+                <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Ghi chú</label>
                 <input 
                   type="text" 
                   value={editNote}
                   onChange={(e) => setEditNote(e.target.value)}
-                  placeholder="Thêm ghi chú..."
-                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/20"
+                  placeholder="Ví dụ: Ăn trưa #vui_ve"
+                  className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-white/20 transition-all placeholder:text-muted-foreground/30"
                 />
               </div>
 
               <button 
                 onClick={handleUpdate}
                 disabled={isMutating}
-                className="w-full py-4 rounded-2xl bg-white text-black font-bold text-sm hover:bg-white/90 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 mt-4 shadow-xl"
+                className="w-full py-5 rounded-[1.5rem] bg-white text-black font-extrabold text-sm hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 mt-6 shadow-2xl shadow-white/5 uppercase tracking-widest"
               >
-                {isMutating ? "ĐANG CẬP NHẬT..." : "LƯU THAY ĐỔI"}
+                {isMutating ? "ĐANG LƯU..." : "LƯU THAY ĐỔI"}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deletingTransactionId && (
+        <div 
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
+          onClick={() => setDeletingTransactionId(null)}
+        >
+          <div 
+            className="bg-[#121212] border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 mb-6">
+                <AlertCircle size={32} />
+              </div>
+              <h3 className="text-xl font-bold text-foreground mb-2">Xác nhận xóa?</h3>
+              <p className="text-sm text-muted-foreground mb-8">
+                Bạn có chắc chắn muốn xóa giao dịch này? Hành động này không thể hoàn tác và sẽ cập nhật lại số dư quỹ.
+              </p>
+              
+              <div className="flex gap-3 w-full">
+                <button 
+                  onClick={() => setDeletingTransactionId(null)}
+                  className="flex-1 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-foreground font-bold text-sm hover:bg-white/5 transition-all"
+                >
+                  HỦY
+                </button>
+                <button 
+                  onClick={handleDelete}
+                  disabled={isMutating}
+                  className="flex-1 py-4 rounded-2xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-500 active:scale-[0.98] transition-all"
+                >
+                  {isMutating ? "ĐANG XÓA..." : "XÓA NGAY"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
