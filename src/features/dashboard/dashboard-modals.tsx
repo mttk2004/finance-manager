@@ -17,6 +17,7 @@ interface DashboardModalsProps {
   transferToFund: Fund | null;
   setTransferToFund: (fund: Fund | null) => void;
   amount: string;
+  setAmount: (amount: string) => void;
   handleTransfer: () => Promise<void>;
   isSubmitting: boolean;
 }
@@ -32,6 +33,7 @@ export function DashboardModals({
   transferToFund,
   setTransferToFund,
   amount,
+  setAmount,
   handleTransfer,
   isSubmitting,
 }: DashboardModalsProps) {
@@ -71,7 +73,7 @@ export function DashboardModals({
             <div className="space-y-4 mb-6">
               <div className="flex justify-between items-end mb-1">
                 <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Từ quỹ</p>
-                <span className="text-[10px] font-mono text-emerald-500/60">Số dư: {activeFund.balance.toLocaleString('vi-VN')}đ</span>
+                <span className="text-[10px] font-mono text-emerald-500/60">Số dư: {(activeFund.balance || 0).toLocaleString('vi-VN')}đ</span>
               </div>
               <div className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground font-medium flex justify-between items-center">
                 <span>{activeFund.name}</span>
@@ -97,7 +99,7 @@ export function DashboardModals({
                 >
                   <option value="" disabled>-- Chọn quỹ đích --</option>
                   {funds.filter(f => f.id !== activeFund.id).map(f => (
-                    <option key={f.id} value={f.id}>{f.name} ({f.balance.toLocaleString('vi-VN')}đ)</option>
+                    <option key={f.id} value={f.id}>{f.name} ({(f.balance || 0).toLocaleString('vi-VN')}đ)</option>
                   ))}
                 </select>
               </div>
@@ -105,11 +107,19 @@ export function DashboardModals({
               <div className="pt-2">
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Số tiền chuyển</p>
-                  {parseInt(amount || '0') > activeFund.balance && (
-                    <span className="text-[10px] font-bold text-rose-500 animate-pulse">Vượt số dư!</span>
-                  )}
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => setAmount((activeFund.balance || 0).toString())}
+                      className="text-[10px] font-bold text-blue-400 hover:text-blue-300 transition-colors cursor-pointer"
+                    >
+                      Chuyển hết
+                    </button>
+                    {parseInt(amount || '0') > (activeFund.balance || 0) && (
+                      <span className="text-[10px] font-bold text-rose-500 animate-pulse">Vượt số dư!</span>
+                    )}
+                  </div>
                 </div>
-                <div className={`text-3xl font-mono tracking-tight bg-secondary border rounded-2xl px-4 py-4 text-center transition-all ${parseInt(amount || '0') > activeFund.balance ? 'border-rose-500/50 text-rose-500' : 'border-border text-foreground'}`}>
+                <div className={`text-3xl font-mono tracking-tight bg-secondary border rounded-2xl px-4 py-4 text-center transition-all ${parseInt(amount || '0') > (activeFund.balance || 0) ? 'border-rose-500/50 text-rose-500' : 'border-border text-foreground'}`}>
                   {parseInt(amount || '0').toLocaleString('vi-VN')}<span className="text-sm ml-1 opacity-50">đ</span>
                 </div>
               </div>
@@ -117,7 +127,7 @@ export function DashboardModals({
 
             <button 
               onClick={handleTransfer}
-              disabled={isLoading || !transferToFund || !amount || amount === '0' || parseInt(amount) > activeFund.balance}
+              disabled={isLoading || !transferToFund || !amount || amount === '0' || parseInt(amount) > (activeFund.balance || 0)}
               className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-500 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xl shadow-blue-900/20"
             >
               {isLoading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN CHUYỂN QUỸ"}

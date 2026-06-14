@@ -108,6 +108,7 @@ interface DashboardClientProps {
         transferToFund={transferToFund}
         setTransferToFund={setTransferToFund}
         amount={transferAmount}
+        setAmount={setTransferAmount}
         handleTransfer={handleTransfer}
         isSubmitting={isSubmitting}
       />
