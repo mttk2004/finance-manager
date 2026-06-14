@@ -5,8 +5,14 @@ export function IncomeDistributionModal({ isOpen, onClose }: { isOpen: boolean, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-      <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="mb-6">
           <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-xl mb-4">
             🏦

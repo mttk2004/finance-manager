@@ -18,8 +18,14 @@ export function FundSelectorModal({ isOpen, onClose, currentFund, onSelectFund, 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-      <div className="bg-card border border-border rounded-3xl p-6 max-w-sm w-full shadow-2xl relative">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      onClick={onClose}
+    >
+      <div 
+        className="bg-card border border-border rounded-3xl p-6 max-w-sm w-full shadow-2xl relative"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-lg font-semibold text-white tracking-tight">Chọn quỹ giao dịch</h2>
           <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground">

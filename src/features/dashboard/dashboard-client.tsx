@@ -44,6 +44,7 @@ interface DashboardClientProps {
 
   const [transferToFund, setTransferToFund] = useState<Fund | null>(null);
   const [transferAmount, setTransferAmount] = useState("");
+  const [transferDate, setTransferDate] = useState(new Date().toISOString().split('T')[0]);
 
   const { dashboardData } = useDashboard(initialData);
   const { createTransaction, isSubmitting } = useTransactions();
@@ -56,7 +57,7 @@ interface DashboardClientProps {
     }
   }, [data.allFunds, activeFund, setActiveFund]);
 
-  const handleTransfer = async () => {
+  const handleTransfer = async (customDate?: string) => {
     if (!transferAmount || transferAmount === '0' || !transferToFund || isSubmitting || !activeFund) return;
     
     await createTransaction({
@@ -64,6 +65,7 @@ interface DashboardClientProps {
       toFundId: transferToFund.id,
       amount: parseInt(transferAmount),
       type: 'TRANSFER',
+      date: customDate ? new Date(customDate) : new Date(),
     });
     
     if (typeof window !== 'undefined' && window.navigator.vibrate) {
@@ -71,6 +73,7 @@ interface DashboardClientProps {
     }
     toast.success("Chuyển tiền thành công");
     setTransferAmount("");
+    setTransferToFund(null);
     setModal(null);
   };
 
@@ -90,8 +93,9 @@ interface DashboardClientProps {
     return acc;
   }, {});
 
-  const onOpenTransferModal = (amount: string) => {
+  const onOpenTransferModal = (amount: string, date: string) => {
     setTransferAmount(amount);
+    setTransferDate(date);
     setModal('transfer');
   };
 
@@ -111,6 +115,7 @@ interface DashboardClientProps {
         setAmount={setTransferAmount}
         handleTransfer={handleTransfer}
         isSubmitting={isSubmitting}
+        date={transferDate}
       />
 
       <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-6 md:space-y-10 max-w-7xl mx-auto mt-4 md:mt-8">

@@ -10,7 +10,7 @@ interface TransactionFormProps {
   allCategories: Category[];
   allTemplates: Template[];
   budgetTracking?: (Budget & { spent: number })[];
-  onOpenTransferModal?: (amount: string) => void;
+  onOpenTransferModal?: (amount: string, date: string) => void;
 }
 
 export function TransactionForm({ 
@@ -84,13 +84,13 @@ export function TransactionForm({
 
   const onOpenTransferModal = useCallback(() => {
     if (onOpenTransferModalProp) {
-      onOpenTransferModalProp(amount);
+      onOpenTransferModalProp(amount, date);
     } else {
       const params = new URLSearchParams(searchParams.toString());
       params.set('modal', 'transfer');
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     }
-  }, [amount, onOpenTransferModalProp, router, pathname, searchParams]);
+  }, [amount, date, onOpenTransferModalProp, router, pathname, searchParams]);
 
   const handleTransaction = async (type: TransactionType, amount: string, note: string, customDate?: string) => {
     if (!amount || amount === '0' || isSubmitting || !activeFund) return;

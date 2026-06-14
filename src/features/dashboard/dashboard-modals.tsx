@@ -18,8 +18,9 @@ interface DashboardModalsProps {
   setTransferToFund: (fund: Fund | null) => void;
   amount: string;
   setAmount: (amount: string) => void;
-  handleTransfer: () => Promise<void>;
+  handleTransfer: (date?: string) => Promise<void>;
   isSubmitting: boolean;
+  date: string;
 }
 
 export function DashboardModals({
@@ -36,6 +37,7 @@ export function DashboardModals({
   setAmount,
   handleTransfer,
   isSubmitting,
+  date,
 }: DashboardModalsProps) {
   const { activeFund, setActiveFund } = useDashboardStore();
   const isLoading = isSubmitting;
@@ -57,8 +59,14 @@ export function DashboardModals({
       />
       {/* Transfer Modal */}
       {isTransferModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-          <div className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative">
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          onClick={() => setTransferModalOpen(false)}
+        >
+          <div 
+            className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-sm w-full shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-foreground tracking-tight">Chuyển tiền</h2>
               <button 
@@ -126,7 +134,7 @@ export function DashboardModals({
             </div>
 
             <button 
-              onClick={handleTransfer}
+              onClick={() => handleTransfer(date)}
               disabled={isLoading || !transferToFund || !amount || amount === '0' || parseInt(amount) > (activeFund.balance || 0)}
               className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-500 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xl shadow-blue-900/20"
             >
