@@ -15,6 +15,16 @@ export async function createTransaction(rawData: z.infer<typeof transactionSchem
   return result;
 }
 
+export async function updateTransaction(id: string, rawData: z.infer<typeof transactionSchema>) {
+  const data = transactionSchema.parse(rawData);
+  const result = await TransactionService.update(id, data);
+
+  revalidatePath('/', 'layout');
+  revalidatePath('/transactions', 'page');
+  revalidatePath('/charts', 'page');
+  return result;
+}
+
 export async function deleteTransaction(id: string) {
   const result = await TransactionService.delete(id);
 

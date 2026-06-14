@@ -71,6 +71,94 @@ export class TransactionService {
     });
   }
 
+  static async update(id: string, data: z.infer<typeof transactionSchema>) {
+    return await db.transaction(async (tx) => {
+      const oldTx = await tx.query.transactions.findFirst({
+        where: eq(transactions.id, id),
+      });
+
+      if (!oldTx) throw new Error("Transaction not found");
+
+      // 1. Revert old transaction effects on balances
+      const oldFund = await tx.query.funds.findFirst({
+        where: eq(funds.id, oldTx.fundId),
+      });
+
+      if (oldFund) {
+        let revertedBalance = oldFund.balance || 0;
+        if (oldTx.type === 'INCOME' || oldTx.type === 'BORROW') {
+          revertedBalance -= oldTx.amount;
+        } else if (oldTx.type === 'EXPENSE' || oldTx.type === 'LEND' || oldTx.type === 'TRANSFER') {
+          revertedBalance += oldTx.amount;
+        }
+        await tx.update(funds).set({ balance: revertedBalance }).where(eq(funds.id, oldTx.fundId));
+      }
+
+      if (oldTx.type === 'TRANSFER' && oldTx.toFundId) {
+        const oldToFund = await tx.query.funds.findFirst({
+          where: eq(funds.id, oldTx.toFundId),
+        });
+        if (oldToFund) {
+          await tx.update(funds).set({ balance: (oldToFund.balance || 0) - oldTx.amount }).where(eq(funds.id, oldTx.toFundId));
+        }
+      }
+
+      // 2. Apply new transaction effects on balances
+      const newFund = await tx.query.funds.findFirst({
+        where: eq(funds.id, data.fundId),
+      });
+
+      if (newFund) {
+        // We need to re-fetch or calculate based on potential changes above if fund is same
+        let currentBalance = newFund.balance || 0;
+        // If it's the same fund, we must use the reverted balance calculated above
+        if (data.fundId === oldTx.fundId) {
+           // Re-fetch to be safe within the same transaction
+           const refetched = await tx.query.funds.findFirst({ where: eq(funds.id, data.fundId) });
+           currentBalance = refetched?.balance || 0;
+        }
+
+        if (data.type === 'INCOME' || data.type === 'BORROW') {
+          currentBalance += data.amount;
+        } else if (data.type === 'EXPENSE' || data.type === 'LEND' || data.type === 'TRANSFER') {
+          currentBalance -= data.amount;
+        }
+        await tx.update(funds).set({ balance: currentBalance }).where(eq(funds.id, data.fundId));
+      }
+
+      if (data.type === 'TRANSFER' && data.toFundId) {
+        const newToFund = await tx.query.funds.findFirst({
+          where: eq(funds.id, data.toFundId),
+        });
+        if (newToFund) {
+          let currentToBalance = newToFund.balance || 0;
+          // Again, check if it was affected by previous steps
+          if (data.toFundId === oldTx.fundId || data.toFundId === oldTx.toFundId) {
+            const refetchedTo = await tx.query.funds.findFirst({ where: eq(funds.id, data.toFundId) });
+            currentToBalance = refetchedTo?.balance || 0;
+          }
+          await tx.update(funds).set({ balance: currentToBalance + data.amount }).where(eq(funds.id, data.toFundId));
+        }
+      }
+
+      // 3. Update the transaction record
+      const [updated] = await tx.update(transactions)
+        .set({
+          fundId: data.fundId,
+          toFundId: data.toFundId,
+          categoryId: data.categoryId,
+          amount: data.amount,
+          type: data.type,
+          note: data.note,
+          date: data.date || new Date(),
+        })
+        .where(eq(transactions.id, id))
+        .returning();
+
+      return updated;
+    });
+  }
+
   static async delete(id: string) {
     return await db.transaction(async (tx) => {
       const transaction = await tx.query.transactions.findFirst({
@@ -161,6 +249,7 @@ export class TransactionService {
       with: {
         category: true,
         fund: true,
+        toFund: true,
       },
       orderBy: [getOrderBy()],
       limit,

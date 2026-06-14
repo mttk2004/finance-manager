@@ -1,16 +1,16 @@
 "use client";
 
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useCallback } from "react";
 import { importTransactions } from "@/server/actions/transactions";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
 import { EmptyState } from "@/components/empty-state";
 import { AmountInput } from "@/components/amount-input";
 import { CustomSelect } from "@/components/ui/custom-select";
-import { ReceiptText, Trash2, Calendar, Tag, Wallet, Search, Filter, FileText, Download, Upload, ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ReceiptText, Trash2, Calendar, Tag, Wallet, Search, Filter, FileText, Download, Upload, ChevronLeft, ChevronRight, X, Edit2 } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useMutation } from "@tanstack/react-query";
-import { Transaction, Fund, Category, TransactionsResponse } from "@/types";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Transaction, Fund, Category, TransactionsResponse, TransactionType } from "@/types";
 import { TransactionFilter } from "@/lib/validations";
 
 interface TransactionsClientProps {
@@ -25,7 +25,18 @@ const ExportReportModal = dynamic(() => import("@/components/export-report-modal
 
 export default function TransactionsClient({ initialTransactions, funds, categories }: TransactionsClientProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const queryClient = useQueryClient();
   
+  // Edit States
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editAmount, setEditAmount] = useState("");
+  const [editNote, setEditNote] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editFundId, setEditFundId] = useState("");
+  const [editToFundId, setEditToFundId] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editType, setEditType] = useState<TransactionType>('EXPENSE');
+
   // Basic States
   const [filterType, setFilterType] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState("");
@@ -70,7 +81,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
     currentPage === 1 && sortField === 'date' && sortOrder === 'desc'
   ), [filterType, fundId, categoryId, searchTerm, startDate, endDate, minAmount, maxAmount, currentPage, sortField, sortOrder]);
 
-  const { transactions: data, isLoading, deleteTransaction } = useTransactions(
+  const { transactions: data, isLoading, deleteTransaction, updateTransaction, isSubmitting: isMutating } = useTransactions(
     filters, 
     isDefaultFilters ? initialTransactions : undefined
   );
@@ -148,6 +159,38 @@ export default function TransactionsClient({ initialTransactions, funds, categor
   const handleDelete = (id: string) => {
     if (confirm("Bạn có chắc chắn muốn xóa giao dịch này?")) {
       deleteTransaction(id);
+    }
+  };
+
+  const handleEditClick = (tx: Transaction) => {
+    setEditingTransaction(tx);
+    setEditAmount(tx.amount.toString());
+    setEditNote(tx.note || "");
+    setEditDate(tx.date ? new Date(tx.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
+    setEditFundId(tx.fundId || "");
+    setEditToFundId(tx.toFundId || "");
+    setEditCategoryId(tx.categoryId || "");
+    setEditType(tx.type);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingTransaction) return;
+    try {
+      await updateTransaction({
+        id: editingTransaction.id,
+        data: {
+          fundId: editFundId,
+          toFundId: editType === 'TRANSFER' ? editToFundId : null,
+          categoryId: editType === 'TRANSFER' ? null : (editCategoryId || null),
+          amount: parseInt(editAmount),
+          type: editType,
+          note: editNote,
+          date: new Date(editDate),
+        }
+      });
+      setEditingTransaction(null);
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -434,7 +477,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">
                         {tx.type === 'TRANSFER' ? (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex items-center gap-1.5 min-w-[150px]">
                             <span className="text-foreground font-medium">{tx.fund?.name}</span>
                             <span className="text-[10px] opacity-40">→</span>
                             <span className="text-foreground font-medium">{tx.toFund?.name}</span>
@@ -454,12 +497,20 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                         {tx.type === 'INCOME' || tx.type === 'BORROW' ? '+' : tx.type === 'TRANSFER' ? '' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
                       </td>
                       <td className="px-4 py-4">
-                         <button 
-                           onClick={() => handleDelete(tx.id)}
-                           className="p-2 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-rose-500/10 text-muted-foreground hover:text-rose-400 transition-all cursor-pointer"
-                         >
-                           <Trash2 className="w-4 h-4" />
-                         </button>
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                           <button 
+                             onClick={() => handleEditClick(tx)}
+                             className="p-1.5 rounded-lg hover:bg-blue-500/10 text-muted-foreground hover:text-blue-400 transition-all cursor-pointer"
+                           >
+                             <Edit2 className="w-3.5 h-3.5" />
+                           </button>
+                           <button 
+                             onClick={() => handleDelete(tx.id)}
+                             className="p-1.5 rounded-lg hover:bg-rose-500/10 text-muted-foreground hover:text-rose-400 transition-all cursor-pointer"
+                           >
+                             <Trash2 className="w-3.5 h-3.5" />
+                           </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -495,6 +546,110 @@ export default function TransactionsClient({ initialTransactions, funds, categor
       </div>
 
       <ExportReportModal isOpen={isReportModalOpen} onClose={() => setIsReportModalOpen(false)} />
+
+      {/* Edit Modal */}
+      {editingTransaction && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+          onClick={() => setEditingTransaction(null)}
+        >
+          <div 
+            className="bg-card border border-border rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-foreground tracking-tight">Sửa giao dịch</h2>
+              <button onClick={() => setEditingTransaction(null)} className="p-2 hover:bg-white/5 rounded-full text-muted-foreground">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Số tiền</label>
+                <AmountInput value={editAmount} onChange={setEditAmount} className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-2xl" />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Loại</label>
+                  <CustomSelect 
+                    value={editType}
+                    onChange={(e) => setEditType(e.target.value as TransactionType)}
+                    options={[
+                      { value: 'EXPENSE', label: 'Chi tiêu' },
+                      { value: 'INCOME', label: 'Thu nhập' },
+                      { value: 'TRANSFER', label: 'Chuyển tiền' },
+                      { value: 'BORROW', label: 'Vay' },
+                      { value: 'LEND', label: 'Cho vay' },
+                    ]}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Ngày</label>
+                  <input 
+                    type="date" 
+                    value={editDate}
+                    onChange={(e) => setEditDate(e.target.value)}
+                    className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/20"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Từ Quỹ</label>
+                <CustomSelect 
+                  value={editFundId}
+                  onChange={(e) => setEditFundId(e.target.value)}
+                  options={funds.map(f => ({ value: f.id, label: f.name }))}
+                />
+              </div>
+
+              {editType === 'TRANSFER' ? (
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Đến Quỹ</label>
+                  <CustomSelect 
+                    value={editToFundId}
+                    onChange={(e) => setEditToFundId(e.target.value)}
+                    options={funds.filter(f => f.id !== editFundId).map(f => ({ value: f.id, label: f.name }))}
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Danh mục</label>
+                  <CustomSelect 
+                    value={editCategoryId}
+                    onChange={(e) => setEditCategoryId(e.target.value)}
+                    options={[
+                      { value: '', label: 'Không có danh mục' },
+                      ...categories.map(c => ({ value: c.id, label: `${c.icon} ${c.name}` }))
+                    ]}
+                  />
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold ml-1">Ghi chú</label>
+                <input 
+                  type="text" 
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                  placeholder="Thêm ghi chú..."
+                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:border-white/20"
+                />
+              </div>
+
+              <button 
+                onClick={handleUpdate}
+                disabled={isMutating}
+                className="w-full py-4 rounded-2xl bg-white text-black font-bold text-sm hover:bg-white/90 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 mt-4 shadow-xl"
+              >
+                {isMutating ? "ĐANG CẬP NHẬT..." : "LƯU THAY ĐỔI"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { getAllTransactions, createTransaction, deleteTransaction } from "@/server/actions/transactions";
+import { getAllTransactions, createTransaction, deleteTransaction, updateTransaction } from "@/server/actions/transactions";
 import { toast } from "sonner";
 import { handleError } from "@/lib/error-handler";
 import { TransactionType, TransactionsResponse, DashboardData } from "@/types";
@@ -56,6 +56,23 @@ export function useTransactions(filters?: TransactionFilter, initialData?: Trans
     }
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (vars: { id: string, data: any }) => updateTransaction(vars.id, vars.data),
+    onSuccess: () => {
+      toast.success("Đã cập nhật giao dịch");
+    },
+    onError: (err) => handleError(err, "Lỗi khi cập nhật giao dịch"),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['balanceHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowTrend'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowBar'] });
+      queryClient.invalidateQueries({ queryKey: ['categorySpending'] });
+      queryClient.invalidateQueries({ queryKey: ['topSpending'] });
+    }
+  });
+
   const deleteMutation = useMutation({
     mutationFn: deleteTransaction,
     onSuccess: () => {
@@ -73,7 +90,8 @@ export function useTransactions(filters?: TransactionFilter, initialData?: Trans
     isLoading: query.isLoading,
     isFetching: query.isFetching,
     createTransaction: createMutation.mutateAsync,
+    updateTransaction: updateMutation.mutateAsync,
     deleteTransaction: deleteMutation.mutate,
-    isSubmitting: createMutation.isPending || deleteMutation.isPending
+    isSubmitting: createMutation.isPending || deleteMutation.isPending || updateMutation.isPending
   };
 }
