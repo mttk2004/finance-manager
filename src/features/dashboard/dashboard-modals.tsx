@@ -69,21 +69,23 @@ export function DashboardModals({
             </div>
             
             <div className="space-y-4 mb-6">
-              <div>
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Từ quỹ</p>
-                <div className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-neutral-300">
-                  {activeFund.name}
+              <div className="flex justify-between items-end mb-1">
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Từ quỹ</p>
+                <span className="text-[10px] font-mono text-emerald-500/60">Số dư: {activeFund.balance.toLocaleString('vi-VN')}đ</span>
+              </div>
+              <div className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground font-medium flex justify-between items-center">
+                <span>{activeFund.name}</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]"></span>
+              </div>
+              
+              <div className="flex justify-center -my-3 relative z-10">
+                <div className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground shadow-lg">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
                 </div>
               </div>
               
-              <div className="flex justify-center -my-2 relative z-10">
-                <div className="w-8 h-8 rounded-full bg-card border border-border flex items-center justify-center text-muted-foreground">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>
-                </div>
-              </div>
-              
               <div>
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Đến quỹ</p>
+                <p className="text-[10px] uppercase tracking-widest text-muted-foreground mb-2 font-medium">Đến quỹ</p>
                 <select 
                   value={transferToFund?.id || ''} 
                   onChange={(e) => {
@@ -91,29 +93,34 @@ export function DashboardModals({
                     if (fund) setTransferToFund(fund);
                   }}
                   disabled={isLoading}
-                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-white/20 transition-colors disabled:opacity-50"
+                  className="w-full bg-secondary border border-border rounded-xl px-4 py-3 text-foreground focus:outline-none focus:border-blue-500/50 transition-colors disabled:opacity-50 appearance-none cursor-pointer"
                 >
                   <option value="" disabled>-- Chọn quỹ đích --</option>
                   {funds.filter(f => f.id !== activeFund.id).map(f => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
+                    <option key={f.id} value={f.id}>{f.name} ({f.balance.toLocaleString('vi-VN')}đ)</option>
                   ))}
                 </select>
               </div>
               
-              <div>
-                <p className="text-xs text-muted-foreground mb-2 font-medium">Số tiền chuyển</p>
-                <div className="text-2xl font-mono text-foreground tracking-tight bg-secondary border border-border rounded-xl px-4 py-3">
-                  {parseInt(amount || '0').toLocaleString('vi-VN')}đ
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-medium">Số tiền chuyển</p>
+                  {parseInt(amount || '0') > activeFund.balance && (
+                    <span className="text-[10px] font-bold text-rose-500 animate-pulse">Vượt số dư!</span>
+                  )}
+                </div>
+                <div className={`text-3xl font-mono tracking-tight bg-secondary border rounded-2xl px-4 py-4 text-center transition-all ${parseInt(amount || '0') > activeFund.balance ? 'border-rose-500/50 text-rose-500' : 'border-border text-foreground'}`}>
+                  {parseInt(amount || '0').toLocaleString('vi-VN')}<span className="text-sm ml-1 opacity-50">đ</span>
                 </div>
               </div>
             </div>
 
             <button 
               onClick={handleTransfer}
-              disabled={isLoading || !transferToFund}
-              className="w-full py-4 rounded-xl bg-blue-500 text-white font-bold text-sm hover:bg-blue-400 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={isLoading || !transferToFund || !amount || amount === '0' || parseInt(amount) > activeFund.balance}
+              className="w-full py-4 rounded-2xl bg-blue-600 text-white font-bold text-sm hover:bg-blue-500 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-xl shadow-blue-900/20"
             >
-              {isLoading ? "ĐANG CHUYỂN..." : "XÁC NHẬN CHUYỂN"}
+              {isLoading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN CHUYỂN QUỸ"}
             </button>
           </div>
         </div>

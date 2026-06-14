@@ -90,6 +90,11 @@ interface DashboardClientProps {
     return acc;
   }, {});
 
+  const onOpenTransferModal = (amount: string) => {
+    setTransferAmount(amount);
+    setModal('transfer');
+  };
+
   return (
     <>
       <DashboardModals 
@@ -121,6 +126,7 @@ interface DashboardClientProps {
               allCategories={data.allCategories}
               allTemplates={data.allTemplates}
               budgetTracking={data.budgetTracking}
+              onOpenTransferModal={onOpenTransferModal}
             />
 
             <FinancialInsights 
