@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useMemo, useCallback } from "react";
+import { useState, useRef, useMemo, useCallback, useEffect } from "react";
 import { importTransactions } from "@/server/actions/transactions";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
@@ -36,6 +36,122 @@ export default function TransactionsClient({ initialTransactions, funds, categor
   const [editToFundId, setEditToFundId] = useState("");
   const [editCategoryId, setEditCategoryId] = useState("");
   const [editType, setEditType] = useState<TransactionType>('EXPENSE');
+
+  // Edit suggestions & keyboard navigation states
+  const editContainerRef = useRef<HTMLDivElement>(null);
+  const [editLastWordState, setEditLastWordState] = useState("");
+  const [editSuggestionsDismissed, setEditSuggestionsDismissed] = useState(false);
+  const [editActiveIndex, setEditActiveIndex] = useState(0);
+  const [editPrevSuggestionsLength, setEditPrevSuggestionsLength] = useState(0);
+
+  const allHashtags = useMemo(() => {
+    const list: { tag: string; category: Category }[] = [];
+    categories.forEach(cat => {
+      if (cat.hashtags && cat.hashtags.length > 0) {
+        cat.hashtags.forEach(tag => {
+          list.push({ tag, category: cat });
+        });
+      } else {
+        const tag = `#${cat.name.replace(/\s+/g, '_').toLowerCase()}`;
+        list.push({ tag, category: cat });
+      }
+    });
+    return list;
+  }, [categories]);
+
+  const editLastWord = useMemo(() => {
+    return editNote.split(" ").pop() || "";
+  }, [editNote]);
+
+  const editHashtagSuggestions = useMemo(() => {
+    if (!editLastWord.startsWith("#")) return [];
+    const query = editLastWord.slice(1).toLowerCase();
+    
+    if (!query) {
+      return allHashtags.slice(0, 8);
+    }
+    
+    return allHashtags.filter(item => 
+      item.tag.toLowerCase().includes(query) ||
+      item.category.name.toLowerCase().includes(query)
+    ).slice(0, 8);
+  }, [editLastWord, allHashtags]);
+
+  // Reset dismissed state when editing last word changes
+  if (editLastWord !== editLastWordState) {
+    setEditLastWordState(editLastWord);
+    setEditSuggestionsDismissed(false);
+  }
+
+  if (editHashtagSuggestions.length !== editPrevSuggestionsLength) {
+    setEditPrevSuggestionsLength(editHashtagSuggestions.length);
+    setEditActiveIndex(0);
+  }
+
+  const editShowSuggestions = editLastWord.startsWith("#") && editHashtagSuggestions.length > 0 && !editSuggestionsDismissed;
+
+  const applyEditHashtag = (tag: string) => {
+    const words = editNote.split(" ");
+    words.pop();
+    const newNote = [...words, tag].join(" ").trim() + " ";
+    setEditNote(newNote);
+    setEditSuggestionsDismissed(true);
+
+    const matched = categories.find(cat => cat.hashtags?.some(h => h.toLowerCase() === tag.toLowerCase()));
+    if (matched && editType !== 'TRANSFER') {
+      setEditCategoryId(matched.id);
+    }
+  };
+
+  const handleEditInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (editShowSuggestions) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setEditActiveIndex(prev => (prev + 1) % editHashtagSuggestions.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setEditActiveIndex(prev => (prev - 1 + editHashtagSuggestions.length) % editHashtagSuggestions.length);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (editHashtagSuggestions[editActiveIndex]) {
+          applyEditHashtag(editHashtagSuggestions[editActiveIndex].tag);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setEditSuggestionsDismissed(true);
+      }
+    }
+  };
+
+  // Click outside listener for Edit Modal
+  useEffect(() => {
+    if (!editShowSuggestions) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (editContainerRef.current && !editContainerRef.current.contains(event.target as Node)) {
+        setEditSuggestionsDismissed(true);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [editShowSuggestions]);
+
+  // Auto-detect category while typing note in Edit Modal
+  useEffect(() => {
+    const foundHashtags = editNote.match(/#\w+/g);
+    if (!foundHashtags) return;
+    const lowerHashtags = foundHashtags.map(t => t.toLowerCase());
+    
+    const matched = categories.find(cat => 
+      cat.hashtags?.some(h => lowerHashtags.includes(h.toLowerCase()))
+    );
+    if (matched && editType !== 'TRANSFER') {
+      setEditCategoryId(matched.id);
+    }
+  }, [editNote, categories, editType]);
 
   // Delete States
   const [deletingTransactionId, setDeletingTransactionId] = useState<string | null>(null);
@@ -651,12 +767,43 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                 )}
               </div>
 
-              <div className="space-y-2.5">
+              <div className="space-y-2.5 relative" ref={editContainerRef}>
                 <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Ghi chú</label>
+                
+                {editShowSuggestions && (
+                  <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                    <div className="p-2 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                      <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-medium px-2">Gợi ý danh mục</span>
+                      <span className="text-[8px] text-muted-foreground opacity-50 px-2 font-mono">↑↓ Di chuyển • Enter Chọn</span>
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {editHashtagSuggestions.map((item, index) => (
+                        <button
+                          key={`${item.category.id}-${item.tag}`}
+                          onClick={() => applyEditHashtag(item.tag)}
+                          className={`w-full flex items-center justify-between px-4 py-3 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer text-left ${
+                            index === editActiveIndex ? "bg-white/10" : "hover:bg-white/5"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="text-lg">{item.category.icon || "📝"}</span>
+                            <div className="flex flex-col items-start">
+                              <span className="text-sm font-medium text-foreground">{item.tag}</span>
+                              <span className="text-[10px] text-muted-foreground">Thuộc danh mục: {item.category.name}</span>
+                            </div>
+                          </div>
+                          <div className="text-xs text-emerald-500/50 group-hover:text-emerald-500 transition-colors font-mono">CHỌN</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <input 
                   type="text" 
                   value={editNote}
                   onChange={(e) => setEditNote(e.target.value)}
+                  onKeyDown={handleEditInputKeyDown}
                   placeholder="Ví dụ: Ăn trưa #vui_ve"
                   className="w-full bg-white/[0.03] border border-white/5 rounded-2xl px-6 py-4 text-sm text-white focus:outline-none focus:border-white/20 transition-all placeholder:text-muted-foreground/30"
                 />

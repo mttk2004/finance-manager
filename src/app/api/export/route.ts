@@ -11,14 +11,21 @@ export async function GET() {
       with: {
         category: true,
         fund: true,
+        toFund: true,
       },
       orderBy: [desc(transactions.date)],
     });
 
     // Create CSV content
-    const header = ['ID', 'Ngày giờ', 'Loại', 'Danh mục', 'Quỹ', 'Số tiền', 'Ghi chú'];
+    const header = ['ID', 'Ngày giờ', 'Loại', 'Danh mục', 'Quỹ gửi', 'Quỹ nhận', 'Số tiền', 'Ghi chú'];
     const rows = allTransactions.map(tx => {
-      const type = tx.type === 'INCOME' ? 'Thu nhập' : tx.type === 'EXPENSE' ? 'Chi tiêu' : tx.type;
+      let type = tx.type as string;
+      if (tx.type === 'INCOME') type = 'Thu nhập';
+      else if (tx.type === 'EXPENSE') type = 'Chi tiêu';
+      else if (tx.type === 'TRANSFER') type = 'Chuyển tiền';
+      else if (tx.type === 'BORROW') type = 'Vay';
+      else if (tx.type === 'LEND') type = 'Cho vay';
+
       const date = tx.date ? new Date(tx.date).toLocaleString('vi-VN') : '';
       // Escape notes with quotes to handle commas
       const note = `"${(tx.note || '').replace(/"/g, '""')}"`;
@@ -29,6 +36,7 @@ export async function GET() {
         type,
         tx.category?.name || '',
         tx.fund?.name || '',
+        tx.toFund?.name || '',
         tx.amount.toString(),
         note
       ].join(',');

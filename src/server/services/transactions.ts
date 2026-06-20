@@ -312,60 +312,115 @@ export class TransactionService {
     };
 
     const errors: string[] = [];
+    let importedCount = 0;
 
-    const results = await db.transaction(async (tx) => {
-      let importedCount = 0;
-      for (let i = 1; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line) continue;
-        const parts = line.split(',').map(s => s.replace(/^"|"$/g, '').trim());
-        if (parts.length < 6) {
-          errors.push(`Dòng ${i + 1}: Thiếu cột dữ liệu`);
-          continue;
-        }
-
-        const dateStr = parts[1];
-        const typeStr = parts[2];
-        const categoryName = parts[3];
-        const fundName = parts[4];
-        const amount = parseInt(parts[5]);
-        const note = parts[6];
-
-        const fund = allFunds.find(f => f.name === fundName);
-        if (!fund) {
-          errors.push(`Dòng ${i + 1}: Không tìm thấy quỹ "${fundName}"`);
-          continue;
-        }
-
-        const category = allCategories.find(c => c.name === categoryName);
-        const type = typeMap[typeStr] || 'EXPENSE';
-
-        if (isNaN(amount) || amount <= 0) {
-          errors.push(`Dòng ${i + 1}: Số tiền không hợp lệ ("${parts[5]}")`);
-          continue;
-        }
-
-        await tx.insert(transactions).values({
-          fundId: fund.id,
-          categoryId: category?.id,
-          amount,
-          type,
-          note,
-          date: dateStr ? new Date(dateStr) : new Date(),
+    try {
+      await db.transaction(async (tx) => {
+        const fundBalances: Record<string, number> = {};
+        allFunds.forEach(f => {
+          fundBalances[f.id] = f.balance || 0;
         });
 
-        let newBalance = fund.balance || 0;
-        if (type === 'INCOME' || type === 'BORROW') newBalance += amount;
-        else if (type === 'EXPENSE' || type === 'LEND' || type === 'TRANSFER') newBalance -= amount;
-        
-        await tx.update(funds).set({ balance: newBalance, updatedAt: new Date() }).where(eq(funds.id, fund.id));
-        fund.balance = newBalance;
-        importedCount++;
-      }
-      return importedCount;
-    });
+        for (let i = 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+          const parts = line.split(',').map(s => s.replace(/^"|"$/g, '').trim());
+          if (parts.length < 6) {
+            errors.push(`Dòng ${i + 1}: Thiếu cột dữ liệu`);
+            throw new Error("Validation failed");
+          }
 
-    return { success: results > 0 || errors.length === 0, count: results, errors };
+          const dateStr = parts[1];
+          const typeStr = parts[2];
+          const categoryName = parts[3];
+          const fundName = parts[4];
+          
+          let toFundName = "";
+          let amount = 0;
+          let note = "";
+
+          if (parts.length >= 8) {
+            toFundName = parts[5];
+            amount = parseInt(parts[6]);
+            note = parts[7];
+          } else {
+            amount = parseInt(parts[5]);
+            note = parts[6];
+          }
+
+          const fund = allFunds.find(f => f.name === fundName);
+          if (!fund) {
+            errors.push(`Dòng ${i + 1}: Không tìm thấy quỹ nguồn "${fundName}"`);
+            throw new Error("Validation failed");
+          }
+
+          const type = typeMap[typeStr] || 'EXPENSE';
+
+          let toFund = null;
+          if (type === 'TRANSFER' && toFundName) {
+            toFund = allFunds.find(f => f.name === toFundName);
+            if (!toFund) {
+              errors.push(`Dòng ${i + 1}: Không tìm thấy quỹ nhận "${toFundName}"`);
+              throw new Error("Validation failed");
+            }
+          }
+
+          if (isNaN(amount) || amount <= 0) {
+            errors.push(`Dòng ${i + 1}: Số tiền không hợp lệ`);
+            throw new Error("Validation failed");
+          }
+
+          const category = allCategories.find(c => c.name === categoryName);
+
+          // Update memory balance and validate
+          let newSrcBalance = fundBalances[fund.id];
+          if (type === 'INCOME' || type === 'BORROW') {
+            newSrcBalance += amount;
+          } else if (type === 'EXPENSE' || type === 'LEND' || type === 'TRANSFER') {
+            newSrcBalance -= amount;
+          }
+
+          if (newSrcBalance < 0) {
+            errors.push(`Dòng ${i + 1}: Số dư quỹ "${fund.name}" không đủ (hiện có ${fundBalances[fund.id].toLocaleString('vi-VN')}đ, cần trừ ${amount.toLocaleString('vi-VN')}đ)`);
+            throw new Error("Validation failed");
+          }
+          fundBalances[fund.id] = newSrcBalance;
+
+          if (type === 'TRANSFER' && toFund) {
+            let newDestBalance = fundBalances[toFund.id];
+            newDestBalance += amount;
+            fundBalances[toFund.id] = newDestBalance;
+          }
+
+          // Insert transaction
+          await tx.insert(transactions).values({
+            fundId: fund.id,
+            toFundId: toFund?.id || null,
+            categoryId: category?.id || null,
+            amount,
+            type,
+            note,
+            date: dateStr ? new Date(dateStr) : new Date(),
+          });
+
+          importedCount++;
+        }
+
+        // Apply all updated balances to database
+        for (const [fundId, finalBalance] of Object.entries(fundBalances)) {
+          await tx.update(funds)
+            .set({ balance: finalBalance, updatedAt: new Date() })
+            .where(eq(funds.id, fundId));
+        }
+      });
+      return { success: true, count: importedCount, errors: [] };
+    } catch (err) {
+      return { 
+        success: false, 
+        count: 0, 
+        errors: errors.length > 0 ? errors : ["Lỗi hệ thống khi nhập file CSV."] 
+      };
+    }
   }
 
   static async checkYesterday() {
