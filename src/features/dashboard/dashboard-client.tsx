@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
 import { Transaction, TransactionType, Fund, Category, CashFlowItem, DashboardData } from "@/types";
 import { DashboardHeader } from "./dashboard-header";
 import { TransactionForm } from "./transaction-form";
 import { FinancialInsights } from "./financial-insights";
 import { RecentTransactions } from "./recent-transactions";
-import { DashboardModals } from "./dashboard-modals";
 import { useDashboard } from "@/hooks/use-dashboard";
 import { useTransactions } from "@/hooks/use-transactions";
 
@@ -42,12 +40,8 @@ interface DashboardClientProps {
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
-  const [transferToFund, setTransferToFund] = useState<Fund | null>(null);
-  const [transferAmount, setTransferAmount] = useState("");
-  const [transferDate, setTransferDate] = useState(new Date().toISOString().split('T')[0]);
-
   const { dashboardData } = useDashboard(initialData);
-  const { createTransaction, isSubmitting } = useTransactions();
+  const { isSubmitting } = useTransactions();
 
   const data = dashboardData || initialData;
 
@@ -56,26 +50,6 @@ interface DashboardClientProps {
       setActiveFund(data.allFunds.find((f: Fund) => f.isDefault) || data.allFunds[0]);
     }
   }, [data.allFunds, activeFund, setActiveFund]);
-
-  const handleTransfer = async (customDate?: string) => {
-    if (!transferAmount || transferAmount === '0' || !transferToFund || isSubmitting || !activeFund) return;
-    
-    await createTransaction({
-      fundId: activeFund.id,
-      toFundId: transferToFund.id,
-      amount: parseInt(transferAmount),
-      type: 'TRANSFER',
-      date: customDate ? new Date(customDate) : new Date(),
-    });
-    
-    if (typeof window !== 'undefined' && window.navigator.vibrate) {
-      window.navigator.vibrate(50);
-    }
-    toast.success("Chuyển tiền thành công");
-    setTransferAmount("");
-    setTransferToFund(null);
-    setModal(null);
-  };
 
   // Group transactions by date
   const groupedTransactions = data.recentTransactions.reduce((acc: Record<string, Transaction[]>, tx: Transaction) => {
@@ -93,31 +67,8 @@ interface DashboardClientProps {
     return acc;
   }, {});
 
-  const onOpenTransferModal = (amount: string, date: string) => {
-    setTransferAmount(amount);
-    setTransferDate(date);
-    setModal('transfer');
-  };
-
   return (
     <>
-      <DashboardModals 
-        isDistributionModalOpen={isDistributionModalOpen}
-        setDistributionModalOpen={(open) => setModal(open ? 'distribution' : null)}
-        isFundSelectorOpen={isFundSelectorOpen}
-        setFundSelectorOpen={(open) => setModal(open ? 'fund-selector' : null)}
-        isTransferModalOpen={isTransferModalOpen}
-        setTransferModalOpen={(open) => setModal(open ? 'transfer' : null)}
-        funds={data.allFunds}
-        transferToFund={transferToFund}
-        setTransferToFund={setTransferToFund}
-        amount={transferAmount}
-        setAmount={setTransferAmount}
-        handleTransfer={handleTransfer}
-        isSubmitting={isSubmitting}
-        date={transferDate}
-      />
-
       <div className="flex flex-col w-full h-full pb-20 md:pb-8 space-y-6 md:space-y-10 max-w-7xl mx-auto mt-4 md:mt-8">
         <DashboardHeader 
           totalBalance={data.totalBalance}
@@ -132,7 +83,6 @@ interface DashboardClientProps {
               allCategories={data.allCategories}
               allTemplates={data.allTemplates}
               budgetTracking={data.budgetTracking}
-              onOpenTransferModal={onOpenTransferModal}
             />
 
             <FinancialInsights 

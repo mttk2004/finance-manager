@@ -16,7 +16,7 @@ export function RecentTransactions({ groupedTransactions, isSubmitting }: Recent
       <div className="sticky top-32">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xs uppercase tracking-widest text-muted-foreground font-medium">Giao dịch gần đây</h3>
-          <button onClick={() => router.push('/transactions')} className="text-xs font-medium text-emerald-400 hover:text-emerald-300 transition-colors cursor-pointer">Xem tất cả</button>
+          <button onClick={() => router.push('/transactions')} className="text-xs font-medium text-primary-accent hover:text-primary-accent/80 transition-colors cursor-pointer">Xem tất cả</button>
         </div>
         
         <div className="space-y-8">
@@ -26,7 +26,7 @@ export function RecentTransactions({ groupedTransactions, isSubmitting }: Recent
                 <div className="h-3 w-20 bg-white/5 rounded animate-pulse"></div>
                 <div className="h-[1px] flex-1 bg-white/[0.03]"></div>
               </div>
-              <div className="w-full p-4 rounded-3xl bg-card border border-border flex items-center justify-between opacity-50">
+              <div className="w-full p-4 glass-card flex items-center justify-between opacity-50 bg-white/[0.01]">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-white/5 animate-pulse shrink-0"></div>
                   <div className="space-y-2">
@@ -56,7 +56,7 @@ export function RecentTransactions({ groupedTransactions, isSubmitting }: Recent
                   {txs.map((tx) => (
                     <button 
                       key={tx.id} 
-                      className="w-full p-4 rounded-3xl bg-card border border-border flex items-center justify-between hover:bg-secondary/50 cursor-pointer transition-all hover:translate-x-1 group text-left"
+                      className="w-full p-4 glass-card flex items-center justify-between hover:bg-white/[0.03] cursor-pointer transition-all hover:translate-x-1 hover:scale-[1.01] active:scale-[0.99] group text-left bg-white/[0.01]"
                     >
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg shrink-0 shadow-inner transition-colors ${

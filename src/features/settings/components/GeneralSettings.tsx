@@ -4,6 +4,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useDashboard } from "@/hooks/use-dashboard";
 
+import { useAccent, ACCENT_PRESETS } from "@/components/accent-provider";
+
 interface GeneralSettingsProps {
   isLoading: boolean;
 }
@@ -11,6 +13,7 @@ interface GeneralSettingsProps {
 export function GeneralSettings({ isLoading: parentIsLoading }: GeneralSettingsProps) {
   const { resetData, isResetting } = useDashboard();
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState(false);
+  const { accent, setAccent } = useAccent();
 
   const isLoading = parentIsLoading || isResetting;
 
@@ -23,6 +26,35 @@ export function GeneralSettings({ isLoading: parentIsLoading }: GeneralSettingsP
   return (
     <div className="space-y-6">
       <h3 className="font-medium text-foreground">Cài đặt chung</h3>
+      
+      {/* Accent Color Section */}
+      <div className="p-6 rounded-2xl bg-card border border-border space-y-4">
+        <div>
+          <h4 className="font-semibold text-foreground mb-1">Màu chủ đạo (Accent Color)</h4>
+          <p className="text-xs text-muted-foreground">Chọn màu sắc hiển thị chủ đạo trên toàn bộ giao diện ứng dụng.</p>
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          {ACCENT_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              onClick={() => setAccent(preset.id)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-medium transition-all active:scale-[0.98] cursor-pointer ${
+                accent === preset.id
+                  ? "border-primary-accent bg-primary-accent/10 text-white"
+                  : "border-border hover:border-white/10 text-muted-foreground hover:text-white"
+              }`}
+            >
+              <div
+                className="w-3.5 h-3.5 rounded-full"
+                style={{ backgroundColor: preset.hex }}
+              />
+              {preset.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="p-6 rounded-2xl bg-rose-500/5 border border-rose-500/10">
         <h4 className="text-rose-500 font-semibold mb-2 flex items-center gap-2">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>

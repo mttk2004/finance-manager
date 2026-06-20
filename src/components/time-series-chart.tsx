@@ -1,6 +1,6 @@
 "use client";
 
-import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { AreaChart, Area, XAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 interface TimeSeriesData {
   name: string;
@@ -19,10 +19,16 @@ export function TimeSeriesChart({ data }: { data: TimeSeriesData[] }) {
   return (
     <div className="h-full w-full relative">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart
+        <AreaChart
           data={data}
           margin={{ top: 20, right: 10, left: 10, bottom: 0 }}
         >
+          <defs>
+            <linearGradient id="colorBalance" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="var(--primary-accent)" stopOpacity={0.3}/>
+              <stop offset="95%" stopColor="var(--primary-accent)" stopOpacity={0.0}/>
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
           <XAxis 
             dataKey="name" 
@@ -33,8 +39,8 @@ export function TimeSeriesChart({ data }: { data: TimeSeriesData[] }) {
           />
           <Tooltip 
             contentStyle={{ 
-              backgroundColor: 'rgba(23, 23, 23, 0.9)', 
-              backdropFilter: 'blur(12px)',
+              backgroundColor: 'rgba(23, 23, 23, 0.95)', 
+              backdropFilter: 'blur(16px)',
               border: '1px solid rgba(255,255,255,0.08)', 
               borderRadius: '20px', 
               fontSize: '12px', 
@@ -45,15 +51,16 @@ export function TimeSeriesChart({ data }: { data: TimeSeriesData[] }) {
             formatter={(value: any) => [new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(value)), 'Số dư']}
             labelStyle={{ color: '#888', marginBottom: '8px', fontWeight: 'bold' }}
           />
-          <Line 
+          <Area 
             type="monotone" 
             dataKey="balance" 
-            stroke="#3b82f6" 
-            strokeWidth={4}
-            dot={{ fill: '#3b82f6', strokeWidth: 2, r: 4, stroke: '#121212' }}
-            activeDot={{ r: 6, strokeWidth: 0, fill: '#60a5fa' }}
+            stroke="var(--primary-accent)" 
+            strokeWidth={3}
+            fillOpacity={1}
+            fill="url(#colorBalance)"
+            activeDot={{ r: 5, strokeWidth: 0, fill: 'var(--primary-accent)' }}
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

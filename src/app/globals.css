@@ -39,6 +39,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-primary-accent: var(--primary-accent);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -81,6 +82,9 @@
   --sidebar-accent-foreground: #1a1a1a;
   --sidebar-border: #ebebeb;
   --sidebar-ring: #999999;
+  --primary-accent: #10b981;
+  --primary-accent-hover: #059669;
+  --primary-accent-rgb: 16, 185, 129;
 }
 
 .dark {
@@ -115,6 +119,9 @@
   --sidebar-accent-foreground: #fcfcfc;
   --sidebar-border: rgba(255, 255, 255, 0.05);
   --sidebar-ring: #71717a;
+  --primary-accent: #10b981;
+  --primary-accent-hover: #059669;
+  --primary-accent-rgb: 16, 185, 129;
 }
 
 @layer base {
@@ -142,5 +149,12 @@
   input[type="radio"] {
     cursor: pointer;
   }
+}
+
+@utility glass-card {
+  background-color: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 32px;
 }
 

@@ -165,6 +165,8 @@ export function TransactionForm({
     } else {
       const params = new URLSearchParams(searchParams.toString());
       params.set('modal', 'transfer');
+      params.set('amount', amount);
+      params.set('date', date);
       router.push(`${pathname}?${params.toString()}`, { scroll: false });
     }
   }, [amount, date, onOpenTransferModalProp, router, pathname, searchParams]);
@@ -232,7 +234,7 @@ export function TransactionForm({
   }, [amount, note, date, handleTransaction, onOpenTransferModal]);
 
   return (
-    <section className="bg-card border border-border rounded-3xl p-6 md:p-8">
+    <section className="glass-card p-6 md:p-8">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5 group/tooltip relative">
@@ -331,9 +333,9 @@ export function TransactionForm({
           </div>
           
           {showSuggestions && (
-            <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-              <div className="p-2 border-b border-white/5 bg-white/5 flex justify-between items-center">
-                <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-medium px-2">Gợi ý danh mục</span>
+            <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-card/95 backdrop-blur-xl border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+              <div className="p-2 border-b border-border bg-white/[0.02] flex justify-between items-center">
+                <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-semibold px-2">Gợi ý danh mục</span>
                 <span className="text-[8px] text-muted-foreground opacity-50 px-2 font-mono">↑↓ Di chuyển • Enter Chọn</span>
               </div>
               <div className="max-h-48 overflow-y-auto">
@@ -341,18 +343,20 @@ export function TransactionForm({
                   <button
                     key={`${item.category.id}-${item.tag}`}
                     onClick={() => applyHashtag(item.tag)}
-                    className={`w-full flex items-center justify-between px-4 py-3 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer text-left ${
-                      index === activeIndex ? "bg-white/10" : "hover:bg-white/5"
+                    className={`w-full flex items-center justify-between px-4 py-3 transition-colors border-b border-border/10 last:border-0 group cursor-pointer text-left ${
+                      index === activeIndex ? "bg-primary-accent/15 border-l-2 border-primary-accent" : "hover:bg-white/[0.02]"
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg">{item.category.icon || "📝"}</span>
+                      <div className="w-8 h-8 rounded-full bg-white/[0.03] flex items-center justify-center text-lg">
+                        {item.category.icon || "📝"}
+                      </div>
                       <div className="flex flex-col items-start">
                         <span className="text-sm font-medium text-foreground">{item.tag}</span>
                         <span className="text-[10px] text-muted-foreground">Thuộc danh mục: {item.category.name}</span>
                       </div>
                     </div>
-                    <div className="text-xs text-emerald-500/50 group-hover:text-emerald-500 transition-colors font-mono">CHỌN</div>
+                    <div className="text-xs text-primary-accent/60 group-hover:text-primary-accent font-bold font-mono transition-colors">CHỌN</div>
                   </button>
                 ))}
               </div>

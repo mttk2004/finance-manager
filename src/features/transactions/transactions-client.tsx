@@ -673,13 +673,17 @@ export default function TransactionsClient({ initialTransactions, funds, categor
       {/* Edit Modal */}
       {editingTransaction && (
         <div 
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
+          className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm px-0 md:px-4 py-0 md:py-6 animate-in fade-in duration-200"
           onClick={() => setEditingTransaction(null)}
         >
           <div 
-            className="bg-[#121212] border border-white/10 rounded-[2.5rem] p-6 md:p-10 max-w-lg w-full shadow-[0_0_50px_rgba(0,0,0,0.5)] relative animate-in fade-in zoom-in-95 duration-200"
+            className="bg-background border-t md:border border-border rounded-t-[32px] md:rounded-[32px] p-6 md:p-10 max-w-lg w-full shadow-2xl relative z-10 bottom-0 md:bottom-auto fixed md:relative transition-all duration-300 md:animate-in md:zoom-in-95 animate-in slide-in-from-bottom duration-300 overflow-y-auto max-h-[92vh] md:max-h-[85vh]"
             onClick={(e) => e.stopPropagation()}
           >
+            {/* Header dragging handle for mobile */}
+            <div className="md:hidden flex justify-center py-2 bg-card border-b border-border/10 -mt-6 -mx-6 mb-4">
+              <div className="w-12 h-1.5 rounded-full bg-neutral-800" />
+            </div>
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-bold text-foreground tracking-tight">Sửa giao dịch</h2>
               <button onClick={() => setEditingTransaction(null)} className="p-2 hover:bg-white/5 rounded-full text-muted-foreground transition-colors">
@@ -771,8 +775,8 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                 <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold ml-1">Ghi chú</label>
                 
                 {editShowSuggestions && (
-                  <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-                    <div className="p-2 border-b border-white/5 bg-white/5 flex justify-between items-center">
+                  <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                    <div className="p-2 border-b border-border bg-white/[0.02] flex justify-between items-center">
                       <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-medium px-2">Gợi ý danh mục</span>
                       <span className="text-[8px] text-muted-foreground opacity-50 px-2 font-mono">↑↓ Di chuyển • Enter Chọn</span>
                     </div>
@@ -781,7 +785,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                         <button
                           key={`${item.category.id}-${item.tag}`}
                           onClick={() => applyEditHashtag(item.tag)}
-                          className={`w-full flex items-center justify-between px-4 py-3 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer text-left ${
+                          className={`w-full flex items-center justify-between px-4 py-3 transition-colors border-b border-border last:border-0 group cursor-pointer text-left ${
                             index === editActiveIndex ? "bg-white/10" : "hover:bg-white/5"
                           }`}
                         >
@@ -792,7 +796,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
                               <span className="text-[10px] text-muted-foreground">Thuộc danh mục: {item.category.name}</span>
                             </div>
                           </div>
-                          <div className="text-xs text-emerald-500/50 group-hover:text-emerald-500 transition-colors font-mono">CHỌN</div>
+                          <div className="text-xs text-primary-accent/70 group-hover:text-primary-accent transition-colors font-mono">CHỌN</div>
                         </button>
                       ))}
                     </div>
@@ -812,7 +816,7 @@ export default function TransactionsClient({ initialTransactions, funds, categor
               <button 
                 onClick={handleUpdate}
                 disabled={isMutating}
-                className="w-full py-5 rounded-[1.5rem] bg-white text-black font-extrabold text-sm hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 mt-6 shadow-2xl shadow-white/5 uppercase tracking-widest"
+                className="w-full py-5 rounded-[1.5rem] bg-primary-accent text-white font-extrabold text-sm hover:bg-primary-accent/90 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 mt-6 shadow-2xl shadow-primary-accent/10 uppercase tracking-widest"
               >
                 {isMutating ? "ĐANG LƯU..." : "LƯU THAY ĐỔI"}
               </button>
@@ -824,11 +828,11 @@ export default function TransactionsClient({ initialTransactions, funds, categor
       {/* Delete Confirmation Modal */}
       {deletingTransactionId && (
         <div 
-          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
+          className="fixed inset-0 z-[70] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm px-0 md:px-4 py-0 md:py-6 animate-in fade-in duration-200"
           onClick={() => setDeletingTransactionId(null)}
         >
           <div 
-            className="bg-[#121212] border border-white/10 rounded-[2.5rem] p-8 max-w-sm w-full shadow-2xl relative animate-in fade-in zoom-in-95 duration-200"
+            className="bg-background border-t md:border border-border rounded-t-[32px] md:rounded-[32px] p-8 max-w-sm w-full shadow-2xl relative z-10 bottom-0 md:bottom-auto fixed md:relative transition-all duration-300 md:animate-in md:zoom-in-95 animate-in slide-in-from-bottom duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex flex-col items-center text-center">
@@ -843,14 +847,14 @@ export default function TransactionsClient({ initialTransactions, funds, categor
               <div className="flex gap-3 w-full">
                 <button 
                   onClick={() => setDeletingTransactionId(null)}
-                  className="flex-1 py-4 rounded-2xl bg-white/[0.03] border border-white/5 text-foreground font-bold text-sm hover:bg-white/5 transition-all"
+                  className="flex-1 py-4 rounded-2xl bg-white/[0.03] border border-border text-foreground font-bold text-sm hover:bg-white/5 active:scale-[0.98] transition-all cursor-pointer"
                 >
                   HỦY
                 </button>
                 <button 
                   onClick={handleDelete}
                   disabled={isMutating}
-                  className="flex-1 py-4 rounded-2xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-500 active:scale-[0.98] transition-all"
+                  className="flex-1 py-4 rounded-2xl bg-rose-600 text-white font-bold text-sm hover:bg-rose-500 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
                 >
                   {isMutating ? "ĐANG XÓA..." : "XÓA NGAY"}
                 </button>

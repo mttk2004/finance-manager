@@ -41,7 +41,7 @@ export function FinancialInsights({
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
+        <div className="glass-card p-6 relative overflow-hidden group hover:border-white/10 transition-colors">
           <div className="flex items-center gap-3 mb-4">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${diff <= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -63,7 +63,7 @@ export function FinancialInsights({
           <div className={`absolute bottom-0 left-0 h-1 transition-all duration-500 ${diff <= 0 ? 'bg-emerald-500 w-full opacity-20' : 'bg-rose-500 w-full opacity-20'}`}></div>
         </div>
 
-        <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
+        <div className="glass-card p-6 relative overflow-hidden group hover:border-white/10 transition-colors">
           <div className="flex items-center gap-3 mb-4">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center ${parseFloat(budgetPercentage) <= 80 ? 'bg-blue-500/10 text-blue-400' : 'bg-orange-500/10 text-orange-400'}`}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="6" x2="12" y2="12"></line><line x1="16" y1="14" x2="12" y2="12"></line></svg>
@@ -87,7 +87,7 @@ export function FinancialInsights({
           )}
         </div>
 
-        <div className="bg-card border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-white/10 transition-colors">
+        <div className="glass-card p-6 relative overflow-hidden group hover:border-white/10 transition-colors">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-8 h-8 rounded-full bg-purple-500/10 text-purple-400 flex items-center justify-center">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
