@@ -46,14 +46,32 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
       
       const pdf = new jsPDF({
         orientation: "portrait",
-        unit: "px"
+        unit: "px",
+        format: "a4"
       });
       
       const imgProps = pdf.getImageProperties(dataUrl);
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
       
-      pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+      // Calculate height of the image scaled to the page width
+      const imgScaledHeight = (imgProps.height * pageWidth) / imgProps.width;
+      
+      let heightLeft = imgScaledHeight;
+      let position = 0;
+      
+      // Page 1
+      pdf.addImage(dataUrl, "PNG", 0, position, pageWidth, imgScaledHeight);
+      heightLeft -= pageHeight;
+      
+      // Page 2 and onwards
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(dataUrl, "PNG", 0, position, pageWidth, imgScaledHeight);
+        heightLeft -= pageHeight;
+      }
+      
       pdf.save(`Bao_cao_tai_chinh_${startDate}_den_${endDate}.pdf`);
       toast.success("Đã xuất báo cáo PDF thành công!");
       onClose();
