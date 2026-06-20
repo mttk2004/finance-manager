@@ -49,6 +49,10 @@ export class TransactionService {
         } else if (data.type === 'EXPENSE' || data.type === 'LEND' || data.type === 'TRANSFER') {
           newBalance -= data.amount;
         }
+
+        if (newBalance < 0) {
+          throw new Error("Số dư tài khoản không đủ!");
+        }
         
         await tx.update(funds)
           .set({ balance: newBalance, updatedAt: new Date() })
@@ -91,6 +95,11 @@ export class TransactionService {
         } else if (oldTx.type === 'EXPENSE' || oldTx.type === 'LEND' || oldTx.type === 'TRANSFER') {
           revertedBalance += oldTx.amount;
         }
+
+        if (data.fundId !== oldTx.fundId && data.toFundId !== oldTx.fundId && revertedBalance < 0) {
+          throw new Error("Số dư tài khoản không đủ!");
+        }
+
         await tx.update(funds).set({ balance: revertedBalance }).where(eq(funds.id, oldTx.fundId));
       }
 
@@ -99,7 +108,13 @@ export class TransactionService {
           where: eq(funds.id, oldTx.toFundId),
         });
         if (oldToFund) {
-          await tx.update(funds).set({ balance: (oldToFund.balance || 0) - oldTx.amount }).where(eq(funds.id, oldTx.toFundId));
+          const revertedToBalance = (oldToFund.balance || 0) - oldTx.amount;
+
+          if (data.fundId !== oldTx.toFundId && data.toFundId !== oldTx.toFundId && revertedToBalance < 0) {
+            throw new Error("Số dư tài khoản không đủ!");
+          }
+
+          await tx.update(funds).set({ balance: revertedToBalance }).where(eq(funds.id, oldTx.toFundId));
         }
       }
 
@@ -123,6 +138,11 @@ export class TransactionService {
         } else if (data.type === 'EXPENSE' || data.type === 'LEND' || data.type === 'TRANSFER') {
           currentBalance -= data.amount;
         }
+
+        if (data.toFundId !== data.fundId && currentBalance < 0) {
+          throw new Error("Số dư tài khoản không đủ!");
+        }
+
         await tx.update(funds).set({ balance: currentBalance }).where(eq(funds.id, data.fundId));
       }
 
@@ -133,11 +153,17 @@ export class TransactionService {
         if (newToFund) {
           let currentToBalance = newToFund.balance || 0;
           // Again, check if it was affected by previous steps
-          if (data.toFundId === oldTx.fundId || data.toFundId === oldTx.toFundId) {
+          if (data.toFundId === oldTx.fundId || data.toFundId === oldTx.toFundId || data.toFundId === data.fundId) {
             const refetchedTo = await tx.query.funds.findFirst({ where: eq(funds.id, data.toFundId) });
             currentToBalance = refetchedTo?.balance || 0;
           }
-          await tx.update(funds).set({ balance: currentToBalance + data.amount }).where(eq(funds.id, data.toFundId));
+
+          const finalToBalance = currentToBalance + data.amount;
+          if (finalToBalance < 0) {
+            throw new Error("Số dư tài khoản không đủ!");
+          }
+
+          await tx.update(funds).set({ balance: finalToBalance }).where(eq(funds.id, data.toFundId));
         }
       }
 
@@ -179,6 +205,10 @@ export class TransactionService {
           newBalance += transaction.amount;
         }
 
+        if (newBalance < 0) {
+          throw new Error("Số dư tài khoản không đủ!");
+        }
+
         await tx.update(funds)
           .set({ balance: newBalance, updatedAt: new Date() })
           .where(eq(funds.id, transaction.fundId));
@@ -190,8 +220,14 @@ export class TransactionService {
         });
 
         if (toFund) {
+          const finalToBalance = (toFund.balance || 0) - transaction.amount;
+
+          if (finalToBalance < 0) {
+            throw new Error("Số dư tài khoản không đủ!");
+          }
+
           await tx.update(funds)
-            .set({ balance: (toFund.balance || 0) - transaction.amount, updatedAt: new Date() })
+            .set({ balance: finalToBalance, updatedAt: new Date() })
             .where(eq(funds.id, transaction.toFundId));
         }
       }
