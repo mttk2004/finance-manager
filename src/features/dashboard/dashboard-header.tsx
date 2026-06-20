@@ -35,7 +35,7 @@ export function DashboardHeader({ totalBalance, totalSpentMonth, totalBudgetMont
 
         <div className="grid grid-cols-2 gap-3">
           <div 
-            className="bg-card border border-border rounded-2xl p-4 active:scale-[0.98] transition-all"
+            className="bg-card border border-border rounded-2xl p-4 active:scale-[0.98] transition-all cursor-pointer"
             onClick={onOpenDistributionModal}
           >
             <span className="text-[9px] uppercase tracking-[0.15em] text-muted-foreground block mb-1 font-bold">Số dư</span>

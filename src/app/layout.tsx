@@ -44,7 +44,7 @@ export default function RootLayout({
                   {children}
                 </div>
               </div>
-              <Toaster position="top-center" expand={false} richColors />
+              <Toaster position="bottom-right" expand={false} richColors />
             </QueryProvider>
           </GlobalErrorBoundary>
         </ThemeProvider>

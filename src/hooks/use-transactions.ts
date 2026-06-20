@@ -47,6 +47,7 @@ export function useTransactions(filters?: TransactionFilter, initialData?: Trans
     onError: (err) => handleError(err, "Lỗi khi thực hiện giao dịch"),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FUNDS });
       queryClient.invalidateQueries({ queryKey: ['transactions'] }); // Invalidate all transaction lists
       queryClient.invalidateQueries({ queryKey: ['balanceHistory'] });
       queryClient.invalidateQueries({ queryKey: ['cashFlowTrend'] });
@@ -64,6 +65,7 @@ export function useTransactions(filters?: TransactionFilter, initialData?: Trans
     onError: (err) => handleError(err, "Lỗi khi cập nhật giao dịch"),
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FUNDS });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['balanceHistory'] });
       queryClient.invalidateQueries({ queryKey: ['cashFlowTrend'] });
@@ -80,8 +82,14 @@ export function useTransactions(filters?: TransactionFilter, initialData?: Trans
     },
     onError: (err) => handleError(err, "Không thể xóa giao dịch"),
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.DASHBOARD });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.FUNDS });
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['balanceHistory'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowTrend'] });
+      queryClient.invalidateQueries({ queryKey: ['cashFlowBar'] });
+      queryClient.invalidateQueries({ queryKey: ['categorySpending'] });
+      queryClient.invalidateQueries({ queryKey: ['topSpending'] });
     }
   });
 
@@ -91,7 +99,7 @@ export function useTransactions(filters?: TransactionFilter, initialData?: Trans
     isFetching: query.isFetching,
     createTransaction: createMutation.mutateAsync,
     updateTransaction: updateMutation.mutateAsync,
-    deleteTransaction: deleteMutation.mutate,
+    deleteTransaction: deleteMutation.mutateAsync,
     isSubmitting: createMutation.isPending || deleteMutation.isPending || updateMutation.isPending
   };
 }
