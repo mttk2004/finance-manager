@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { AmountInput } from "@/components/amount-input";
 import { Category, TransactionType, Template, Budget } from "@/types";
 import { toast } from "sonner";
@@ -28,33 +28,110 @@ export function TransactionForm({
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [showHashtagSuggestions, setShowHashtagSuggestions] = useState(false);
+
+  // Ref for click outside detection
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // States for smart suggestions and keyboard navigation
+  const [lastWordState, setLastWordState] = useState("");
+  const [suggestionsDismissed, setSuggestionsDismissed] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [prevSuggestionsLength, setPrevSuggestionsLength] = useState(0);
 
   const isLoading = isSubmitting;
 
-  const hashtagSuggestions = useMemo(() => {
-    const lastWord = note.split(" ").pop() || "";
-    if (!lastWord.startsWith("#")) return [];
-    
-    const query = lastWord.slice(1).toLowerCase();
-    return allCategories.filter(cat => 
-      cat.hashtags?.some(h => h.toLowerCase().includes(query)) ||
-      cat.name.toLowerCase().includes(query)
-    ).slice(0, 5);
-  }, [note, allCategories]);
+  const lastWord = useMemo(() => {
+    return note.split(" ").pop() || "";
+  }, [note]);
 
-  useEffect(() => {
-    const lastWord = note.split(" ").pop() || "";
-    setShowHashtagSuggestions(lastWord.startsWith("#") && hashtagSuggestions.length > 0);
-  }, [note, hashtagSuggestions]);
+  // Extract all hashtags from categories
+  const allHashtags = useMemo(() => {
+    const list: { tag: string; category: Category }[] = [];
+    allCategories.forEach(cat => {
+      if (cat.hashtags && cat.hashtags.length > 0) {
+        cat.hashtags.forEach(tag => {
+          list.push({ tag, category: cat });
+        });
+      } else {
+        const tag = `#${cat.name.replace(/\s+/g, '_').toLowerCase()}`;
+        list.push({ tag, category: cat });
+      }
+    });
+    return list;
+  }, [allCategories]);
+
+  // Generate suggestions matching the query
+  const hashtagSuggestions = useMemo(() => {
+    if (!lastWord.startsWith("#")) return [];
+    const query = lastWord.slice(1).toLowerCase();
+    
+    if (!query) {
+      return allHashtags.slice(0, 8);
+    }
+    
+    return allHashtags.filter(item => 
+      item.tag.toLowerCase().includes(query) ||
+      item.category.name.toLowerCase().includes(query)
+    ).slice(0, 8);
+  }, [lastWord, allHashtags]);
+
+  // Reset dismissed state when the last word changes (user typed more or changed input)
+  if (lastWord !== lastWordState) {
+    setLastWordState(lastWord);
+    setSuggestionsDismissed(false);
+  }
+
+  // Reset active index if suggestions list length changes
+  if (hashtagSuggestions.length !== prevSuggestionsLength) {
+    setPrevSuggestionsLength(hashtagSuggestions.length);
+    setActiveIndex(0);
+  }
+
+  const showSuggestions = lastWord.startsWith("#") && hashtagSuggestions.length > 0 && !suggestionsDismissed;
 
   const applyHashtag = (tag: string) => {
     const words = note.split(" ");
     words.pop();
     const newNote = [...words, tag].join(" ").trim() + " ";
     setNote(newNote);
-    setShowHashtagSuggestions(false);
+    setSuggestionsDismissed(true);
   };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showSuggestions) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setActiveIndex(prev => (prev + 1) % hashtagSuggestions.length);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setActiveIndex(prev => (prev - 1 + hashtagSuggestions.length) % hashtagSuggestions.length);
+      } else if (e.key === "Enter") {
+        e.preventDefault();
+        if (hashtagSuggestions[activeIndex]) {
+          applyHashtag(hashtagSuggestions[activeIndex].tag);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        setSuggestionsDismissed(true);
+      }
+    }
+  };
+
+  // Click outside listener
+  useEffect(() => {
+    if (!showSuggestions) return;
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setSuggestionsDismissed(true);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showSuggestions]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -245,7 +322,7 @@ export function TransactionForm({
           <span className={`absolute right-0 bottom-6 text-xl font-mono hidden md:block transition-colors ${budgetInfo?.isOver ? 'text-orange-500/40' : 'text-muted-foreground/60'}`}>đ</span>
         </div>
         
-        <div className="relative">
+        <div className="relative" ref={containerRef}>
           <div className="flex items-center gap-1.5 mb-2 group/tooltip relative">
             <label className="text-[10px] uppercase tracking-widest text-muted-foreground/60 block cursor-help">Ghi chú & Hashtag</label>
             <div className="absolute bottom-full left-0 mb-1 w-56 p-2 bg-[#1a1a1a] border border-white/10 rounded-xl text-[10px] text-muted-foreground opacity-0 invisible group-hover/tooltip:opacity-100 group-hover/tooltip:visible transition-all z-20 shadow-xl">
@@ -253,23 +330,26 @@ export function TransactionForm({
             </div>
           </div>
           
-          {showHashtagSuggestions && (
+          {showSuggestions && (
             <div className="absolute bottom-full left-0 w-full mb-2 z-20 bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-2">
-              <div className="p-2 border-b border-white/5 bg-white/5">
+              <div className="p-2 border-b border-white/5 bg-white/5 flex justify-between items-center">
                 <span className="text-[10px] uppercase tracking-tighter text-muted-foreground font-medium px-2">Gợi ý danh mục</span>
+                <span className="text-[8px] text-muted-foreground opacity-50 px-2 font-mono">↑↓ Di chuyển • Enter Chọn</span>
               </div>
               <div className="max-h-48 overflow-y-auto">
-                {hashtagSuggestions.map(cat => (
+                {hashtagSuggestions.map((item, index) => (
                   <button
-                    key={cat.id}
-                    onClick={() => applyHashtag(cat.hashtags?.[0] || `#${cat.name.replace(/\s+/g, '_').toLowerCase()}`)}
-                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-white/5 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer"
+                    key={`${item.category.id}-${item.tag}`}
+                    onClick={() => applyHashtag(item.tag)}
+                    className={`w-full flex items-center justify-between px-4 py-3 transition-colors border-b border-white/[0.03] last:border-0 group cursor-pointer text-left ${
+                      index === activeIndex ? "bg-white/10" : "hover:bg-white/5"
+                    }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-lg">{cat.icon || "📝"}</span>
+                      <span className="text-lg">{item.category.icon || "📝"}</span>
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium text-foreground">{cat.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{cat.hashtags?.[0] || 'Chưa có hashtag'}</span>
+                        <span className="text-sm font-medium text-foreground">{item.tag}</span>
+                        <span className="text-[10px] text-muted-foreground">Thuộc danh mục: {item.category.name}</span>
                       </div>
                     </div>
                     <div className="text-xs text-emerald-500/50 group-hover:text-emerald-500 transition-colors font-mono">CHỌN</div>
@@ -283,6 +363,7 @@ export function TransactionForm({
             type="text" 
             value={note}
             onChange={(e) => setNote(e.target.value)}
+            onKeyDown={handleInputKeyDown}
             placeholder="Ví dụ: Ăn trưa #vui_ve" 
             disabled={isLoading}
             className="w-full bg-[#161616] border border-white/[0.03] rounded-2xl px-4 md:px-6 py-4 md:py-5 text-sm text-neutral-300 focus:outline-none focus:border-white/20 placeholder:text-muted-foreground/60 transition-colors disabled:opacity-50" 
