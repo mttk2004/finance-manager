@@ -25,7 +25,6 @@ export async function createCategory(data: {
 
   revalidateTag('categories', 'max');
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
   
   return newCat;
 }
@@ -40,8 +39,7 @@ export async function updateCategory(id: string, data: {
 
   revalidateTag('categories', 'max');
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
-
+ 
   return updatedCat;
 }
 
@@ -50,7 +48,6 @@ export async function deleteCategory(id: string, options?: { transferToCategoryI
   
   revalidateTag('categories', 'max');
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
-
+ 
   return result;
 }

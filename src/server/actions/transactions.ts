@@ -10,8 +10,6 @@ export async function createTransaction(rawData: z.infer<typeof transactionSchem
   const result = await TransactionService.create(data);
 
   revalidatePath('/', 'layout');
-  revalidatePath('/transactions', 'page');
-  revalidatePath('/charts', 'page');
   return result;
 }
 
@@ -20,8 +18,6 @@ export async function updateTransaction(id: string, rawData: z.infer<typeof tran
   const result = await TransactionService.update(id, data);
 
   revalidatePath('/', 'layout');
-  revalidatePath('/transactions', 'page');
-  revalidatePath('/charts', 'page');
   return result;
 }
 
@@ -29,8 +25,6 @@ export async function deleteTransaction(id: string) {
   const result = await TransactionService.delete(id);
 
   revalidatePath('/', 'layout');
-  revalidatePath('/transactions', 'page');
-  revalidatePath('/charts', 'page');
   return result;
 }
 
@@ -42,8 +36,6 @@ export async function importTransactions(csvText: string) {
   const result = await TransactionService.import(csvText);
 
   revalidatePath('/', 'layout');
-  revalidatePath('/transactions', 'page');
-  revalidatePath('/charts', 'page');
 
   return result;
 }

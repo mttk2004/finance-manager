@@ -28,7 +28,6 @@ export async function upsertBudget(data: {
   const result = await BudgetService.upsert(data);
 
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
   return result;
 }
 
@@ -37,6 +36,5 @@ export async function setGlobalBudget(categoryId: string, amountLimit: number) {
 
   revalidateTag('global_budgets', 'max');
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
   return result;
 }

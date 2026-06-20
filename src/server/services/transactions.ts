@@ -4,6 +4,7 @@ import { desc, eq, sql, and, gte, lt, asc, exists, ilike, or } from 'drizzle-orm
 import { transactionSchema, transactionFilterSchema, TransactionFilter } from '@/lib/validations';
 import { z } from 'zod';
 import { TransactionType } from '@/types';
+import { BusinessError, ErrorCode } from '@/lib/errors';
 
 export class TransactionService {
   static async create(data: z.infer<typeof transactionSchema>) {
@@ -51,7 +52,7 @@ export class TransactionService {
         }
 
         if (newBalance < 0) {
-          throw new Error("Số dư tài khoản không đủ!");
+          throw new BusinessError(ErrorCode.INSUFFICIENT_BALANCE);
         }
         
         await tx.update(funds)
@@ -81,7 +82,7 @@ export class TransactionService {
         where: eq(transactions.id, id),
       });
 
-      if (!oldTx) throw new Error("Transaction not found");
+      if (!oldTx) throw new BusinessError(ErrorCode.TRANSACTION_NOT_FOUND);
 
       // 1. Revert old transaction effects on balances
       const oldFund = await tx.query.funds.findFirst({
@@ -97,7 +98,7 @@ export class TransactionService {
         }
 
         if (data.fundId !== oldTx.fundId && data.toFundId !== oldTx.fundId && revertedBalance < 0) {
-          throw new Error("Số dư tài khoản không đủ!");
+          throw new BusinessError(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
         await tx.update(funds).set({ balance: revertedBalance }).where(eq(funds.id, oldTx.fundId));
@@ -111,7 +112,7 @@ export class TransactionService {
           const revertedToBalance = (oldToFund.balance || 0) - oldTx.amount;
 
           if (data.fundId !== oldTx.toFundId && data.toFundId !== oldTx.toFundId && revertedToBalance < 0) {
-            throw new Error("Số dư tài khoản không đủ!");
+            throw new BusinessError(ErrorCode.INSUFFICIENT_BALANCE);
           }
 
           await tx.update(funds).set({ balance: revertedToBalance }).where(eq(funds.id, oldTx.toFundId));
@@ -140,7 +141,7 @@ export class TransactionService {
         }
 
         if (data.toFundId !== data.fundId && currentBalance < 0) {
-          throw new Error("Số dư tài khoản không đủ!");
+          throw new BusinessError(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
         await tx.update(funds).set({ balance: currentBalance }).where(eq(funds.id, data.fundId));
@@ -160,7 +161,7 @@ export class TransactionService {
 
           const finalToBalance = currentToBalance + data.amount;
           if (finalToBalance < 0) {
-            throw new Error("Số dư tài khoản không đủ!");
+            throw new BusinessError(ErrorCode.INSUFFICIENT_BALANCE);
           }
 
           await tx.update(funds).set({ balance: finalToBalance }).where(eq(funds.id, data.toFundId));
@@ -191,7 +192,7 @@ export class TransactionService {
         where: eq(transactions.id, id),
       });
 
-      if (!transaction) throw new Error("Transaction not found");
+      if (!transaction) throw new BusinessError(ErrorCode.TRANSACTION_NOT_FOUND);
 
       const fund = await tx.query.funds.findFirst({
         where: eq(funds.id, transaction.fundId),
@@ -206,7 +207,7 @@ export class TransactionService {
         }
 
         if (newBalance < 0) {
-          throw new Error("Số dư tài khoản không đủ!");
+          throw new BusinessError(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
         await tx.update(funds)
@@ -223,7 +224,7 @@ export class TransactionService {
           const finalToBalance = (toFund.balance || 0) - transaction.amount;
 
           if (finalToBalance < 0) {
-            throw new Error("Số dư tài khoản không đủ!");
+            throw new BusinessError(ErrorCode.INSUFFICIENT_BALANCE);
           }
 
           await tx.update(funds)
@@ -327,7 +328,7 @@ export class TransactionService {
           const parts = line.split(',').map(s => s.replace(/^"|"$/g, '').trim());
           if (parts.length < 6) {
             errors.push(`Dòng ${i + 1}: Thiếu cột dữ liệu`);
-            throw new Error("Validation failed");
+            throw new BusinessError(ErrorCode.VALIDATION_FAILED);
           }
 
           const dateStr = parts[1];
@@ -351,7 +352,7 @@ export class TransactionService {
           const fund = allFunds.find(f => f.name === fundName);
           if (!fund) {
             errors.push(`Dòng ${i + 1}: Không tìm thấy quỹ nguồn "${fundName}"`);
-            throw new Error("Validation failed");
+            throw new BusinessError(ErrorCode.VALIDATION_FAILED);
           }
 
           const type = typeMap[typeStr] || 'EXPENSE';
@@ -361,13 +362,13 @@ export class TransactionService {
             toFund = allFunds.find(f => f.name === toFundName);
             if (!toFund) {
               errors.push(`Dòng ${i + 1}: Không tìm thấy quỹ nhận "${toFundName}"`);
-              throw new Error("Validation failed");
+              throw new BusinessError(ErrorCode.VALIDATION_FAILED);
             }
           }
 
           if (isNaN(amount) || amount <= 0) {
             errors.push(`Dòng ${i + 1}: Số tiền không hợp lệ`);
-            throw new Error("Validation failed");
+            throw new BusinessError(ErrorCode.VALIDATION_FAILED);
           }
 
           const category = allCategories.find(c => c.name === categoryName);
@@ -382,7 +383,7 @@ export class TransactionService {
 
           if (newSrcBalance < 0) {
             errors.push(`Dòng ${i + 1}: Số dư quỹ "${fund.name}" không đủ (hiện có ${fundBalances[fund.id].toLocaleString('vi-VN')}đ, cần trừ ${amount.toLocaleString('vi-VN')}đ)`);
-            throw new Error("Validation failed");
+            throw new BusinessError(ErrorCode.VALIDATION_FAILED);
           }
           fundBalances[fund.id] = newSrcBalance;
 

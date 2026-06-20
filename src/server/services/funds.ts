@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { funds } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { BusinessError, ErrorCode } from '@/lib/errors';
 
 export class FundService {
   static async getAll() {
@@ -38,7 +39,7 @@ export class FundService {
     });
     
     if (fund?.isDefault) {
-      throw new Error("Cannot delete the default fund");
+      throw new BusinessError(ErrorCode.CANNOT_DELETE_DEFAULT_FUND);
     }
 
     return await db.transaction(async (tx) => {
@@ -47,7 +48,7 @@ export class FundService {
           where: eq(funds.id, options.transferToFundId),
         });
 
-        if (!targetFund) throw new Error("Target fund not found");
+        if (!targetFund) throw new BusinessError(ErrorCode.FUND_NOT_FOUND);
 
         // Update target fund balance
         await tx.update(funds)

@@ -147,92 +147,13 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-6 mb-12">
-                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Tổng thu nhập</p>
-                    <p className="text-2xl font-mono text-emerald-400">+{reportData.summary.income.toLocaleString('vi-VN')}đ</p>
-                  </div>
-                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Tổng chi tiêu</p>
-                    <p className="text-2xl font-mono text-rose-400">-{reportData.summary.expense.toLocaleString('vi-VN')}đ</p>
-                  </div>
-                  <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
-                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Dư thuần</p>
-                    <p className={`text-2xl font-mono ${reportData.summary.net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
-                      {reportData.summary.net >= 0 ? '+' : ''}{reportData.summary.net.toLocaleString('vi-VN')}đ
-                    </p>
-                  </div>
-                </div>
+                <ReportSummary summary={reportData.summary} />
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
-                  <div>
-                    <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                      Xu hướng Dòng tiền
-                    </h3>
-                    <div className="h-[250px] w-full">
-                      <CashFlowChart data={reportData.cashFlow} />
-                    </div>
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                      <div className="w-2 h-2 rounded-full bg-orange-500"></div>
-                      Phân bổ Chi tiêu
-                    </h3>
-                    <div className="h-[250px] w-full">
-                      <CategoryDonutChart data={reportData.categorySpending} />
-                    </div>
-                  </div>
-                </div>
+                <ReportCharts cashFlow={reportData.cashFlow} categorySpending={reportData.categorySpending} />
 
-                <div className="mb-12">
-                  <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-purple-500"></div>
-                    Chi tiêu theo Danh mục
-                  </h3>
-                  <div className="space-y-4">
-                    {reportData.categorySpending.slice(0, 5).map((cat: CategorySpending, i: number) => (
-                      <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-border">
-                        <div className="flex items-center gap-3">
-                          <span className="text-xl">{cat.icon || "📊"}</span>
-                          <span className="font-medium">{cat.name}</span>
-                        </div>
-                        <span className="font-mono font-medium text-neutral-300">-{cat.spent.toLocaleString('vi-VN')}đ</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                <ReportCategoryList categorySpending={reportData.categorySpending} />
 
-                <div>
-                  <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    Giao dịch lớn nhất
-                  </h3>
-                  <div className="overflow-hidden border border-border rounded-2xl">
-                    <table className="w-full text-sm text-left">
-                      <thead>
-                        <tr className="bg-white/[0.03] text-muted-foreground">
-                          <th className="px-4 py-3 font-medium">Ngày</th>
-                          <th className="px-4 py-3 font-medium">Danh mục</th>
-                          <th className="px-4 py-3 font-medium">Ghi chú</th>
-                          <th className="px-4 py-3 text-right font-medium">Số tiền</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-white/[0.02]">
-                        {reportData.topTransactions.map((tx: Transaction, i: number) => (
-                          <tr key={i} className="text-muted-foreground">
-                            <td className="px-4 py-3">{new Date(tx.date!).toLocaleDateString('vi-VN')}</td>
-                            <td className="px-4 py-3">{tx.category?.name || "Khác"}</td>
-                            <td className="px-4 py-3 truncate max-w-[150px]">{tx.note || "-"}</td>
-                            <td className={`px-4 py-3 text-right font-mono font-medium ${tx.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
-                              {tx.type === 'INCOME' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                <ReportTopTransactions topTransactions={reportData.topTransactions} />
                 
                 <div className="mt-20 pt-8 border-t border-border text-center">
                   <p className="text-xs text-neutral-600 italic">Báo cáo được tạo tự động bởi Personal Finance Manager</p>
@@ -267,6 +188,109 @@ export default function ExportReportModal({ isOpen, onClose }: { isOpen: boolean
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportSummary({ summary }: { summary: ReportData['summary'] }) {
+  return (
+    <div className="grid grid-cols-3 gap-6 mb-12">
+      <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Tổng thu nhập</p>
+        <p className="text-2xl font-mono text-emerald-400">+{summary.income.toLocaleString('vi-VN')}đ</p>
+      </div>
+      <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Tổng chi tiêu</p>
+        <p className="text-2xl font-mono text-rose-400">-{summary.expense.toLocaleString('vi-VN')}đ</p>
+      </div>
+      <div className="bg-white/[0.03] p-6 rounded-3xl border border-border">
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Dư thuần</p>
+        <p className={`text-2xl font-mono ${summary.net >= 0 ? 'text-blue-400' : 'text-orange-400'}`}>
+          {summary.net >= 0 ? '+' : ''}{summary.net.toLocaleString('vi-VN')}đ
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function ReportCharts({ cashFlow, categorySpending }: { cashFlow: ReportData['cashFlow'], categorySpending: ReportData['categorySpending'] }) {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-12">
+      <div>
+        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+          Xu hướng Dòng tiền
+        </h3>
+        <div className="h-[250px] w-full">
+          <CashFlowChart data={cashFlow} />
+        </div>
+      </div>
+      <div>
+        <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+          <div className="w-2 h-2 rounded-full bg-orange-500"></div>
+          Phân bổ Chi tiêu
+        </h3>
+        <div className="h-[250px] w-full">
+          <CategoryDonutChart data={categorySpending} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReportCategoryList({ categorySpending }: { categorySpending: ReportData['categorySpending'] }) {
+  return (
+    <div className="mb-12">
+      <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+        Chi tiêu theo Danh mục
+      </h3>
+      <div className="space-y-4">
+        {categorySpending.slice(0, 5).map((cat: CategorySpending, i: number) => (
+          <div key={i} className="flex items-center justify-between p-4 bg-white/[0.02] rounded-2xl border border-border">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">{cat.icon || "📊"}</span>
+              <span className="font-medium">{cat.name}</span>
+            </div>
+            <span className="font-mono font-medium text-neutral-300">-{cat.spent.toLocaleString('vi-VN')}đ</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ReportTopTransactions({ topTransactions }: { topTransactions: ReportData['topTransactions'] }) {
+  return (
+    <div>
+      <h3 className="text-lg font-semibold mb-6 flex items-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+        Giao dịch lớn nhất
+      </h3>
+      <div className="overflow-hidden border border-border rounded-2xl">
+        <table className="w-full text-sm text-left">
+          <thead>
+            <tr className="bg-white/[0.03] text-muted-foreground">
+              <th className="px-4 py-3 font-medium">Ngày</th>
+              <th className="px-4 py-3 font-medium">Danh mục</th>
+              <th className="px-4 py-3 font-medium">Ghi chú</th>
+              <th className="px-4 py-3 text-right font-medium">Số tiền</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.02]">
+            {topTransactions.map((tx: Transaction, i: number) => (
+              <tr key={i} className="text-muted-foreground">
+                <td className="px-4 py-3">{new Date(tx.date!).toLocaleDateString('vi-VN')}</td>
+                <td className="px-4 py-3">{tx.category?.name || "Khác"}</td>
+                <td className="px-4 py-3 truncate max-w-[150px]">{tx.note || "-"}</td>
+                <td className={`px-4 py-3 text-right font-mono font-medium ${tx.type === 'INCOME' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {tx.type === 'INCOME' ? '+' : '-'}{tx.amount.toLocaleString('vi-VN')}đ
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

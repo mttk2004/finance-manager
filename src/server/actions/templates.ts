@@ -17,7 +17,6 @@ export async function createTemplate(data: {
   const newTemplate = await TemplateService.create(data);
   
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
   return newTemplate;
 }
 
@@ -31,7 +30,6 @@ export async function updateTemplate(id: string, data: {
   const updatedTemplate = await TemplateService.update(id, data);
   
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
   return updatedTemplate;
 }
 
@@ -39,6 +37,5 @@ export async function deleteTemplate(id: string) {
   const result = await TemplateService.delete(id);
   
   revalidatePath('/', 'layout');
-  revalidatePath('/settings', 'page');
   return result;
 }
