@@ -95,20 +95,31 @@ export function FundSettings({ funds: initialFunds, isLoading: parentIsLoading }
             }
           }}
           disabled={isLoading}
-          className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer disabled:opacity-50"
+          className="text-xs bg-primary-accent text-white font-semibold px-4 py-2 rounded-xl hover:bg-primary-accent/90 shadow-md shadow-primary-accent/10 active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50"
         >
           {isAddingFund || editingFundId ? "Hủy" : "+ Thêm quỹ mới"}
         </button>
       </div>
       
       {(isAddingFund || editingFundId) && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center md:items-end bg-black/60 backdrop-blur-sm px-4 md:px-0">
-          <div className="bg-card border border-border rounded-3xl md:rounded-t-[2.5rem] md:rounded-b-none p-6 md:p-10 max-w-lg w-full shadow-2xl relative animate-in slide-in-from-bottom-4 duration-300">
+        <div 
+          className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm px-0 md:px-4 py-0 md:py-6 animate-in fade-in duration-200"
+          onClick={resetFundForm}
+        >
+          <div 
+            className="bg-background border-t md:border border-border rounded-t-[32px] md:rounded-[32px] p-6 md:p-10 max-w-lg w-full shadow-2xl relative z-10 bottom-0 md:bottom-auto fixed md:relative transition-all duration-300 md:animate-in md:zoom-in-95 animate-in slide-in-from-bottom duration-300 overflow-y-auto max-h-[92vh] md:max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header dragging handle for mobile */}
+            <div className="md:hidden flex justify-center py-2 bg-card border-b border-border/10 -mt-6 -mx-6 mb-4">
+              <div className="w-12 h-1.5 rounded-full bg-neutral-800" />
+            </div>
+            
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-xl font-bold text-foreground tracking-tight">
                 {editingFundId ? "Chỉnh sửa quỹ" : "Thêm quỹ mới"}
               </h2>
-              <button onClick={resetFundForm} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground">
+              <button onClick={resetFundForm} className="p-2 hover:bg-white/5 rounded-full transition-colors text-muted-foreground cursor-pointer">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
               </button>
             </div>
@@ -121,7 +132,7 @@ export function FundSettings({ funds: initialFunds, isLoading: parentIsLoading }
                   value={fundName}
                   onChange={(e) => setFundName(e.target.value)}
                   placeholder="Nhập tên quỹ..." 
-                  className="w-full bg-secondary border border-white/5 rounded-2xl px-5 py-4 text-lg font-medium text-foreground focus:outline-none focus:border-white/20 transition-all" 
+                  className="w-full bg-white/[0.03] border border-border rounded-2xl px-5 py-4 text-lg font-medium text-foreground focus:outline-none focus:border-primary-accent/30 focus:bg-white/[0.05] transition-all" 
                 />
               </div>
 
@@ -131,7 +142,7 @@ export function FundSettings({ funds: initialFunds, isLoading: parentIsLoading }
                   value={fundBalance}
                   onChange={(val) => setFundBalance(val)}
                   placeholder="0" 
-                  className="bg-secondary border border-white/5 rounded-2xl px-5 py-4 text-3xl" 
+                  className="bg-white/[0.03] border border-border rounded-2xl px-5 py-4 text-3xl focus-within:border-primary-accent/30 focus-within:bg-white/[0.05]" 
                 />
               </div>
 
@@ -145,7 +156,7 @@ export function FundSettings({ funds: initialFunds, isLoading: parentIsLoading }
                 <button 
                   onClick={editingFundId ? handleUpdateFund : handleAddFund}
                   disabled={isSubmitting || !fundName}
-                  className="flex-[2] py-4 rounded-2xl bg-foreground text-background font-bold text-sm hover:bg-neutral-200 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50"
+                  className="flex-[2] py-4 rounded-2xl bg-primary-accent text-white font-bold text-sm hover:bg-primary-accent/90 active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-primary-accent/10"
                 >
                   {isSubmitting ? "Đang lưu..." : (editingFundId ? "Cập nhật quỹ" : "Lưu quỹ")}
                 </button>
@@ -236,26 +247,40 @@ export function FundSettings({ funds: initialFunds, isLoading: parentIsLoading }
       </div>
 
       {fundToDelete && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md px-4">
-          <div className="bg-card border border-border rounded-[2.5rem] p-8 md:p-10 max-w-lg w-full shadow-2xl relative animate-in zoom-in-95 duration-200">
+        <div 
+          className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm px-0 md:px-4 py-0 md:py-6 animate-in fade-in duration-200"
+          onClick={() => {
+            setFundToDelete(null);
+            setTransferTargetId("");
+          }}
+        >
+          <div 
+            className="bg-background border-t md:border border-border rounded-t-[32px] md:rounded-[32px] p-8 md:p-10 max-w-lg w-full shadow-2xl relative z-10 bottom-0 md:bottom-auto fixed md:relative transition-all duration-300 md:animate-in md:zoom-in-95 animate-in slide-in-from-bottom duration-300 overflow-y-auto max-h-[92vh] md:max-h-[85vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header dragging handle for mobile */}
+            <div className="md:hidden flex justify-center py-2 bg-card border-b border-border/10 -mt-8 -mx-8 mb-6">
+              <div className="w-12 h-1.5 rounded-full bg-neutral-800" />
+            </div>
+
             <div className="mb-8">
               <div className="w-16 h-16 rounded-3xl bg-rose-500/10 flex items-center justify-center text-rose-500 mb-6 border border-rose-500/20">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
               </div>
               <h2 className="text-2xl font-bold text-foreground tracking-tight mb-3">Xác nhận xóa quỹ?</h2>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed text-sm">
                 Bạn sắp xóa quỹ <strong className="text-foreground">{fundToDelete.name}</strong>. Hãy chọn cách xử lý với số dư và dữ liệu của quỹ này.
               </p>
             </div>
 
             <div className="space-y-4 mb-8">
               <label className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-bold mb-2 block">Tùy chọn an toàn (Tùy chọn)</label>
-              <div className="bg-secondary/50 border border-white/5 rounded-2xl p-4">
+              <div className="bg-white/[0.02] border border-border rounded-2xl p-4">
                 <p className="text-xs text-muted-foreground mb-3">Chuyển toàn bộ số dư ({(fundToDelete.balance || 0).toLocaleString('vi-VN')}đ) và giao dịch sang:</p>
                 <select 
                   value={transferTargetId}
                   onChange={(e) => setTransferTargetId(e.target.value)}
-                  className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-white/20 transition-all cursor-pointer"
+                  className="w-full bg-card border border-border rounded-xl px-4 py-3 text-sm text-foreground focus:outline-none focus:border-primary-accent/30 transition-all cursor-pointer"
                 >
                   <option value="">-- Không chuyển (Xóa sạch) --</option>
                   {otherFunds.map(f => (

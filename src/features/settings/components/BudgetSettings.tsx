@@ -66,14 +66,14 @@ export function BudgetSettings({ categories, budgets: initialBudgets, currentMon
             }
           }} 
           disabled={isLoading}
-          className="text-xs bg-foreground text-background font-medium px-3 py-1.5 rounded-lg hover:bg-neutral-200 transition-colors cursor-pointer"
+          className="text-xs bg-primary-accent text-white font-semibold px-4 py-2 rounded-xl hover:bg-primary-accent/90 active:scale-[0.97] transition-all cursor-pointer disabled:opacity-50 shadow-md shadow-primary-accent/10"
         >
           {isAddingBudget || editingBudgetId ? "Hủy" : "+ Thiết lập ngân sách"}
         </button>
       </div>
       
       {(isAddingBudget || editingBudgetId) && (
-        <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-secondary p-3 rounded-xl border border-border">
+        <div className="flex flex-col sm:flex-row gap-3 mb-4 items-center bg-white/[0.02] p-3 rounded-2xl border border-border">
           <CustomSelect 
             value={budgetCategoryId} 
             onChange={(e) => setBudgetCategoryId(e.target.value)}
@@ -91,13 +91,13 @@ export function BudgetSettings({ categories, budgets: initialBudgets, currentMon
               value={budgetAmount}
               onChange={(val) => setBudgetAmount(val)}
               placeholder="Hạn mức" 
-              className="bg-card border border-border rounded-lg px-3 py-1.5 text-sm" 
+              className="bg-card border border-border rounded-xl px-3 py-2 text-sm focus-within:border-primary-accent/30" 
             />
           </div>
           <button 
             onClick={handleUpsertBudget}
             disabled={isSubmitting || !budgetCategoryId || !budgetAmount}
-            className="px-4 py-1.5 rounded-lg bg-orange-500 text-white font-semibold text-sm hover:bg-orange-400 cursor-pointer w-full sm:w-auto disabled:opacity-50"
+            className="px-5 py-2.5 rounded-xl bg-primary-accent text-white font-bold text-sm hover:bg-primary-accent/90 active:scale-[0.98] transition-all cursor-pointer w-full sm:w-auto disabled:opacity-50 shadow-md shadow-primary-accent/10"
           >
             {isSubmitting ? "Đang lưu..." : "Lưu"}
           </button>
@@ -109,23 +109,23 @@ export function BudgetSettings({ categories, budgets: initialBudgets, currentMon
           <p className="text-sm text-muted-foreground text-center py-8">Chưa có ngân sách nào được thiết lập cho tháng này.</p>
         ) : (
           budgets.map(budget => (
-            <div key={budget.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${editingBudgetId === budget.id ? 'bg-orange-500/5 border-orange-500/20' : 'bg-secondary border-white/[0.02]'}`}>
+            <div key={budget.id} className={`flex items-center justify-between p-4 rounded-2xl border transition-all ${editingBudgetId === budget.id ? 'bg-primary-accent/5 border-primary-accent/20' : 'bg-white/[0.01] border-border hover:bg-white/[0.03]'}`}>
               <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-orange-500/10">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg bg-primary-accent/10 text-primary-accent">
                   {budget.category?.icon || "📝"}
                 </div>
                 <div>
-                  <span className="font-medium text-foreground block">{budget.category?.name || "Danh mục không xác định"}</span>
-                  <span className="text-[10px] uppercase font-mono tracking-tight text-muted-foreground">
-                    Hạn mức
+                  <span className="font-semibold text-foreground block text-sm">{budget.category?.name || "Danh mục không xác định"}</span>
+                  <span className="text-[9px] uppercase font-mono tracking-wider text-muted-foreground/60">
+                    Hạn mức tháng này
                   </span>
                 </div>
               </div>
               <div className="flex items-center gap-4">
-                 <span className="font-mono text-muted-foreground font-medium">{(budget.amountLimit || 0).toLocaleString('vi-VN')}đ</span>
+                 <span className="font-mono text-foreground font-bold text-sm">{(budget.amountLimit || 0).toLocaleString('vi-VN')}đ</span>
                  <button 
                    onClick={() => startEditBudget(budget)}
-                   className={`p-2 transition-colors cursor-pointer rounded-lg ${editingBudgetId === budget.id ? 'text-orange-400 bg-orange-500/10' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
+                   className={`p-2 transition-all cursor-pointer rounded-lg active:scale-90 ${editingBudgetId === budget.id ? 'text-primary-accent bg-primary-accent/15' : 'text-muted-foreground hover:text-foreground hover:bg-white/5'}`}
                  >
                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg>
                  </button>
